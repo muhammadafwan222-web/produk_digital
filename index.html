@@ -7,6 +7,7 @@
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -31,7 +32,7 @@
             }
         }
     </script>
-
+    
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Google Fonts: Inter -->
@@ -80,6 +81,13 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo } = React;
 
+        // === INISIALISASI SUPABASE (DIPINDAH KE SINI) ===
+        const { createClient } = supabase;
+        // GANTI DENGAN KREDENSIAL ASLI DARI DASHBOARD SUPABASE KAMU
+        const SUPABASE_URL = 'https://xyz123.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5c...'; 
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
         // Initial Data Defaults
         const DEFAULT_CREATOR = {
             name: "Mizal Digital",
@@ -117,18 +125,6 @@
                 description: "Panduan lengkap 150+ halaman menyusun konten viral, copywriting konversi tinggi, dan monetisasi akun dari nol.",
                 downloadUrl: "https://drive.google.com/file/d/demo-ebook-instagram/view?usp=sharing",
                 fileType: "PDF Document"
-            },
-            {
-                id: "prod-2",
-                title: "Notion Life & Business Operating System",
-                category: "Template",
-                price: 149000,
-                rating: 5.0,
-                salesCount: 89,
-                coverUrl: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&q=80&w=600",
-                description: "Template Notion komprehensif mengelola keuangan bisnis, project client, dan content planner.",
-                downloadUrl: "https://notion.so/demo-notion-template",
-                fileType: "Notion Template"
             }
         ];
 
@@ -149,11 +145,13 @@
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
         function App() {
-            // Persistent State Initialization
+            // Persistent State Initialization (Hanya non-produk yang pakai LocalStorage sekarang)
             const [creator, setCreator] = useState(() => JSON.parse(localStorage.getItem('mizal_creator')) || DEFAULT_CREATOR);
             const [links, setLinks] = useState(() => JSON.parse(localStorage.getItem('mizal_links')) || DEFAULT_LINKS);
-            const [products, setProducts] = useState(() => JSON.parse(localStorage.getItem('mizal_products')) || DEFAULT_PRODUCTS);
             const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('mizal_transactions')) || DEFAULT_TRANSACTIONS);
+            
+            // State Produk menggunakan Database Supabase
+            const [products, setProducts] = useState([]);
 
             // View & Admin Auth State
             const [viewMode, setViewMode] = useState('store'); 
@@ -175,10 +173,23 @@
             const [editProduct, setEditProduct] = useState(null);
             const [editLink, setEditLink] = useState(null);
 
-            // Save state updates to LocalStorage
+            // Menarik data produk dari Supabase secara otomatis
+            useEffect(() => {
+                async function fetchProducts() {
+                    const { data, error } = await supabaseClient.from('products').select('*');
+                    if (data && data.length > 0) {
+                        setProducts(data);
+                    } else {
+                        // Jika belum ada data di server, gunakan default
+                        setProducts(DEFAULT_PRODUCTS); 
+                    }
+                }
+                fetchProducts();
+            }, []);
+
+            // Save state updates to LocalStorage untuk komponen yang belum masuk DB
             useEffect(() => { localStorage.setItem('mizal_creator', JSON.stringify(creator)); }, [creator]);
             useEffect(() => { localStorage.setItem('mizal_links', JSON.stringify(links)); }, [links]);
-            useEffect(() => { localStorage.setItem('mizal_products', JSON.stringify(products)); }, [products]);
             useEffect(() => { localStorage.setItem('mizal_transactions', JSON.stringify(transactions)); }, [transactions]);
 
             const showToast = (msg) => {
@@ -203,23 +214,53 @@
                 showToast("✅ Pengaturan Profil & Rekening Berhasil Disimpan!");
             };
 
-            const handleSaveProduct = (e) => {
+            // === FUNGSI SIMPAN PRODUK KE DATABASE ===
+            const handleSaveProduct = async (e) => {
                 e.preventDefault();
-                if (editProduct.id) {
-                    setProducts(products.map(p => p.id === editProduct.id ? editProduct : p));
-                    showToast("✅ Produk Berhasil Diperbarui!");
+                
+                if (editProduct.id && !editProduct.id.toString().startsWith('prod-')) {
+                    // Update data ke server jika ID berasal dari database (biasanya UUID atau ID integer)
+                    const { error } = await supabaseClient
+                        .from('products')
+                        .update(editProduct)
+                        .eq('id', editProduct.id);
+                        
+                    if (!error) {
+                        setProducts(products.map(p => p.id === editProduct.id ? editProduct : p));
+                        showToast("✅ Produk Berhasil Diperbarui di Database!");
+                    } else {
+                        showToast("❌ Gagal memperbarui produk.");
+                    }
                 } else {
-                    const created = { ...editProduct, id: `prod-${Date.now()}`, salesCount: 0, rating: 5.0 };
-                    setProducts([created, ...products]);
-                    showToast("🎉 Produk Baru Berhasil Diterbitkan!");
+                    // Simpan produk baru ke server
+                    const newProduct = { ...editProduct, salesCount: 0, rating: 5.0 };
+                    delete newProduct.id; // Biarkan Supabase yang mengenerate ID baru (pastikan tabel Supabase auto-increment/UUID)
+
+                    const { data, error } = await supabaseClient
+                        .from('products')
+                        .insert([newProduct])
+                        .select(); // Mengembalikan data yang baru diinput
+                        
+                    if (!error && data) {
+                        setProducts([data[0], ...products]);
+                        showToast("🎉 Produk Baru Berhasil Diterbitkan ke Database!");
+                    } else {
+                        showToast("❌ Gagal menyimpan produk. Cek koneksi Supabase.");
+                    }
                 }
                 setEditProduct(null);
             };
 
-            const handleDeleteProduct = (id) => {
-                if (confirm("Apakah Anda yakin ingin menghapus produk ini?")) {
-                    setProducts(products.filter(p => p.id !== id));
-                    showToast("🗑️ Produk Telah Dihapus.");
+            // === FUNGSI HAPUS PRODUK DARI DATABASE ===
+            const handleDeleteProduct = async (id) => {
+                if (confirm("Apakah Anda yakin ingin menghapus produk ini secara permanen?")) {
+                    const { error } = await supabaseClient.from('products').delete().eq('id', id);
+                    if (!error) {
+                        setProducts(products.filter(p => p.id !== id));
+                        showToast("🗑️ Produk Telah Dihapus dari Database.");
+                    } else {
+                        showToast("❌ Gagal menghapus produk.");
+                    }
                 }
             };
 
@@ -257,6 +298,7 @@
                     downloadUrl: checkoutProduct.downloadUrl
                 };
                 setTransactions([newTx, ...transactions]);
+                // Update sales count (idealnya ini juga di-update ke DB, tapi untuk demo state sudah cukup)
                 setProducts(products.map(p => p.id === checkoutProduct.id ? { ...p, salesCount: p.salesCount + 1 } : p));
                 setCheckoutStep(4);
             };
@@ -314,7 +356,7 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                         <i className="fa-solid fa-key"></i>
                                     </div>
                                     <h2 className="text-base font-bold text-white">Masukan PIN Admin</h2>
-                                    <p className="text-xs text-slate-400">Default PIN: <code className="bg-slate-800 px-1 rounded text-indigo-300">1234</code></p>
+                                    <p className="text-xs text-slate-400">Default PIN: <code className="bg-slate-800 px-1 rounded text-indigo-300">{creator.pin}</code></p>
                                     <input
                                         type="password"
                                         maxLength="6"
@@ -556,10 +598,10 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                                         <td className="p-2 font-bold text-emerald-400">{formatIDR(tx.amount)}</td>
                                                         <td className="p-2 text-emerald-400 font-semibold">{tx.status}</td>
                                                         <td className="p-2">
-    <a href={`mailto:${tx.buyerEmail}?subject=Akses Pesanan: ${tx.productTitle}&body=Halo ${tx.buyerName},%0D%0A%0D%0ATerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:%0D%0A${tx.downloadUrl}%0D%0A%0D%0ASalam Hangat.`} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap">
-        <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
-    </a>
-</td>
+                                                            <a href={`mailto:${tx.buyerEmail}?subject=Akses Pesanan: ${tx.productTitle}&body=Halo ${tx.buyerName},%0D%0A%0D%0ATerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:%0D%0A${tx.downloadUrl}%0D%0A%0D%0ASalam Hangat.`} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap">
+                                                                <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
+                                                            </a>
+                                                        </td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -623,23 +665,23 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                         )}
 
                                        <button onClick={() => {
-    const newTx = {
-        id: `INV-${Date.now().toString().slice(-6)}`,
-        buyerName: buyerName,
-        buyerEmail: buyerEmail,
-        productTitle: checkoutProduct.title,
-        amount: checkoutProduct.price,
-        paymentMethod: selectedPayment === 'bank' ? 'BANK BCA' : 'DANA',
-        date: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-        status: "Menunggu Konfirmasi",
-        downloadUrl: checkoutProduct.downloadUrl
-    };
-    setTransactions([newTx, ...transactions]);
-    window.open(generateWAConfirmLink(), '_blank');
-    setCheckoutProduct(null);
-}} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl">
-    <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran via WhatsApp
-</button>
+                                            const newTx = {
+                                                id: `INV-${Date.now().toString().slice(-6)}`,
+                                                buyerName: buyerName,
+                                                buyerEmail: buyerEmail,
+                                                productTitle: checkoutProduct.title,
+                                                amount: checkoutProduct.price,
+                                                paymentMethod: selectedPayment === 'bank' ? 'BANK BCA' : 'DANA',
+                                                date: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+                                                status: "Menunggu Konfirmasi",
+                                                downloadUrl: checkoutProduct.downloadUrl
+                                            };
+                                            setTransactions([newTx, ...transactions]);
+                                            window.open(generateWAConfirmLink(), '_blank');
+                                            setCheckoutProduct(null);
+                                        }} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl">
+                                            <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran via WhatsApp
+                                        </button>
                                         <button onClick={handleSimulatePaymentSuccess} className="w-full bg-slate-800 text-slate-400 text-[11px] py-2 rounded-xl">(Simulasi Pembayaran Lunas)</button>
                                     </div>
                                 )}
