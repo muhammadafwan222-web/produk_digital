@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mizal Digital - Link in Bio & Digital Storefront</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff',
+                            100: '#e5edff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        emerald: {
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                        }
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-short': 'bounce 0.8s ease-in-out 2'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- React 18 & Babel CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card-hover:hover {
+            background: rgba(30, 41, 59, 0.9);
+            border-color: rgba(99, 102, 241, 0.4);
+            transform: translateY(-2px);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 50%, #f472b6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <div id="root" class="flex-grow flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        const INITIAL_CREATOR = {
+            name: "Mizal Digital",
+            username: "mizaldigital",
+            verified: true,
+            avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300",
+            bio: "Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy. Siap tingkatkan omset usahamu! 🔥",
+            socials: {
+                instagram: "https://instagram.com",
+                tiktok: "https://tiktok.com",
+                youtube: "https://youtube.com",
+                whatsapp: "https://wa.me/6281234567890"
+            }
+        };
+
+        const INITIAL_CUSTOM_LINKS = [
+            { id: 'l1', title: '💬 Konsultasi Privat 1-on-1 (WhatsApp)', url: 'https://wa.me/6281234567890', badge: 'Slot Terbatas', highlight: true },
+            { id: 'l2', title: '🌐 Website & Portofolio Karya', url: 'https://example.com', badge: '' },
+            { id: 'l3', title: '🚀 Join Gratis VIP Telegram Community', url: 'https://t.me', badge: '10K+ Member' }
+        ];
+
+        const INITIAL_PRODUCTS = [
+            {
+                id: "prod-1",
+                title: "E-Book: Mastered Instagram Content Strategy 2026",
+                category: "E-Book",
+                price: 99000,
+                rating: 4.9,
+                salesCount: 142,
+                coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600",
+                description: "Panduan lengkap 150+ halaman menyusun konten viral, copywriting konversi tinggi, dan monetisasi akun dari nol hingga hasilkan cuan rutin.",
+                downloadUrl: "https://drive.google.com/file/d/demo-ebook-instagram/view?usp=sharing",
+                fileType: "PDF Document (12.4 MB)"
+            },
+            {
+                id: "prod-2",
+                title: "Notion Life & Business All-in-One Operating System",
+                category: "Template",
+                price: 149000,
+                rating: 5.0,
+                salesCount: 89,
+                coverUrl: "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&q=80&w=600",
+                description: "Template Notion paling komprehensif untuk mengelola keuangan bisnis, manajemen project client, content planner, dan habits tracker.",
+                downloadUrl: "https://notion.so/demo-notion-template-mizal",
+                fileType: "Notion Template Link"
+            },
+            {
+                id: "prod-3",
+                title: "Video Course: Bikin Landing Page High-Converting Tanpa Coding",
+                category: "Kursus/Video",
+                price: 299000,
+                rating: 4.8,
+                salesCount: 65,
+                coverUrl: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&q=80&w=600",
+                description: "12 Modul video HD step-by-step membuat website jualan super cepat, terhubung payment gateway, dan desain aesthetic ramah HP.",
+                downloadUrl: "https://course.mizaldigital.id/access-key-8823",
+                fileType: "Akses Member Area Video"
+            },
+            {
+                id: "prod-4",
+                title: "100+ Preset Canva Carousel Feed Sleek & Modern",
+                category: "Template",
+                price: 79000,
+                rating: 4.9,
+                salesCount: 210,
+                coverUrl: "https://images.unsplash.com/photo-1558655146-d09347e92766?auto=format&fit=crop&q=80&w=600",
+                description: "Tinggal ganti teks dan gambar! Template Canva siap pakai untuk edukasi bisnis, microblog, dan promosi produk digital.",
+                downloadUrl: "https://canva.com/design/demo-template-carousels",
+                fileType: "Tautan Canva Template"
+            }
+        ];
+
+        const INITIAL_TRANSACTIONS = [
+            {
+                id: "INV-202609-881",
+                buyerName: "Budi Santoso",
+                buyerEmail: "budi.santoso@gmail.com",
+                buyerPhone: "081298765432",
+                productTitle: "E-Book: Mastered Instagram Content Strategy 2026",
+                amount: 99000,
+                paymentMethod: "QRIS",
+                date: "16 Sep 2026, 14:20",
+                status: "Lunas & Terkirim"
+            },
+            {
+                id: "INV-202609-880",
+                buyerName: "Siti Rahmawati",
+                buyerEmail: "siti.rahma@yahoo.com",
+                buyerPhone: "085711223344",
+                productTitle: "Notion Life & Business All-in-One Operating System",
+                amount: 149000,
+                paymentMethod: "Virtual Account BCA",
+                date: "16 Sep 2026, 11:05",
+                status: "Lunas & Terkirim"
+            },
+            {
+                id: "INV-202609-879",
+                buyerName: "Dion Wijaya",
+                buyerEmail: "dion.w@outlook.com",
+                buyerPhone: "081377889900",
+                productTitle: "Video Course: Bikin Landing Page High-Converting",
+                amount: 299000,
+                paymentMethod: "GoPay",
+                date: "15 Sep 2026, 20:45",
+                status: "Lunas & Terkirim"
+            }
+        ];
+
+        // Helper function for IDR Currency Formatting
+        const formatIDR = (val) => {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0
+            }).format(val);
+        };
+
+        // Main App Component
+        function App() {
+            // State
+            const [viewMode, setViewMode] = useState('store'); // 'store' | 'admin'
+            const [products, setProducts] = useState(INITIAL_PRODUCTS);
+            const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
+            const [selectedCategory, setSelectedCategory] = useState('Semua');
+            
+            // Checkout State
+            const [checkoutProduct, setCheckoutProduct] = useState(null);
+            const [checkoutStep, setCheckoutStep] = useState(1); // 1: Info, 2: Payment Selector, 3: Processing/Pay, 4: Success
+            
+            // Buyer Form State
+            const [buyerName, setBuyerName] = useState('');
+            const [buyerEmail, setBuyerEmail] = useState('');
+            const [buyerPhone, setBuyerPhone] = useState('');
+            const [selectedPayment, setSelectedPayment] = useState('qris');
+
+            // Add Product Modal State
+            const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+            const [newProd, setNewProd] = useState({
+                title: '',
+                category: 'E-Book',
+                price: '',
+                description: '',
+                downloadUrl: '',
+                coverUrl: ''
+            });
+
+            // Toast / Notification State
+            const [toastMessage, setToastMessage] = useState(null);
+            const [isEmailSimModalOpen, setIsEmailSimModalOpen] = useState(false);
+            const [lastCompletedTx, setLastCompletedTx] = useState(null);
+
+            // Timer State for Payment Screen
+            const [timeLeft, setTimeLeft] = useState(900); // 15 minutes in seconds
+
+            useEffect(() => {
+                let timer;
+                if (checkoutStep === 3 && timeLeft > 0) {
+                    timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+                }
+                return () => clearInterval(timer);
+            }, [checkoutStep, timeLeft]);
+
+            const showToast = (msg) => {
+                setToastMessage(msg);
+                setTimeout(() => {
+                    setToastMessage(null);
+                }, 4000);
+            };
+
+            const copyStoreLink = () => {
+                const link = `https://lynk.id/${INITIAL_CREATOR.username}`;
+                const tempInput = document.createElement("input");
+                tempInput.value = link;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempInput);
+                showToast("✅ Link toko berhasil disalin ke clipboard!");
+            };
+
+            // Start Checkout Flow
+            const handleBuyClick = (product) => {
+                setCheckoutProduct(product);
+                setCheckoutStep(1);
+                setTimeLeft(900);
+            };
+
+            // Process Payment Simulation
+            const handleSimulatePaymentSuccess = () => {
+                if (!checkoutProduct) return;
+
+                const newTx = {
+                    id: `INV-202609-${Math.floor(100 + Math.random() * 900)}`,
+                    buyerName: buyerName || "Pembeli Baru",
+                    buyerEmail: buyerEmail || "pembeli@gmail.com",
+                    buyerPhone: buyerPhone || "08123456789",
+                    productTitle: checkoutProduct.title,
+                    amount: checkoutProduct.price,
+                    paymentMethod: selectedPayment.toUpperCase(),
+                    date: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+                    status: "Lunas & Terkirim",
+                    downloadUrl: checkoutProduct.downloadUrl,
+                    fileType: checkoutProduct.fileType
+                };
+
+                // Add to transactions
+                setTransactions([newTx, ...transactions]);
+                
+                // Update product sales count
+                setProducts(products.map(p => {
+                    if (p.id === checkoutProduct.id) {
+                        return { ...p, salesCount: p.salesCount + 1 };
+                    }
+                    return p;
+                }));
+
+                setLastCompletedTx(newTx);
+                setCheckoutStep(4); // Move to Success Screen
+                
+                // Show automatic simulated email delivery alert after a brief delay
+                setTimeout(() => {
+                    setIsEmailSimModalOpen(true);
+                }, 800);
+            };
+
+            // Add Product Handler
+            const handleCreateProduct = (e) => {
+                e.preventDefault();
+                if (!newProd.title || !newProd.price || !newProd.downloadUrl) {
+                    showToast("❌ Harap isi semua bidang wajib!");
+                    return;
+                }
+
+                const created = {
+                    id: `prod-${Date.now()}`,
+                    title: newProd.title,
+                    category: newProd.category,
+                    price: parseFloat(newProd.price),
+                    rating: 5.0,
+                    salesCount: 0,
+                    coverUrl: newProd.coverUrl || "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=600",
+                    description: newProd.description || "Produk digital berkualitas siap unduh setelah pembayaran terkonfirmasi.",
+                    downloadUrl: newProd.downloadUrl,
+                    fileType: "Digital Download"
+                };
+
+                setProducts([created, ...products]);
+                setIsAddProductOpen(false);
+                setNewProd({ title: '', category: 'E-Book', price: '', description: '', downloadUrl: '', coverUrl: '' });
+                showToast("🎉 Produk digital baru berhasil diterbitkan ke Toko!");
+            };
+
+            // Computed Stats for Admin
+            const totalRevenue = useMemo(() => {
+                return transactions.reduce((sum, tx) => sum + tx.amount, 0);
+            }, [transactions]);
+
+            const filteredProducts = useMemo(() => {
+                if (selectedCategory === 'Semua') return products;
+                if (selectedCategory === 'Tautan Bio') return []; // Handled separately
+                return products.filter(p => p.category === selectedCategory);
+            }, [products, selectedCategory]);
+
+            return (
+                <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+                    
+                    {}
+                    {/* Top Mode Toggle Bar (Sticky Header) */}
+                    <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 py-3 px-4 shadow-xl">
+                        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-indigo-500/30">
+                                    M
+                                </div>
+                                <span className="font-bold text-base tracking-tight text-white">Mizal Digital Platform</span>
+                                <span className="text-xs bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium hidden sm:inline-block">v2.4 Live</span>
+                            </div>
+
+                            {/* View Mode Toggle Buttons */}
+                            <div className="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 w-full sm:w-auto justify-center">
+                                <button
+                                    onClick={() => setViewMode('store')}
+                                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                        viewMode === 'store'
+                                            ? 'bg-gradient-to-r from-indigo-600 to-indigo-500 text-white shadow-md'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-store"></i>
+                                    <span>Pratinjau Toko (Buyer)</span>
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('admin')}
+                                    className={`flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                        viewMode === 'admin'
+                                            ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-md'
+                                            : 'text-slate-400 hover:text-slate-200'
+                                    }`}
+                                >
+                                    <i className="fa-solid fa-chart-line"></i>
+                                    <span>Dashboard Penjual (Admin)</span>
+                                </button>
+                            </div>
+
+                            <button
+                                onClick={copyStoreLink}
+                                className="hidden md:flex items-center gap-2 text-xs text-indigo-400 hover:text-indigo-300 bg-indigo-950/50 hover:bg-indigo-900/50 border border-indigo-800/50 px-3 py-1.5 rounded-lg transition"
+                                title="Salin Tautan Bio Toko"
+                            >
+                                <i className="fa-regular fa-copy"></i>
+                                <span>lynk.id/{INITIAL_CREATOR.username}</span>
+                            </button>
+                        </div>
+                    </header>
+
+                    {/* Toast Alert Banner */}
+                    {toastMessage && (
+                        <div className="fixed bottom-6 right-6 z-50 animate-bounce-short">
+                            <div className="bg-slate-800 text-white border border-indigo-500/50 px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></div>
+                                <span className="text-sm font-medium">{toastMessage}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MAIN CONTENT AREA */}
+                    <main className="flex-grow">
+                        {viewMode === 'store' ? (
+                            /* ================= BUYER / STORE FRONT VIEW ================= */
+                            <div className="max-w-md mx-auto min-h-screen pb-20 px-4 pt-6">
+                                
+                                {}
+                                {/* Creator Bio Profile Header */}
+                                <div className="text-center flex flex-col items-center mb-6">
+                                    <div className="relative mb-3">
+                                        <img
+                                            src={INITIAL_CREATOR.avatar}
+                                            alt={INITIAL_CREATOR.name}
+                                            className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-500/40 p-1 bg-slate-900 shadow-2xl"
+                                        />
+                                        {INITIAL_CREATOR.verified && (
+                                            <div className="absolute bottom-0 right-1 bg-indigo-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md" title="Terverifikasi">
+                                                <i className="fa-solid fa-check"></i>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h1 className="text-xl font-bold text-white flex items-center gap-2">
+                                        {INITIAL_CREATOR.name}
+                                    </h1>
+                                    <p className="text-xs text-indigo-400 font-medium mb-3">@{INITIAL_CREATOR.username}</p>
+                                    <p className="text-xs text-slate-300 leading-relaxed max-w-xs text-center mb-4">
+                                        {INITIAL_CREATOR.bio}
+                                    </p>
+
+                                    {/* Social Quick Links */}
+                                    <div className="flex items-center gap-3">
+                                        <a href={INITIAL_CREATOR.socials.instagram} target="_blank" className="w-9 h-9 rounded-full bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-pink-400 hover:border-pink-500/50 transition">
+                                            <i className="fa-brands fa-instagram text-base"></i>
+                                        </a>
+                                        <a href={INITIAL_CREATOR.socials.tiktok} target="_blank" className="w-9 h-9 rounded-full bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 transition">
+                                            <i className="fa-brands fa-tiktok text-base"></i>
+                                        </a>
+                                        <a href={INITIAL_CREATOR.socials.youtube} target="_blank" className="w-9 h-9 rounded-full bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-red-400 hover:border-red-500/50 transition">
+                                            <i className="fa-brands fa-youtube text-base"></i>
+                                        </a>
+                                        <a href={INITIAL_CREATOR.socials.whatsapp} target="_blank" className="w-9 h-9 rounded-full bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-300 hover:text-emerald-400 hover:border-emerald-500/50 transition">
+                                            <i className="fa-brands fa-whatsapp text-base"></i>
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {}
+                                {/* Custom Bio Links Section */}
+                                <div className="space-y-2.5 mb-8">
+                                    {INITIAL_CUSTOM_LINKS.map(link => (
+                                        <a
+                                            key={link.id}
+                                            href={link.url}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className={`glass-card glass-card-hover p-3.5 rounded-xl flex items-center justify-between transition-all group ${
+                                                link.highlight ? 'border-indigo-500/50 bg-indigo-950/30' : ''
+                                            }`}
+                                        >
+                                            <span className="text-xs font-semibold text-slate-100 group-hover:text-indigo-300 transition-colors">
+                                                {link.title}
+                                            </span>
+                                            {link.badge && (
+                                                <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full font-medium">
+                                                    {link.badge}
+                                                </span>
+                                            )}
+                                        </a>
+                                    ))}
+                                </div>
+
+                                {}
+                                {/* Products Section Header & Filter Tabs */}
+                                <div className="mb-5">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <h2 className="text-sm font-bold tracking-wide uppercase text-slate-400 flex items-center gap-2">
+                                            <i className="fa-solid fa-box-open text-indigo-400"></i>
+                                            Katalog Produk Digital
+                                        </h2>
+                                        <span className="text-xs text-slate-500">{products.length} Produk</span>
+                                    </div>
+
+                                    {/* Category Pills Slider */}
+                                    <div className="flex gap-1.5 overflow-x-auto pb-2 scrollbar-none text-xs">
+                                        {['Semua', 'E-Book', 'Template', 'Kursus/Video'].map(cat => (
+                                            <button
+                                                key={cat}
+                                                onClick={() => setSelectedCategory(cat)}
+                                                className={`px-3 py-1.5 rounded-lg font-medium whitespace-nowrap transition-all ${
+                                                    selectedCategory === cat
+                                                        ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                                                        : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                                                }`}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Products Grid Cards */}
+                                <div className="space-y-4">
+                                    {filteredProducts.map(product => (
+                                        <div key={product.id} className="glass-card glass-card-hover rounded-2xl overflow-hidden transition-all flex flex-col">
+                                            <div className="relative h-44 w-full overflow-hidden bg-slate-900">
+                                                <img
+                                                    src={product.coverUrl}
+                                                    alt={product.title}
+                                                    className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                                                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&q=80&w=600'; }}
+                                                />
+                                                <span className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-indigo-300 border border-indigo-500/30 text-[10px] px-2.5 py-1 rounded-full font-semibold uppercase tracking-wider">
+                                                    {product.category}
+                                                </span>
+                                                <div className="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-amber-300 border border-amber-500/30 text-[11px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
+                                                    <i className="fa-solid fa-star text-xs text-amber-400"></i>
+                                                    {product.rating.toFixed(1)}
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 flex flex-col flex-grow">
+                                                <h3 className="font-bold text-slate-100 text-sm leading-snug mb-1.5 line-clamp-2">
+                                                    {product.title}
+                                                </h3>
+                                                <p className="text-xs text-slate-400 leading-relaxed mb-4 line-clamp-2 flex-grow">
+                                                    {product.description}
+                                                </p>
+
+                                                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-[10px] text-slate-500 block uppercase font-medium">Harga Produk</span>
+                                                        <span className="text-base font-extrabold text-emerald-400">
+                                                            {formatIDR(product.price)}
+                                                        </span>
+                                                    </div>
+
+                                                    <button
+                                                        onClick={() => handleBuyClick(product)}
+                                                        className="bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 active:scale-95 transition flex items-center gap-1.5"
+                                                    >
+                                                        <span>Beli Sekarang</span>
+                                                        <i className="fa-solid fa-bolt text-[10px]"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {filteredProducts.length === 0 && (
+                                        <div className="text-center py-12 glass-card rounded-2xl">
+                                            <i className="fa-solid fa-folder-open text-3xl text-slate-600 mb-2"></i>
+                                            <p className="text-xs text-slate-400">Tidak ada produk dalam kategori ini.</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Footer Bio Link Branding */}
+                                <div className="mt-12 text-center text-xs text-slate-500">
+                                    <p className="flex items-center justify-center gap-1">
+                                        Powered by <span className="font-bold text-indigo-400">Mizal Digital Platform</span>
+                                    </p>
+                                    <p className="text-[10px] mt-1 text-slate-600">Sistem Otomatis Pengiriman Produk Digital</p>
+                                </div>
+                            </div>
+                        ) : (
+                            /* ================= SELLER / ADMIN DASHBOARD VIEW ================= */
+                            <div className="max-w-5xl mx-auto px-4 py-8 space-y-8">
+                                
+                                {/* Admin Header Banner */}
+                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-2xl border-indigo-500/20 bg-gradient-to-r from-slate-900 via-slate-900 to-indigo-950/40">
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                                            <span className="text-xs text-emerald-400 font-semibold uppercase tracking-wider">Dashboard Toko Penjual</span>
+                                        </div>
+                                        <h1 className="text-2xl font-extrabold text-white">Ringkasan Bisnis & Penjualan</h1>
+                                        <p className="text-xs text-slate-400 mt-1">Pantau performa produk digital, pendapatan cuan, dan otomatisasi pengiriman ke pelanggan.</p>
+                                    </div>
+
+                                    <button
+                                        onClick={() => setIsAddProductOpen(true)}
+                                        className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs px-4 py-3 rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition active:scale-95"
+                                    >
+                                        <i className="fa-solid fa-plus"></i>
+                                        <span>Tambah Produk Digital Baru</span>
+                                    </button>
+                                </div>
+
+                                {/* Metrics Cards Grid */}
+                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <div className="glass-card p-4 rounded-2xl">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-semibold text-slate-400">Total Pendapatan</span>
+                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xs">
+                                                <i className="fa-solid fa-wallet"></i>
+                                            </div>
+                                        </div>
+                                        <p className="text-xl font-extrabold text-emerald-400">{formatIDR(totalRevenue)}</p>
+                                        <span className="text-[10px] text-slate-500 mt-1 block">Semua pembayaran lunas</span>
+                                    </div>
+
+                                    <div className="glass-card p-4 rounded-2xl">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-semibold text-slate-400">Produk Terjual</span>
+                                            <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-xs">
+                                                <i className="fa-solid fa-cart-shopping"></i>
+                                            </div>
+                                        </div>
+                                        <p className="text-xl font-extrabold text-white">{transactions.length} Unit</p>
+                                        <span className="text-[10px] text-slate-500 mt-1 block">Otomatis terkirim via email</span>
+                                    </div>
+
+                                    <div className="glass-card p-4 rounded-2xl">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-semibold text-slate-400">Total Produk Digital</span>
+                                            <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-xs">
+                                                <i className="fa-solid fa-box"></i>
+                                            </div>
+                                        </div>
+                                        <p className="text-xl font-extrabold text-white">{products.length} Item</p>
+                                        <span className="text-[10px] text-slate-500 mt-1 block">Aktif di halaman toko</span>
+                                    </div>
+
+                                    <div className="glass-card p-4 rounded-2xl">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <span className="text-xs font-semibold text-slate-400">Tingkat Konversi</span>
+                                            <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs">
+                                                <i className="fa-solid fa-bolt"></i>
+                                            </div>
+                                        </div>
+                                        <p className="text-xl font-extrabold text-amber-300">4.8%</p>
+                                        <span className="text-[10px] text-emerald-400 mt-1 block">↑ 1.2% dari minggu lalu</span>
+                                    </div>
+                                </div>
+
+                                {/* Live Transaction History Table */}
+                                <div className="glass-card rounded-2xl p-5 overflow-hidden">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                                        <div>
+                                            <h2 className="text-base font-bold text-white flex items-center gap-2">
+                                                <i className="fa-solid fa-clock-rotate-left text-indigo-400"></i>
+                                                Riwayat Transaksi & Otomatisasi Pengiriman
+                                            </h2>
+                                            <p className="text-xs text-slate-400">Data real-time pembeli yang telah menerima file digital.</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full text-left border-collapse text-xs">
+                                            <thead>
+                                                <tr className="border-b border-slate-800 text-slate-400 font-semibold">
+                                                    <th className="py-3 px-3">No. Invoice</th>
+                                                    <th className="py-3 px-3">Pelanggan</th>
+                                                    <th className="py-3 px-3">Produk Digital</th>
+                                                    <th className="py-3 px-3">Metode Bayar</th>
+                                                    <th className="py-3 px-3">Jumlah</th>
+                                                    <th className="py-3 px-3">Status</th>
+                                                    <th className="py-3 px-3 text-right">Waktu</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-800/60">
+                                                {transactions.map(tx => (
+                                                    <tr key={tx.id} className="hover:bg-slate-800/40 transition">
+                                                        <td className="py-3 px-3 font-mono text-indigo-300 font-medium">{tx.id}</td>
+                                                        <td className="py-3 px-3">
+                                                            <div className="font-bold text-slate-200">{tx.buyerName}</div>
+                                                            <div className="text-[10px] text-slate-400">{tx.buyerEmail}</div>
+                                                        </td>
+                                                        <td className="py-3 px-3 max-w-xs font-medium text-slate-300 truncate">
+                                                            {tx.productTitle}
+                                                        </td>
+                                                        <td className="py-3 px-3">
+                                                            <span className="bg-slate-800 border border-slate-700 text-slate-300 px-2 py-0.5 rounded font-medium">
+                                                                {tx.paymentMethod}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-3 px-3 font-bold text-emerald-400">
+                                                            {formatIDR(tx.amount)}
+                                                        </td>
+                                                        <td className="py-3 px-3">
+                                                            <span className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-2 py-0.5 rounded-full text-[10px] font-semibold">
+                                                                <i className="fa-solid fa-circle-check text-[9px]"></i>
+                                                                {tx.status}
+                                                            </span>
+                                                        </td>
+                                                        <td className="py-3 px-3 text-right text-slate-400 whitespace-nowrap">
+                                                            {tx.date}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+
+                    {}
+                    {/* CHECKOUT & PAYMENT MODAL */}
+                    {checkoutProduct && (
+                        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl transition-all">
+                                
+                                {/* Modal Header */}
+                                <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-6 h-6 rounded-md bg-indigo-600/30 text-indigo-400 flex items-center justify-center text-xs font-bold">
+                                            {checkoutStep}
+                                        </div>
+                                        <h3 className="font-bold text-sm text-white">
+                                            {checkoutStep === 1 && "Detail Data Pembeli"}
+                                            {checkoutStep === 2 && "Pilih Metode Pembayaran"}
+                                            {checkoutStep === 3 && "Instruksi Pembayaran"}
+                                            {checkoutStep === 4 && "Pembayaran Berhasil!"}
+                                        </h3>
+                                    </div>
+                                    <button
+                                        onClick={() => setCheckoutProduct(null)}
+                                        className="text-slate-400 hover:text-slate-200 w-7 h-7 rounded-lg hover:bg-slate-800 flex items-center justify-center transition"
+                                    >
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                {/* Modal Body Content based on Step */}
+                                <div className="p-5">
+                                    
+                                    {/* Order Brief Card */}
+                                    <div className="bg-slate-800/60 rounded-xl p-3 mb-5 border border-slate-700/50 flex items-center gap-3">
+                                        <img src={checkoutProduct.coverUrl} alt={checkoutProduct.title} className="w-12 h-12 rounded-lg object-cover" />
+                                        <div className="flex-grow min-w-0">
+                                            <h4 className="text-xs font-bold text-white truncate">{checkoutProduct.title}</h4>
+                                            <p className="text-[10px] text-slate-400">{checkoutProduct.category}</p>
+                                            <p className="text-xs font-extrabold text-emerald-400">{formatIDR(checkoutProduct.price)}</p>
+                                        </div>
+                                    </div>
+
+                                    {/* STEP 1: Buyer Info Form */}
+                                    {checkoutStep === 1 && (
+                                        <div className="space-y-3">
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-300 mb-1">Nama Lengkap *</label>
+                                                <input
+                                                    type="text"
+                                                    placeholder="Contoh: Budi Santoso"
+                                                    value={buyerName}
+                                                    onChange={e => setBuyerName(e.target.value)}
+                                                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-300 mb-1">
+                                                    Email Aktif * <span className="text-[10px] text-indigo-400">(Produk otomatis terkirim ke sini)</span>
+                                                </label>
+                                                <input
+                                                    type="email"
+                                                    placeholder="Contoh: budi@gmail.com"
+                                                    value={buyerEmail}
+                                                    onChange={e => setBuyerEmail(e.target.value)}
+                                                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition"
+                                                />
+                                            </div>
+
+                                            <div>
+                                                <label className="block text-xs font-medium text-slate-300 mb-1">Nomor WhatsApp *</label>
+                                                <input
+                                                    type="tel"
+                                                    placeholder="Contoh: 081234567890"
+                                                    value={buyerPhone}
+                                                    onChange={e => setBuyerPhone(e.target.value)}
+                                                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none transition"
+                                                />
+                                            </div>
+
+                                            <button
+                                                onClick={() => {
+                                                    if (!buyerName || !buyerEmail) {
+                                                        showToast("❌ Harap isi nama dan email aktif kamu!");
+                                                        return;
+                                                    }
+                                                    setCheckoutStep(2);
+                                                }}
+                                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition mt-4"
+                                            >
+                                                Lanjut ke Pembayaran <i className="fa-solid fa-arrow-right ml-1"></i>
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* STEP 2: Payment Selector */}
+                                    {checkoutStep === 2 && (
+                                        <div className="space-y-4">
+                                            <span className="text-xs font-semibold text-slate-300 block">Pilih Channel Bayar:</span>
+
+                                            <div className="space-y-2">
+                                                {/* QRIS */}
+                                                <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition ${
+                                                    selectedPayment === 'qris' ? 'border-indigo-500 bg-indigo-950/40' : 'border-slate-800 bg-slate-950 hover:border-slate-700'
+                                                }`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="radio"
+                                                            name="payment"
+                                                            checked={selectedPayment === 'qris'}
+                                                            onChange={() => setSelectedPayment('qris')}
+                                                            className="accent-indigo-500"
+                                                        />
+                                                        <div>
+                                                            <div className="text-xs font-bold text-white">QRIS Instant (All E-Wallet / M-Banking)</div>
+                                                            <div className="text-[10px] text-slate-400">GoPay, OVO, ShopeePay, DANA, BCA Mobile</div>
+                                                        </div>
+                                                    </div>
+                                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded font-bold">Otomatis</span>
+                                                </label>
+
+                                                {/* Virtual Account */}
+                                                <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition ${
+                                                    selectedPayment === 'bca_va' ? 'border-indigo-500 bg-indigo-950/40' : 'border-slate-800 bg-slate-950 hover:border-slate-700'
+                                                }`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="radio"
+                                                            name="payment"
+                                                            checked={selectedPayment === 'bca_va'}
+                                                            onChange={() => setSelectedPayment('bca_va')}
+                                                            className="accent-indigo-500"
+                                                        />
+                                                        <div>
+                                                            <div className="text-xs font-bold text-white">Virtual Account BCA / Mandiri</div>
+                                                            <div className="text-[10px] text-slate-400">Verifikasi otomatis tanpa perlu upload bukti</div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+
+                                                {/* E-Wallet Direct */}
+                                                <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition ${
+                                                    selectedPayment === 'gopay' ? 'border-indigo-500 bg-indigo-950/40' : 'border-slate-800 bg-slate-950 hover:border-slate-700'
+                                                }`}>
+                                                    <div className="flex items-center gap-3">
+                                                        <input
+                                                            type="radio"
+                                                            name="payment"
+                                                            checked={selectedPayment === 'gopay'}
+                                                            onChange={() => setSelectedPayment('gopay')}
+                                                            className="accent-indigo-500"
+                                                        />
+                                                        <div>
+                                                            <div className="text-xs font-bold text-white">E-Wallet Direct (GoPay / DANA)</div>
+                                                            <div className="text-[10px] text-slate-400">Langsung ke aplikasi dompet digital</div>
+                                                        </div>
+                                                    </div>
+                                                </label>
+                                            </div>
+
+                                            <div className="flex gap-2 pt-2">
+                                                <button
+                                                    onClick={() => setCheckoutStep(1)}
+                                                    className="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-3 rounded-xl transition"
+                                                >
+                                                    Kembali
+                                                </button>
+                                                <button
+                                                    onClick={() => setCheckoutStep(3)}
+                                                    className="w-2/3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-indigo-600/30 transition"
+                                                >
+                                                    Bayar Sekarang
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* STEP 3: Payment Code / Countdown Screen */}
+                                    {checkoutStep === 3 && (
+                                        <div className="text-center space-y-4">
+                                            
+                                            {/* Timer countdown */}
+                                            <div className="bg-amber-500/10 border border-amber-500/30 p-2.5 rounded-xl text-amber-300 text-xs font-medium flex items-center justify-center gap-2">
+                                                <i className="fa-solid fa-stopwatch animate-pulse"></i>
+                                                <span>Selesaikan Pembayaran dalam: </span>
+                                                <span className="font-mono font-bold">
+                                                    {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                                                </span>
+                                            </div>
+
+                                            {selectedPayment === 'qris' ? (
+                                                <div className="bg-white p-4 rounded-xl inline-block shadow-inner my-2">
+                                                    <img
+                                                        src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://lynk.id/mizaldigital/demo-pay"
+                                                        alt="QRIS Code"
+                                                        className="w-44 h-44 mx-auto"
+                                                    />
+                                                    <p className="text-[10px] text-slate-800 font-bold mt-2 tracking-wider uppercase">Scan QRIS All Payment</p>
+                                                </div>
+                                            ) : (
+                                                <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-left space-y-2">
+                                                    <div className="text-[10px] text-slate-400 uppercase">Nomor Virtual Account</div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="font-mono text-lg font-bold text-indigo-400">88012 8829 3019</span>
+                                                        <button onClick={() => showToast("Nomor VA disalin!")} className="text-xs text-slate-400 hover:text-white bg-slate-800 px-2 py-1 rounded">Salin</button>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="text-xs text-slate-400">
+                                                Total Bayar: <span className="font-bold text-emerald-400">{formatIDR(checkoutProduct.price)}</span>
+                                            </div>
+
+                                            {/* SIMULATOR BUTTON FOR DEMO */}
+                                            <div className="pt-2 border-t border-slate-800">
+                                                <p className="text-[10px] text-indigo-300 mb-2 font-medium">⚡ Demo Testing Simulator:</p>
+                                                <button
+                                                    onClick={handleSimulatePaymentSuccess}
+                                                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-emerald-600/30 transition animate-pulse-fast"
+                                                >
+                                                    <i className="fa-solid fa-circle-check mr-1"></i>
+                                                    Simulasi Bayar Lunas (Instant Delivery)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {}
+                                    {/* STEP 4: Success & Instant Product Delivery */}
+                                    {checkoutStep === 4 && (
+                                        <div className="text-center space-y-4 py-2">
+                                            <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center text-2xl mx-auto shadow-xl">
+                                                <i className="fa-solid fa-check"></i>
+                                            </div>
+
+                                            <div>
+                                                <h4 className="text-base font-bold text-white">Pembayaran Berhasil!</h4>
+                                                <p className="text-xs text-slate-400 mt-1">Terima kasih, transaksi kamu telah lunas terverifikasi.</p>
+                                            </div>
+
+                                            {/* Instant Download Box */}
+                                            <div className="bg-slate-950 border border-indigo-500/30 p-4 rounded-xl text-left space-y-3">
+                                                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                                                    <span className="text-[10px] text-slate-400 uppercase font-semibold">File Produk Digital</span>
+                                                    <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded font-medium">Ready Access</span>
+                                                </div>
+                                                <div className="text-xs font-bold text-white">{checkoutProduct.title}</div>
+                                                
+                                                <a
+                                                    href={checkoutProduct.downloadUrl}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs py-2.5 px-4 rounded-lg flex items-center justify-center gap-2 shadow-md transition"
+                                                >
+                                                    <i className="fa-solid fa-download"></i>
+                                                    <span>Unduh / Akses Produk Sekarang</span>
+                                                </a>
+                                            </div>
+
+                                            {/* Email Simulation Note */}
+                                            <div className="bg-slate-800/60 p-3 rounded-xl text-[11px] text-slate-300 flex items-start gap-2.5 text-left border border-slate-700/50">
+                                                <i className="fa-solid fa-envelope text-indigo-400 mt-0.5"></i>
+                                                <div>
+                                                    <span className="font-bold text-white block">Email Terkirim Otomatis:</span>
+                                                    Bukti pembayaran & tautan akses file telah dikirimkan ke <span className="text-indigo-300 font-semibold">{buyerEmail}</span>.
+                                                </div>
+                                            </div>
+
+                                            <button
+                                                onClick={() => setCheckoutProduct(null)}
+                                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs py-2.5 rounded-xl transition"
+                                            >
+                                                Selesai & Tutup
+                                            </button>
+                                        </div>
+                                    )}
+
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {}
+                    {/* ADD PRODUCT MODAL (FOR SELLER/ADMIN) */}
+                    {isAddProductOpen && (
+                        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
+                                
+                                <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+                                    <h3 className="font-bold text-sm text-white flex items-center gap-2">
+                                        <i className="fa-solid fa-plus-circle text-indigo-400"></i>
+                                        Tambah Produk Digital Baru
+                                    </h3>
+                                    <button
+                                        onClick={() => setIsAddProductOpen(false)}
+                                        className="text-slate-400 hover:text-slate-200 w-7 h-7 rounded-lg hover:bg-slate-800 flex items-center justify-center"
+                                    >
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <form onSubmit={handleCreateProduct} className="p-5 space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-1">Nama / Judul Produk Digital *</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            placeholder="Contoh: E-Book Financial Freedom 2026"
+                                            value={newProd.title}
+                                            onChange={e => setNewProd({ ...newProd, title: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition"
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1">Kategori Produk</label>
+                                            <select
+                                                value={newProd.category}
+                                                onChange={e => setNewProd({ ...newProd, category: e.target.value })}
+                                                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition"
+                                            >
+                                                <option value="E-Book">E-Book</option>
+                                                <option value="Template">Template</option>
+                                                <option value="Kursus/Video">Kursus/Video</option>
+                                                <option value="Preset">Preset</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1">Harga (IDR) *</label>
+                                            <input
+                                                type="number"
+                                                required
+                                                placeholder="99000"
+                                                value={newProd.price}
+                                                onChange={e => setNewProd({ ...newProd, price: e.target.value })}
+                                                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-1">
+                                            Link Unduh / Akses File Digital * <span className="text-[10px] text-indigo-400">(Google Drive, Notion, Canva, dll)</span>
+                                        </label>
+                                        <input
+                                            type="url"
+                                            required
+                                            placeholder="https://drive.google.com/file/d/..."
+                                            value={newProd.downloadUrl}
+                                            onChange={e => setNewProd({ ...newProd, downloadUrl: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-1">URL Gambar Cover (Opsional)</label>
+                                        <input
+                                            type="url"
+                                            placeholder="https://images.unsplash.com/..."
+                                            value={newProd.coverUrl}
+                                            onChange={e => setNewProd({ ...newProd, coverUrl: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition"
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-xs font-medium text-slate-300 mb-1">Deskripsi Singkat Produk</label>
+                                        <textarea
+                                            rows="3"
+                                            placeholder="Jelaskan manfaat dan isi file produk digital ini..."
+                                            value={newProd.description}
+                                            onChange={e => setNewProd({ ...newProd, description: e.target.value })}
+                                            className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3.5 py-2 text-xs text-white outline-none transition"
+                                        ></textarea>
+                                    </div>
+
+                                    <div className="pt-2 flex gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsAddProductOpen(false)}
+                                            className="w-1/3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs py-2.5 rounded-xl transition"
+                                        >
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            className="w-2/3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-2.5 rounded-xl shadow-lg shadow-indigo-600/30 transition"
+                                        >
+                                            Terbitkan Produk
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* SIMULATED EMAIL NOTIFICATION MODAL */}
+                    {isEmailSimModalOpen && lastCompletedTx && (
+                        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+                            <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl w-full max-w-sm p-5 shadow-2xl animate-bounce-short text-left space-y-3">
+                                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-indigo-400">
+                                        <i className="fa-solid fa-paper-plane"></i>
+                                        <span>Pengiriman Email Otomatis</span>
+                                    </div>
+                                    <button onClick={() => setIsEmailSimModalOpen(false)} className="text-slate-400 text-xs">
+                                        <i className="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+
+                                <div className="text-xs text-slate-300 space-y-1">
+                                    <p><strong className="text-slate-400">Kepada:</strong> {lastCompletedTx.buyerEmail}</p>
+                                    <p><strong className="text-slate-400">Subjek:</strong> [Akses Produk] {lastCompletedTx.productTitle}</p>
+                                </div>
+
+                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-[11px] text-slate-300 leading-relaxed">
+                                    Halo <strong>{lastCompletedTx.buyerName}</strong>,<br/>
+                                    Pembayaran sebesar <strong>{formatIDR(lastCompletedTx.amount)}</strong> untuk transaksi <strong>{lastCompletedTx.id}</strong> telah diterima lunas.<br/><br/>
+                                    Silakan akses/unduh produk digital kamu melalui tombol di bawah:
+                                    <a
+                                        href={lastCompletedTx.downloadUrl}
+                                        target="_blank"
+                                        className="mt-2 block text-center bg-indigo-600 text-white font-bold py-1.5 rounded-lg text-xs hover:bg-indigo-500 transition"
+                                    >
+                                        Buka Link Akses Digital
+                                    </a>
+                                </div>
+
+                                <button
+                                    onClick={() => setIsEmailSimModalOpen(false)}
+                                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs py-2 rounded-lg font-semibold transition"
+                                >
+                                    Tutup Notifikasi Email
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                </div>
+            );
+        }
+
+        // Render React App
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
