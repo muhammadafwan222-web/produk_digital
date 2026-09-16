@@ -543,6 +543,7 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                                     <th className="p-2">Metode</th>
                                                     <th className="p-2">Total</th>
                                                     <th className="p-2">Status</th>
+                                                    <th className="p-2">Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-slate-800/60">
@@ -554,6 +555,11 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                                         <td className="p-2">{tx.paymentMethod}</td>
                                                         <td className="p-2 font-bold text-emerald-400">{formatIDR(tx.amount)}</td>
                                                         <td className="p-2 text-emerald-400 font-semibold">{tx.status}</td>
+                                                        <td className="p-2">
+    <a href={`mailto:${tx.buyerEmail}?subject=Akses Pesanan: ${tx.productTitle}&body=Halo ${tx.buyerName},%0D%0A%0D%0ATerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:%0D%0A${tx.downloadUrl}%0D%0A%0D%0ASalam Hangat.`} className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap">
+        <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
+    </a>
+</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
@@ -616,9 +622,24 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                             </div>
                                         )}
 
-                                        <a href={generateWAConfirmLink()} target="_blank" className="block w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl">
-                                            <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran via WhatsApp
-                                        </a>
+                                       <button onClick={() => {
+    const newTx = {
+        id: `INV-${Date.now().toString().slice(-6)}`,
+        buyerName: buyerName,
+        buyerEmail: buyerEmail,
+        productTitle: checkoutProduct.title,
+        amount: checkoutProduct.price,
+        paymentMethod: selectedPayment === 'bank' ? 'BANK BCA' : 'DANA',
+        date: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+        status: "Menunggu Konfirmasi",
+        downloadUrl: checkoutProduct.downloadUrl
+    };
+    setTransactions([newTx, ...transactions]);
+    window.open(generateWAConfirmLink(), '_blank');
+    setCheckoutProduct(null);
+}} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl">
+    <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran via WhatsApp
+</button>
                                         <button onClick={handleSimulatePaymentSuccess} className="w-full bg-slate-800 text-slate-400 text-[11px] py-2 rounded-xl">(Simulasi Pembayaran Lunas)</button>
                                     </div>
                                 )}
