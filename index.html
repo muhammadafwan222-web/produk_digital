@@ -72,7 +72,7 @@
             instagram: "https://instagram.com",
             tiktok: "https://tiktok.com",
             youtube: "https://youtube.com",
-            pin: "4905",
+            // PIN DIHAPUS DARI SINI
             bankBriNorek: "8801288293019",
             bankBriNama: "Agust Tommy",
             danaNomor: "082351544347",
@@ -91,7 +91,10 @@
             const [viewMode, setViewMode] = useState('store'); 
             const [adminTab, setAdminTab] = useState('overview'); 
             const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
-            const [inputPin, setInputPin] = useState('');
+            
+            // State Email & Password menggantikan PIN
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
 
             const [selectedCategory, setSelectedCategory] = useState('Semua');
             const [checkoutProduct, setCheckoutProduct] = useState(null);
@@ -105,7 +108,6 @@
             const [editProduct, setEditProduct] = useState(null);
             const [editLink, setEditLink] = useState(null);
             
-            // State untuk Fitur Viral (Bonus Share)
             const [isBonusUnlocked, setIsBonusUnlocked] = useState(false);
 
             const showToast = (msg) => {
@@ -115,6 +117,12 @@
 
             useEffect(() => {
                 async function fetchAllData() {
+                    // Cek Sesi Login Supabase saat dimuat
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) {
+                        setIsAdminUnlocked(true);
+                    }
+
                     const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id', 1).single();
                     if (creatorData) setCreator(creatorData);
 
@@ -130,16 +138,32 @@
                 fetchAllData();
             }, []);
 
-            const handleUnlockAdmin = (e) => {
+            // FUNGSI LOGIN SUPABASE
+            const handleLoginAdmin = async (e) => {
                 e.preventDefault();
-                if (inputPin === creator.pin) {
+                
+                const { data, error } = await supabaseClient.auth.signInWithPassword({
+                    email: email,
+                    password: password,
+                });
+
+                if (error) {
+                    showToast("❌ Login Gagal: " + error.message);
+                } else {
                     setIsAdminUnlocked(true);
                     setViewMode('admin');
-                    setInputPin('');
+                    setEmail('');
+                    setPassword('');
                     showToast("🔓 Akses Admin Diberikan!");
-                } else {
-                    showToast("❌ PIN Admin Salah!");
                 }
+            };
+
+            // FUNGSI LOGOUT SUPABASE
+            const handleLogoutAdmin = async () => {
+                await supabaseClient.auth.signOut();
+                setIsAdminUnlocked(false);
+                setViewMode('store');
+                showToast("🔒 Anda telah keluar.");
             };
 
             const handleSaveCreator = async (e) => {
@@ -246,14 +270,12 @@
             };
             
             const handleCompleteOrder = async (txId) => {
-                // 1. Update data di Supabase
                 const { error } = await supabaseClient
                     .from('transactions')
                     .update({ status: 'Selesai' })
                     .eq('id', txId);
                 
                 if (!error) {
-                    // 2. Update tampilan tabel secara langsung (local state)
                     setTransactions(transactions.map(tx => 
                         tx.id === txId ? { ...tx, status: 'Selesai' } : tx
                     ));
@@ -263,7 +285,6 @@
                 }
             }; 
             
-            // Fungsi untuk membagikan ke sosial media dan membuka bonus
             const handleShareViral = (platform) => {
                 const storeUrl = window.location.href;
                 const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
@@ -274,7 +295,6 @@
                     window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
                 }
                 
-                // Set timeout simulasi verifikasi
                 setTimeout(() => {
                     setIsBonusUnlocked(true);
                     showToast("🎉 Terima kasih telah membagikan! Bonus Eksklusif berhasil dibuka.");
@@ -311,15 +331,33 @@
                     )}
 
                     <main className="flex-grow">
+                        {/* FORM LOGIN ADMIN MENGGUNAKAN EMAIL & PASSWORD SUPABASE */}
                         {viewMode === 'pin_prompt' && (
                             <div className="max-w-sm mx-auto my-20 px-4">
-                                <form onSubmit={handleUnlockAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
+                                <form onSubmit={handleLoginAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
                                     <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto text-xl">
-                                        <i className="fa-solid fa-key"></i>
+                                        <i className="fa-solid fa-lock"></i>
                                     </div>
-                                    <h2 className="text-base font-bold text-white">Masukan PIN Admin</h2>
-                                    <p className="text-xs text-slate-400">Default PIN: <code className="bg-slate-800 px-1 rounded text-indigo-300">{creator.pin}</code></p>
-                                    <input type="password" maxLength="6" placeholder="PIN Admin" value={inputPin} onChange={e => setInputPin(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-center text-lg tracking-widest text-white outline-none focus:border-indigo-500" />
+                                    <h2 className="text-base font-bold text-white">Login Admin</h2>
+                                    <p className="text-xs text-slate-400">Masukkan kredensial Supabase Anda</p>
+                                    
+                                    <input 
+                                        type="email" 
+                                        placeholder="Email Admin" 
+                                        value={email} 
+                                        onChange={e => setEmail(e.target.value)} 
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" 
+                                        required
+                                    />
+                                    <input 
+                                        type="password" 
+                                        placeholder="Password" 
+                                        value={password} 
+                                        onChange={e => setPassword(e.target.value)} 
+                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" 
+                                        required
+                                    />
+                                    
                                     <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl">Buka Dashboard</button>
                                 </form>
                             </div>
@@ -340,7 +378,6 @@
                                     </div>
                                 </div>
 
-                                {/* BAGIAN BARU: FITUR VIRAL (SHARE TO UNLOCK) */}
                                 <div className="mb-8 glass-card p-4 rounded-2xl border border-indigo-500/50 bg-indigo-950/20 text-center relative overflow-hidden">
                                     <div className="absolute top-0 right-0 bg-indigo-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg uppercase shadow-lg">Promo Spesial</div>
                                     <h3 className="font-bold text-white text-sm mb-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> Dapatkan Bonus Eksklusif!</h3>
@@ -363,7 +400,6 @@
                                         </div>
                                     )}
                                 </div>
-                                {/* END FITUR VIRAL */}
 
                                 <div className="space-y-2.5 mb-8">
                                     {links.map(link => (
@@ -421,6 +457,11 @@
                                         <button onClick={() => setEditLink({ title: '', url: '', badge: '', highlight: false })} className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl">
                                             <i className="fa-solid fa-link mr-1"></i> Tambah Link Bio
                                         </button>
+                                        
+                                        {/* TOMBOL LOGOUT DITAMBAHKAN DI SINI */}
+                                        <button onClick={handleLogoutAdmin} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl">
+                                            <i className="fa-solid fa-right-from-bracket mr-1.5"></i> Keluar
+                                        </button>
                                     </div>
                                 </div>
 
@@ -472,15 +513,12 @@
                                         </div>
 
                                         <h3 className="font-bold text-sm text-emerald-400 uppercase border-b border-slate-800 pb-2 pt-2">Pengaturan Pembayaran & Kontak WhatsApp</h3>
-                                        <div className="grid grid-cols-2 gap-3 text-xs">
+                                        <div className="grid grid-cols-1 gap-3 text-xs">
                                             <div>
                                                 <label className="block text-slate-300 mb-1">Nomor WhatsApp Admin (628...)</label>
                                                 <input type="text" value={creator.whatsapp} onChange={e => setCreator({...creator, whatsapp: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none" />
                                             </div>
-                                            <div>
-                                                <label className="block text-slate-300 mb-1">PIN Keamanan Admin</label>
-                                                <input type="text" value={creator.pin} onChange={e => setCreator({...creator, pin: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none" />
-                                            </div>
+                                            {/* INPUT PIN DIHAPUS DARI SINI */}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3 text-xs">
@@ -569,7 +607,6 @@
                                                         <td className="p-2">{tx.paymentMethod}</td>
                                                         <td className="p-2 font-bold text-emerald-400">{formatIDR(tx.amount)}</td>
                                                         
-                                                        {/* Status Teks Dinamis */}
                                                         <td className={`p-2 font-semibold ${tx.status === 'Selesai' ? 'text-emerald-400' : 'text-amber-400'}`}>
                                                             {tx.status}
                                                         </td>
@@ -585,7 +622,6 @@
                                                                     <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
                                                                 </a>
                                                                 
-                                                                {/* Tombol Tandai Selesai */}
                                                                 {tx.status !== 'Selesai' && (
                                                                     <button 
                                                                         onClick={() => handleCompleteOrder(tx.id)}
