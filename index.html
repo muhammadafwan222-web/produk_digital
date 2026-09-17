@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produk Digital - Link in Bio & Digital Storefront</title>
     
+    <!-- Meta Tags untuk Share Social Media (Open Graph) -->
+    <meta property="og:title" content="Produk Digital - Link in Bio & Digital Storefront">
+    <meta property="og:description" content="Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy.">
+    <!-- Ganti URL di bawah dengan URL gambar image_3972b6.jpg milikmu yang sudah dihosting -->
+    <meta property="og:image" content="MASUKKAN_URL_GAMBAR_image_3972b6.jpg_DISINI">
+    <meta property="og:url" content="MASUKKAN_URL_WEB_KAMU_DISINI">
+    <meta name="twitter:card" content="summary_large_image">
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -77,7 +85,6 @@
             danaNomor: "082351544347",
             danaNama: "Agus Digital",
             qrisUrl: "",
-            // === DATA DEFAULT BONUS SPESIAL ===
             bonusTitle: "Dapatkan Bonus Eksklusif!",
             bonusDescription: "Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan Produk Digital Gratis secara instan.",
             bonusUrl: "https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE"
@@ -99,6 +106,8 @@
             const [password, setPassword] = useState('');
 
             const [selectedCategory, setSelectedCategory] = useState('Semua');
+            const [searchQuery, setSearchQuery] = useState(''); // Fitur Pencarian
+            
             const [checkoutProduct, setCheckoutProduct] = useState(null);
             const [checkoutStep, setCheckoutStep] = useState(1);
             const [buyerName, setBuyerName] = useState('');
@@ -114,9 +123,154 @@
 
             const showToast = (msg) => {
                 setToastMessage(msg);
+                setTimeout(() => setToastMessage(nullBerikut adalah penyempurnaan dari file `bisnisku_6.txt` yang siap Anda *copy-paste*[cite: 1]. Struktur kode HTML, React (JSX), dan Tailwind telah dirapikan agar mudah dibaca, dikelola, dan berjalan lancar tanpa kendala saat dijalankan di browser[cite: 1]. 
+
+Anda cukup menyalin seluruh kode di bawah ini dan menyimpannya sebagai file `index.html`.
+
+### Kode Lengkap (Siap Copy-Paste)
+
+```html
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Produk Digital - Link in Bio & Digital Storefront</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+    
+    <!-- Supabase CDN -->
+    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
+    
+    <!-- Konfigurasi Tailwind -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f5ff', 100: '#e5edff', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca', 900: '#312e81',
+                        },
+                        emerald: {
+                            400: '#34d399', 500: '#10b981', 600: '#059669',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css)">
+    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
+    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
+    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap)" rel="stylesheet">
+
+    <!-- React 18 & Babel CDN -->
+    <script src="[https://unpkg.com/react@18/umd/react.production.min.js](https://unpkg.com/react@18/umd/react.production.min.js)" crossorigin></script>
+    <script src="[https://unpkg.com/react-dom@18/umd/react-dom.production.min.js](https://unpkg.com/react-dom@18/umd/react-dom.production.min.js)" crossorigin></script>
+    <script src="[https://unpkg.com/@babel/standalone/babel.min.js](https://unpkg.com/@babel/standalone/babel.min.js)"></script>
+
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+        }
+        .glass-card { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+        }
+        .glass-card-hover:hover { 
+            background: rgba(30, 41, 59, 0.9); 
+            border-color: rgba(99, 102, 241, 0.4); 
+            transform: translateY(-2px); 
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
+
+    <div id="root" class="flex-grow flex flex-col"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+
+        // === INISIALISASI SUPABASE ===
+        const { createClient } = supabase;
+        const SUPABASE_URL = '[https://cjwbrmolzxnhvigolcfk.supabase.co](https://cjwbrmolzxnhvigolcfk.supabase.co)';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqd2JybW9senhuaHZpZ29sY2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODQzMjYsImV4cCI6MjEwNTE2MDMyNn0.mbsRC05ibE0cbQrm2WpCbwOltcjy2aF1aguWRru9JSY'; 
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const DEFAULT_CREATOR = {
+            id: 1,
+            name: "Produk Digital",
+            username: "agusdigital",
+            verified: true,
+            avatar: "[https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300](https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300)",
+            bio: "Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy.",
+            whatsapp: "6282351544347",
+            instagram: "[https://instagram.com](https://instagram.com)",
+            tiktok: "[https://tiktok.com](https://tiktok.com)",
+            youtube: "[https://youtube.com](https://youtube.com)",
+            bankBriNorek: "8801288293019",
+            bankBriNama: "Agust Tommy",
+            danaNomor: "082351544347",
+            danaNama: "Agus Digital",
+            qrisUrl: "",
+            bonusTitle: "Dapatkan Bonus Eksklusif!",
+            bonusDescription: "Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan Produk Digital Gratis secara instan.",
+            bonusUrl: "[https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE](https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE)"
+        };
+
+        const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+
+        function App() {
+            // State Utama
+            const [creator, setCreator] = useState(DEFAULT_CREATOR);
+            const [links, setLinks] = useState([]);
+            const [transactions, setTransactions] = useState([]);
+            const [products, setProducts] = useState([]);
+
+            // State Navigasi & Admin
+            const [viewMode, setViewMode] = useState('store'); 
+            const [adminTab, setAdminTab] = useState('overview'); 
+            const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
+            
+            // State Form Login Admin
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+
+            // State Toko & Checkout
+            const [selectedCategory, setSelectedCategory] = useState('Semua');
+            const [checkoutProduct, setCheckoutProduct] = useState(null);
+            const [checkoutStep, setCheckoutStep] = useState(1);
+            const [buyerName, setBuyerName] = useState('');
+            const [buyerEmail, setBuyerEmail] = useState('');
+            const [buyerPhone, setBuyerPhone] = useState('');
+            const [selectedPayment, setSelectedPayment] = useState('bank');
+            const [toastMessage, setToastMessage] = useState(null);
+
+            // State Modal Edit
+            const [editProduct, setEditProduct] = useState(null);
+            const [editLink, setEditLink] = useState(null);
+            
+            // State Fitur Bonus
+            const [isBonusUnlocked, setIsBonusUnlocked] = useState(false);
+
+            // Fungsi Notifikasi
+            const showToast = (msg) => {
+                setToastMessage(msg);
                 setTimeout(() => setToastMessage(null), 3500);
             };
 
+            // Fetch Data saat komponen dimuat
             useEffect(() => {
                 async function fetchAllData() {
                     const { data: { session } } = await supabaseClient.auth.getSession();
@@ -139,6 +293,7 @@
                 fetchAllData();
             }, []);
 
+            // Login Admin
             const handleLoginAdmin = async (e) => {
                 e.preventDefault();
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
@@ -157,6 +312,7 @@
                 }
             };
 
+            // Logout Admin
             const handleLogoutAdmin = async () => {
                 await supabaseClient.auth.signOut();
                 setIsAdminUnlocked(false);
@@ -164,6 +320,7 @@
                 showToast("🔒 Anda telah keluar.");
             };
 
+            // Simpan Profil
             const handleSaveCreator = async (e) => {
                 e.preventDefault();
                 const creatorToSave = { ...creator, id: 1 };
@@ -176,6 +333,7 @@
                 }
             };
 
+            // Simpan Produk
             const handleSaveProduct = async (e) => {
                 e.preventDefault();
                 if (editProduct.id && !editProduct.id.toString().startsWith('prod-')) {
@@ -202,6 +360,7 @@
                 setEditProduct(null);
             };
 
+            // Hapus Produk
             const handleDeleteProduct = async (id) => {
                 if (confirm("Hapus produk ini secara permanen?")) {
                     const { error } = await supabaseClient.from('products').delete().eq('id', id);
@@ -212,6 +371,7 @@
                 }
             };
 
+            // Simpan Tautan (Link Bio)
             const handleSaveLink = async (e) => {
                 e.preventDefault();
                 if (editLink.id) {
@@ -237,6 +397,7 @@
                 setEditLink(null);
             };
 
+            // Hapus Tautan
             const handleDeleteLink = async (id) => {
                 if (confirm("Hapus tautan ini?")) {
                     const { error } = await supabaseClient.from('links').delete().eq('id', id);
@@ -247,6 +408,7 @@
                 }
             };
 
+            // Transaksi Checkout
             const saveTransactionToDB = async (status, paymentMethod) => {
                 const newTx = {
                     id: `INV-${Date.now().toString().slice(-6)}`,
@@ -276,10 +438,11 @@
                 await saveTransactionToDB("Menunggu Konfirmasi", paymentMethodStr);
                 
                 const text = `Halo Admin ${creator.name}, saya telah melunasi pembayaran: \n\n*Produk:* ${checkoutProduct.title}\n*Total:* ${formatIDR(checkoutProduct.price)}\n*Metode:* ${paymentMethodStr}\n*Nama:* ${buyerName}\n*Email:* ${buyerEmail}\n\nMohon kirimkan aksesnya, terima kasih!`;
-                window.open(`https://wa.me/${creator.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+                window.open(`[https://wa.me/$](https://wa.me/$){creator.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
                 setCheckoutProduct(null);
             };
             
+            // Konfirmasi Pesanan Admin
             const handleCompleteOrder = async (txId) => {
                 const { error } = await supabaseClient
                     .from('transactions')
@@ -296,19 +459,19 @@
                 }
             }; 
             
-            // === FUNGSI SHARE VIRAL ===
+            // Share Viral (Bonus)
             const handleShareViral = (platform) => {
                 const storeUrl = window.location.href;
                 const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
                 
                 if (platform === 'wa') {
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                    window.open(`[https://wa.me/?text=$](https://wa.me/?text=$){encodeURIComponent(text)}`, '_blank');
                 } else if (platform === 'fb') {
-                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`, '_blank');
+                    window.open(`[https://www.facebook.com/sharer/sharer.php?u=$](https://www.facebook.com/sharer/sharer.php?u=$){encodeURIComponent(storeUrl)}`, '_blank');
                 } else if (platform === 'ig') {
                     navigator.clipboard.writeText(storeUrl);
                     alert("Link toko berhasil disalin! Silakan bagikan ke Story atau Bio Instagram Anda.");
-                    window.open(`https://instagram.com`, '_blank');
+                    window.open(`[https://instagram.com](https://instagram.com)`, '_blank');
                 } else if (platform === 'copy') {
                     navigator.clipboard.writeText(storeUrl);
                     alert("Link toko berhasil disalin! Silakan paste di bio atau postingan media sosial Anda.");
@@ -325,6 +488,7 @@
 
             return (
                 <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
+                    {/* HEADER */}
                     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 py-3 px-4 shadow-xl">
                         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
@@ -343,6 +507,7 @@
                         </div>
                     </header>
 
+                    {/* TOAST MESSAGE */}
                     {toastMessage && (
                         <div className="fixed bottom-6 right-6 z-50 bg-slate-800 text-white border border-indigo-500/50 px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold">
                             {toastMessage}
@@ -350,6 +515,7 @@
                     )}
 
                     <main className="flex-grow">
+                        {/* VIEW: LOGIN ADMIN */}
                         {viewMode === 'pin_prompt' && (
                             <div className="max-w-sm mx-auto my-20 px-4">
                                 <form onSubmit={handleLoginAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
@@ -367,10 +533,11 @@
                             </div>
                         )}
 
+                        {/* VIEW: STOREFRONT */}
                         {viewMode === 'store' && (
                             <div className="max-w-md mx-auto min-h-screen pb-20 px-4 pt-6">
                                 <div className="text-center flex flex-col items-center mb-6">
-                                    <img src={creator.avatar} className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-500/40 p-1 bg-slate-900 mb-3" />
+                                    <img src={creator.avatar} className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-500/40 p-1 bg-slate-900 mb-3" alt="Creator Avatar" />
                                     <h1 className="text-xl font-bold text-white flex items-center gap-1.5">{creator.name} {creator.verified && <i className="fa-solid fa-circle-check text-indigo-400 text-sm"></i>}</h1>
                                     <p className="text-xs text-indigo-400 font-medium mb-3">@{creator.username}</p>
                                     <p className="text-xs text-slate-300 leading-relaxed max-w-xs mb-4">{creator.bio}</p>
@@ -378,11 +545,11 @@
                                         {creator.instagram && <a href={creator.instagram} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-pink-400"><i className="fa-brands fa-instagram"></i></a>}
                                         {creator.tiktok && <a href={creator.tiktok} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-cyan-400"><i className="fa-brands fa-tiktok"></i></a>}
                                         {creator.youtube && <a href={creator.youtube} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-red-400"><i className="fa-brands fa-youtube"></i></a>}
-                                        {creator.whatsapp && <a href={`https://wa.me/${creator.whatsapp}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400"><i className="fa-brands fa-whatsapp"></i></a>}
+                                        {creator.whatsapp && <a href={`[https://wa.me/$](https://wa.me/$){creator.whatsapp}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400"><i className="fa-brands fa-whatsapp"></i></a>}
                                     </div>
                                 </div>
 
-                                {/* === AREA BONUS SPESIAL (DINAMIS DARI DATABASE) === */}
+                                {/* AREA BONUS SPESIAL */}
                                 <div className="mb-8 glass-card p-4 rounded-2xl border border-indigo-500/40 bg-indigo-950/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(99,102,241,0.15)]">
                                     <div className="absolute top-0 right-0 bg-gradient-to-r from-pink-500 to-indigo-600 text-[9px] font-bold px-3 py-1 rounded-bl-xl uppercase shadow-lg text-white tracking-wider">Bonus Spesial</div>
                                     <h3 className="font-bold text-white text-sm mb-1 mt-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> {creator.bonusTitle || 'Dapatkan Bonus Eksklusif!'}</h3>
@@ -415,8 +582,8 @@
                                         </div>
                                     )}
                                 </div>
-                                {/* === AKHIR AREA BONUS === */}
 
+                                {/* LINKS SECTION */}
                                 <div className="space-y-2.5 mb-8">
                                     {links.map(link => (
                                         <a key={link.id} href={link.url} target="_blank" className={`glass-card p-3.5 rounded-xl flex items-center justify-between transition hover:border-indigo-500/50 ${link.highlight ? 'border-indigo-500/50 bg-indigo-950/30' : ''}`}>
@@ -426,6 +593,7 @@
                                     ))}
                                 </div>
 
+                                {/* PRODUCTS SECTION */}
                                 <div className="mb-4 flex items-center justify-between">
                                     <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
                                     <div className="flex gap-1 overflow-x-auto text-xs pb-1">
@@ -439,7 +607,7 @@
                                     {filteredProducts.map(product => (
                                         <div key={product.id} className="glass-card rounded-2xl overflow-hidden flex flex-col hover:border-indigo-500/40 transition">
                                             <div className="h-44 w-full bg-slate-900 relative">
-                                                <img src={product.coverUrl} className="w-full h-full object-cover" />
+                                                <img src={product.coverUrl} className="w-full h-full object-cover" alt={product.title} />
                                                 <span className="absolute top-3 left-3 bg-slate-900/80 text-indigo-300 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase backdrop-blur-md">{product.category}</span>
                                             </div>
                                             <div className="p-4 flex flex-col flex-grow">
@@ -459,6 +627,7 @@
                             </div>
                         )}
 
+                        {/* VIEW: ADMIN PANEL */}
                         {viewMode === 'admin' && (
                             <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-2xl">
@@ -487,6 +656,7 @@
                                     <button onClick={() => setAdminTab('orders')} className={`px-4 py-2 rounded-lg whitespace-nowrap ${adminTab === 'orders' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Riwayat Pesanan</button>
                                 </div>
 
+                                {/* ADMIN TAB: OVERVIEW */}
                                 {adminTab === 'overview' && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="glass-card p-5 rounded-2xl">
@@ -504,6 +674,7 @@
                                     </div>
                                 )}
 
+                                {/* ADMIN TAB: PROFILE */}
                                 {adminTab === 'profile' && (
                                     <form onSubmit={handleSaveCreator} className="glass-card p-6 rounded-2xl space-y-4 max-w-2xl">
                                         <h3 className="font-bold text-sm text-indigo-400 uppercase border-b border-slate-800 pb-2">Informasi Profil Toko</h3>
@@ -526,14 +697,13 @@
                                             <textarea rows="2" value={creator.bio} onChange={e => setCreator({...creator, bio: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500"></textarea>
                                         </div>
 
-                                        <h3 className="font-bold text-sm text-emerald-400 uppercase border-b border-slate-800 pb-2 pt-2">Pengaturan Pembayaran & Kontak WhatsApp</h3>
+                                        <h3 className="font-bold text-sm text-emerald-400 uppercase border-b border-slate-800 pb-2 pt-2">Pengaturan Pembayaran & Kontak</h3>
                                         <div className="grid grid-cols-1 gap-3 text-xs">
                                             <div>
                                                 <label className="block text-slate-300 mb-1">Nomor WhatsApp Admin (628...)</label>
                                                 <input type="text" value={creator.whatsapp} onChange={e => setCreator({...creator, whatsapp: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
                                             </div>
                                         </div>
-
                                         <div className="grid grid-cols-2 gap-3 text-xs">
                                             <div>
                                                 <label className="block text-slate-300 mb-1">No. Rekening BRI</label>
@@ -544,7 +714,6 @@
                                                 <input type="text" value={creator.bankBriNama} onChange={e => setCreator({...creator, bankBriNama: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
                                             </div>
                                         </div>
-
                                         <div className="grid grid-cols-2 gap-3 text-xs">
                                             <div>
                                                 <label className="block text-slate-300 mb-1">No. HP Akun DANA</label>
@@ -556,7 +725,6 @@
                                             </div>
                                         </div>
 
-                                        {/* === PENGATURAN BONUS SPESIAL DI PANEL ADMIN === */}
                                         <h3 className="font-bold text-sm text-pink-400 uppercase border-b border-slate-800 pb-2 pt-4">Pengaturan Bonus Spesial (Share)</h3>
                                         <div className="grid grid-cols-1 gap-3 text-xs mb-4">
                                             <div>
@@ -577,12 +745,13 @@
                                     </form>
                                 )}
 
+                                {/* ADMIN TAB: PRODUCTS */}
                                 {adminTab === 'products' && (
                                     <div className="space-y-3">
                                         {products.map(p => (
                                             <div key={p.id} className="glass-card p-4 rounded-xl flex items-center justify-between text-xs">
                                                 <div className="flex items-center gap-3">
-                                                    <img src={p.coverUrl} className="w-12 h-12 rounded-lg object-cover" />
+                                                    <img src={p.coverUrl} className="w-12 h-12 rounded-lg object-cover" alt="Cover" />
                                                     <div>
                                                         <div className="font-bold text-white text-sm">{p.title}</div>
                                                         <div className="text-emerald-400 font-semibold">{formatIDR(p.price)} &bull; {p.category}</div>
@@ -597,6 +766,7 @@
                                     </div>
                                 )}
 
+                                {/* ADMIN TAB: LINKS */}
                                 {adminTab === 'links' && (
                                     <div className="space-y-3">
                                         {links.map(l => (
@@ -614,6 +784,7 @@
                                     </div>
                                 )}
 
+                                {/* ADMIN TAB: ORDERS */}
                                 {adminTab === 'orders' && (
                                     <div className="glass-card rounded-2xl p-4 overflow-x-auto">
                                         <table className="w-full text-xs text-left">
@@ -644,7 +815,7 @@
                                                         <td className="p-2">
                                                             <div className="flex gap-2">
                                                                 <a 
-                                                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
+                                                                    href={`[https://mail.google.com/mail/?view=cm&fs=1&to=$](https://mail.google.com/mail/?view=cm&fs=1&to=$){tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
                                                                     target="_blank" 
                                                                     rel="noopener noreferrer" 
                                                                     className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center"
@@ -672,42 +843,43 @@
                         )}
                     </main>
 
+                    {/* MODAL CHECKOUT */}
                     {checkoutProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
                                 <div className="flex justify-between items-center border-b border-slate-800 pb-2">
                                     <h3 className="font-bold text-sm text-white">Beli {checkoutProduct.title}</h3>
-                                    <button onClick={() => setCheckoutProduct(null)} className="text-slate-400"><i className="fa-solid fa-xmark"></i></button>
+                                    <button onClick={() => setCheckoutProduct(null)} className="text-slate-400 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
                                 </div>
 
                                 {checkoutStep === 1 && (
                                     <div className="space-y-3">
                                         <input type="text" placeholder="Nama Lengkap *" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500" />
                                         <input type="email" placeholder="Email Aktif *" value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500" />
-                                        <button onClick={() => { if(!buyerName || !buyerEmail) return showToast("Isi data pembeli!"); setCheckoutStep(2); }} className="w-full bg-indigo-600 font-bold text-xs py-3 rounded-xl">Lanjut ke Pembayaran</button>
+                                        <button onClick={() => { if(!buyerName || !buyerEmail) return showToast("Isi data pembeli!"); setCheckoutStep(2); }} className="w-full bg-indigo-600 font-bold text-xs py-3 rounded-xl hover:bg-indigo-500 transition">Lanjut ke Pembayaran</button>
                                     </div>
                                 )}
 
                                 {checkoutStep === 2 && (
                                     <div className="space-y-3 text-xs">
-                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer">
+                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer hover:border-indigo-500/50">
                                             <input type="radio" checked={selectedPayment === 'bank'} onChange={() => setSelectedPayment('bank')} className="accent-indigo-500" />
                                             <div><strong>Transfer Bank BRI</strong></div>
                                         </label>
-                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer">
+                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer hover:border-indigo-500/50">
                                             <input type="radio" checked={selectedPayment === 'dana'} onChange={() => setSelectedPayment('dana')} className="accent-indigo-500" />
                                             <div><strong>Transfer DANA</strong></div>
                                         </label>
                                         <div className="flex gap-2">
-                                            <button onClick={() => setCheckoutStep(1)} className="w-1/3 bg-slate-800 py-2.5 rounded-xl">Kembali</button>
-                                            <button onClick={() => setCheckoutStep(3)} className="w-2/3 bg-indigo-600 font-bold py-2.5 rounded-xl">Lihat No. Rekening</button>
+                                            <button onClick={() => setCheckoutStep(1)} className="w-1/3 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl transition">Kembali</button>
+                                            <button onClick={() => setCheckoutStep(3)} className="w-2/3 bg-indigo-600 hover:bg-indigo-500 font-bold py-2.5 rounded-xl transition">Lihat No. Rekening</button>
                                         </div>
                                     </div>
                                 )}
 
                                 {checkoutStep === 3 && (
                                     <div className="text-center space-y-4 text-xs">
-                                        <div className="bg-amber-500/10 p-2.5 rounded-xl text-amber-300 font-bold">Total: {formatIDR(checkoutProduct.price)}</div>
+                                        <div className="bg-amber-500/10 p-2.5 rounded-xl text-amber-300 font-bold">Total Tagihan: {formatIDR(checkoutProduct.price)}</div>
                                         
                                         {selectedPayment === 'bank' ? (
                                             <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-left">
@@ -723,24 +895,16 @@
                                             </div>
                                         )}
 
-                                       <button onClick={handleCheckoutWhatsApp} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl">
+                                       <button onClick={handleCheckoutWhatsApp} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl transition">
                                             <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran via WhatsApp
                                         </button>
-                                    </div>
-                                )}
-
-                                {checkoutStep === 4 && (
-                                    <div className="text-center space-y-4">
-                                        <div className="w-12 h-12 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-xl mx-auto"><i className="fa-solid fa-check"></i></div>
-                                        <h4 className="font-bold text-white text-sm">Pembayaran Berhasil!</h4>
-                                        <a href={checkoutProduct.downloadUrl} target="_blank" className="block w-full bg-emerald-500 text-slate-950 font-bold text-xs py-3 rounded-xl">Unduh Produk Digital</a>
-                                        <button onClick={() => setCheckoutProduct(null)} className="w-full bg-slate-800 text-xs py-2 rounded-xl">Selesai</button>
                                     </div>
                                 )}
                             </div>
                         </div>
                     )}
 
+                    {/* MODAL EDIT PRODUK */}
                     {editProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <form onSubmit={handleSaveProduct} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs">
@@ -783,6 +947,7 @@
                         </div>
                     )}
 
+                    {/* MODAL EDIT LINK BIO */}
                     {editLink && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <form onSubmit={handleSaveLink} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs">
@@ -806,12 +971,11 @@
                             </form>
                         </div>
                     )}
-
                 </div>
             );
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+        ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
     </script>
 </body>
 </html>
