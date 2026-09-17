@@ -5,17 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produk Digital - Link in Bio & Digital Storefront</title>
     
-    <!-- Meta Tags untuk Share Social Media (Open Graph) -->
-    <meta property="og:title" content="Produk Digital - Link in Bio & Digital Storefront">
-    <meta property="og:description" content="Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy.">
-    <!-- Ganti URL di bawah dengan URL gambar image_3972b6.jpg milikmu yang sudah dihosting -->
-    <meta property="og:image" content="MASUKKAN_URL_GAMBAR_image_3972b6.jpg_DISINI">
-    <meta property="og:url" content="MASUKKAN_URL_WEB_KAMU_DISINI">
-    <meta name="twitter:card" content="summary_large_image">
-    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Konfigurasi Tailwind -->
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -35,9 +31,8 @@
         }
     </script>
     
-    <!-- FontAwesome Icons -->
+    <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <!-- Google Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -48,9 +43,21 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-        .glass-card-hover:hover { background: rgba(30, 41, 59, 0.9); border-color: rgba(99, 102, 241, 0.4); transform: translateY(-2px); }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #0f172a; 
+            color: #f8fafc; 
+        }
+        .glass-card { 
+            background: rgba(30, 41, 59, 0.7); 
+            backdrop-filter: blur(12px); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+        }
+        .glass-card-hover:hover { 
+            background: rgba(30, 41, 59, 0.9); 
+            border-color: rgba(99, 102, 241, 0.4); 
+            transform: translateY(-2px); 
+        }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
@@ -88,145 +95,6 @@
             bonusTitle: "Dapatkan Bonus Eksklusif!",
             bonusDescription: "Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan Produk Digital Gratis secara instan.",
             bonusUrl: "https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE"
-        };
-
-        const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
-
-        function App() {
-            const [creator, setCreator] = useState(DEFAULT_CREATOR);
-            const [links, setLinks] = useState([]);
-            const [transactions, setTransactions] = useState([]);
-            const [products, setProducts] = useState([]);
-
-            const [viewMode, setViewMode] = useState('store'); 
-            const [adminTab, setAdminTab] = useState('overview'); 
-            const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
-            
-            const [email, setEmail] = useState('');
-            const [password, setPassword] = useState('');
-
-            const [selectedCategory, setSelectedCategory] = useState('Semua');
-            const [searchQuery, setSearchQuery] = useState(''); // Fitur Pencarian
-            
-            const [checkoutProduct, setCheckoutProduct] = useState(null);
-            const [checkoutStep, setCheckoutStep] = useState(1);
-            const [buyerName, setBuyerName] = useState('');
-            const [buyerEmail, setBuyerEmail] = useState('');
-            const [buyerPhone, setBuyerPhone] = useState('');
-            const [selectedPayment, setSelectedPayment] = useState('bank');
-            const [toastMessage, setToastMessage] = useState(null);
-
-            const [editProduct, setEditProduct] = useState(null);
-            const [editLink, setEditLink] = useState(null);
-            
-            const [isBonusUnlocked, setIsBonusUnlocked] = useState(false);
-
-            const showToast = (msg) => {
-                setToastMessage(msg);
-                setTimeout(() => setToastMessage(nullBerikut adalah penyempurnaan dari file `bisnisku_6.txt` yang siap Anda *copy-paste*[cite: 1]. Struktur kode HTML, React (JSX), dan Tailwind telah dirapikan agar mudah dibaca, dikelola, dan berjalan lancar tanpa kendala saat dijalankan di browser[cite: 1]. 
-
-Anda cukup menyalin seluruh kode di bawah ini dan menyimpannya sebagai file `index.html`.
-
-### Kode Lengkap (Siap Copy-Paste)
-
-```html
-<!DOCTYPE html>
-<html lang="id" class="dark">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Produk Digital - Link in Bio & Digital Storefront</title>
-    
-    <!-- Tailwind CSS CDN -->
-    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-    
-    <!-- Supabase CDN -->
-    <script src="[https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2](https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2)"></script>
-    
-    <!-- Konfigurasi Tailwind -->
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#f0f5ff', 100: '#e5edff', 500: '#6366f1',
-                            600: '#4f46e5', 700: '#4338ca', 900: '#312e81',
-                        },
-                        emerald: {
-                            400: '#34d399', 500: '#10b981', 600: '#059669',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-    
-    <!-- FontAwesome & Google Fonts -->
-    <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css)">
-    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap)" rel="stylesheet">
-
-    <!-- React 18 & Babel CDN -->
-    <script src="[https://unpkg.com/react@18/umd/react.production.min.js](https://unpkg.com/react@18/umd/react.production.min.js)" crossorigin></script>
-    <script src="[https://unpkg.com/react-dom@18/umd/react-dom.production.min.js](https://unpkg.com/react-dom@18/umd/react-dom.production.min.js)" crossorigin></script>
-    <script src="[https://unpkg.com/@babel/standalone/babel.min.js](https://unpkg.com/@babel/standalone/babel.min.js)"></script>
-
-    <style>
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: #0f172a; 
-            color: #f8fafc; 
-        }
-        .glass-card { 
-            background: rgba(30, 41, 59, 0.7); 
-            backdrop-filter: blur(12px); 
-            border: 1px solid rgba(255, 255, 255, 0.08); 
-        }
-        .glass-card-hover:hover { 
-            background: rgba(30, 41, 59, 0.9); 
-            border-color: rgba(99, 102, 241, 0.4); 
-            transform: translateY(-2px); 
-        }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0f172a; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
-    </style>
-</head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
-
-    <div id="root" class="flex-grow flex flex-col"></div>
-
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
-
-        // === INISIALISASI SUPABASE ===
-        const { createClient } = supabase;
-        const SUPABASE_URL = '[https://cjwbrmolzxnhvigolcfk.supabase.co](https://cjwbrmolzxnhvigolcfk.supabase.co)';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqd2JybW9senhuaHZpZ29sY2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODQzMjYsImV4cCI6MjEwNTE2MDMyNn0.mbsRC05ibE0cbQrm2WpCbwOltcjy2aF1aguWRru9JSY'; 
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        const DEFAULT_CREATOR = {
-            id: 1,
-            name: "Produk Digital",
-            username: "agusdigital",
-            verified: true,
-            avatar: "[https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300](https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300)",
-            bio: "Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy.",
-            whatsapp: "6282351544347",
-            instagram: "[https://instagram.com](https://instagram.com)",
-            tiktok: "[https://tiktok.com](https://tiktok.com)",
-            youtube: "[https://youtube.com](https://youtube.com)",
-            bankBriNorek: "8801288293019",
-            bankBriNama: "Agust Tommy",
-            danaNomor: "082351544347",
-            danaNama: "Agus Digital",
-            qrisUrl: "",
-            bonusTitle: "Dapatkan Bonus Eksklusif!",
-            bonusDescription: "Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan Produk Digital Gratis secara instan.",
-            bonusUrl: "[https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE](https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE)"
         };
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
@@ -438,7 +306,7 @@ Anda cukup menyalin seluruh kode di bawah ini dan menyimpannya sebagai file `ind
                 await saveTransactionToDB("Menunggu Konfirmasi", paymentMethodStr);
                 
                 const text = `Halo Admin ${creator.name}, saya telah melunasi pembayaran: \n\n*Produk:* ${checkoutProduct.title}\n*Total:* ${formatIDR(checkoutProduct.price)}\n*Metode:* ${paymentMethodStr}\n*Nama:* ${buyerName}\n*Email:* ${buyerEmail}\n\nMohon kirimkan aksesnya, terima kasih!`;
-                window.open(`[https://wa.me/$](https://wa.me/$){creator.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+                window.open(`https://wa.me/${creator.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
                 setCheckoutProduct(null);
             };
             
@@ -465,13 +333,13 @@ Anda cukup menyalin seluruh kode di bawah ini dan menyimpannya sebagai file `ind
                 const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
                 
                 if (platform === 'wa') {
-                    window.open(`[https://wa.me/?text=$](https://wa.me/?text=$){encodeURIComponent(text)}`, '_blank');
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
                 } else if (platform === 'fb') {
-                    window.open(`[https://www.facebook.com/sharer/sharer.php?u=$](https://www.facebook.com/sharer/sharer.php?u=$){encodeURIComponent(storeUrl)}`, '_blank');
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`, '_blank');
                 } else if (platform === 'ig') {
                     navigator.clipboard.writeText(storeUrl);
                     alert("Link toko berhasil disalin! Silakan bagikan ke Story atau Bio Instagram Anda.");
-                    window.open(`[https://instagram.com](https://instagram.com)`, '_blank');
+                    window.open(`https://instagram.com`, '_blank');
                 } else if (platform === 'copy') {
                     navigator.clipboard.writeText(storeUrl);
                     alert("Link toko berhasil disalin! Silakan paste di bio atau postingan media sosial Anda.");
@@ -545,7 +413,7 @@ Anda cukup menyalin seluruh kode di bawah ini dan menyimpannya sebagai file `ind
                                         {creator.instagram && <a href={creator.instagram} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-pink-400"><i className="fa-brands fa-instagram"></i></a>}
                                         {creator.tiktok && <a href={creator.tiktok} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-cyan-400"><i className="fa-brands fa-tiktok"></i></a>}
                                         {creator.youtube && <a href={creator.youtube} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-red-400"><i className="fa-brands fa-youtube"></i></a>}
-                                        {creator.whatsapp && <a href={`[https://wa.me/$](https://wa.me/$){creator.whatsapp}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400"><i className="fa-brands fa-whatsapp"></i></a>}
+                                        {creator.whatsapp && <a href={`https://wa.me/${creator.whatsapp}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400"><i className="fa-brands fa-whatsapp"></i></a>}
                                     </div>
                                 </div>
 
@@ -815,7 +683,7 @@ Anda cukup menyalin seluruh kode di bawah ini dan menyimpannya sebagai file `ind
                                                         <td className="p-2">
                                                             <div className="flex gap-2">
                                                                 <a 
-                                                                    href={`[https://mail.google.com/mail/?view=cm&fs=1&to=$](https://mail.google.com/mail/?view=cm&fs=1&to=$){tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
+                                                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
                                                                     target="_blank" 
                                                                     rel="noopener noreferrer" 
                                                                     className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center"
