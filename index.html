@@ -104,6 +104,9 @@
 
             const [editProduct, setEditProduct] = useState(null);
             const [editLink, setEditLink] = useState(null);
+            
+            // State untuk Fitur Viral (Bonus Share)
+            const [isBonusUnlocked, setIsBonusUnlocked] = useState(false);
 
             const showToast = (msg) => {
                 setToastMessage(msg);
@@ -241,23 +244,43 @@
                 window.open(`https://wa.me/${creator.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
                 setCheckoutProduct(null);
             };
+            
             const handleCompleteOrder = async (txId) => {
-    // 1. Update data di Supabase
-    const { error } = await supabaseClient
-        .from('transactions')
-        .update({ status: 'Selesai' })
-        .eq('id', txId);
-    
-    if (!error) {
-        // 2. Update tampilan tabel secara langsung (local state)
-        setTransactions(transactions.map(tx => 
-            tx.id === txId ? { ...tx, status: 'Selesai' } : tx
-        ));
-        showToast("✅ Status pesanan berhasil diperbarui menjadi Selesai!");
-    } else {
-        showToast("❌ Gagal memperbarui status pesanan.");
-    }
-}; 
+                // 1. Update data di Supabase
+                const { error } = await supabaseClient
+                    .from('transactions')
+                    .update({ status: 'Selesai' })
+                    .eq('id', txId);
+                
+                if (!error) {
+                    // 2. Update tampilan tabel secara langsung (local state)
+                    setTransactions(transactions.map(tx => 
+                        tx.id === txId ? { ...tx, status: 'Selesai' } : tx
+                    ));
+                    showToast("✅ Status pesanan berhasil diperbarui menjadi Selesai!");
+                } else {
+                    showToast("❌ Gagal memperbarui status pesanan.");
+                }
+            }; 
+            
+            // Fungsi untuk membagikan ke sosial media dan membuka bonus
+            const handleShareViral = (platform) => {
+                const storeUrl = window.location.href;
+                const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
+                
+                if (platform === 'wa') {
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                } else if (platform === 'tw') {
+                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+                }
+                
+                // Set timeout simulasi verifikasi
+                setTimeout(() => {
+                    setIsBonusUnlocked(true);
+                    showToast("🎉 Terima kasih telah membagikan! Bonus Eksklusif berhasil dibuka.");
+                }, 1500);
+            };
+
             const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0), [transactions]);
             const filteredProducts = useMemo(() => selectedCategory === 'Semua' ? products : products.filter(p => p.category === selectedCategory), [products, selectedCategory]);
 
@@ -316,6 +339,31 @@
                                         {creator.whatsapp && <a href={`https://wa.me/${creator.whatsapp}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400"><i className="fa-brands fa-whatsapp"></i></a>}
                                     </div>
                                 </div>
+
+                                {/* BAGIAN BARU: FITUR VIRAL (SHARE TO UNLOCK) */}
+                                <div className="mb-8 glass-card p-4 rounded-2xl border border-indigo-500/50 bg-indigo-950/20 text-center relative overflow-hidden">
+                                    <div className="absolute top-0 right-0 bg-indigo-600 text-[9px] font-bold px-2 py-1 rounded-bl-lg uppercase shadow-lg">Promo Spesial</div>
+                                    <h3 className="font-bold text-white text-sm mb-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> Dapatkan Bonus Eksklusif!</h3>
+                                    <p className="text-xs text-slate-300 mb-3">Bantu bagikan toko ini ke sosial media kamu untuk membuka kode <strong>Diskon 20%</strong> untuk semua produk.</p>
+                                    
+                                    {!isBonusUnlocked ? (
+                                        <div className="flex gap-2 justify-center">
+                                            <button onClick={() => handleShareViral('wa')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-2 rounded-xl font-bold transition flex items-center">
+                                                <i className="fa-brands fa-whatsapp mr-1.5 text-base"></i> Share WhatsApp
+                                            </button>
+                                            <button onClick={() => handleShareViral('tw')} className="bg-blue-500 hover:bg-blue-400 text-white text-xs px-4 py-2 rounded-xl font-bold transition flex items-center">
+                                                <i className="fa-brands fa-twitter mr-1.5 text-base"></i> Share Twitter
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-slate-900 border border-emerald-500/30 p-3 rounded-xl inline-block w-full animate-pulse shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                                            <span className="text-[10px] text-emerald-400 block mb-1 font-bold">🎉 KODE PROMO BERHASIL DIBUKA:</span>
+                                            <span className="text-lg font-mono font-black text-white tracking-widest bg-slate-800 px-3 py-1 rounded-lg">MIZALVIRAL20</span>
+                                            <p className="text-[10px] text-slate-400 mt-2">Sertakan kode ini saat konfirmasi pesanan via WhatsApp ya!</p>
+                                        </div>
+                                    )}
+                                </div>
+                                {/* END FITUR VIRAL */}
 
                                 <div className="space-y-2.5 mb-8">
                                     {links.map(link => (
@@ -520,16 +568,33 @@
                                                         <td className="p-2">{tx.productTitle}</td>
                                                         <td className="p-2">{tx.paymentMethod}</td>
                                                         <td className="p-2 font-bold text-emerald-400">{formatIDR(tx.amount)}</td>
-                                                        <td className="p-2 text-emerald-400 font-semibold">{tx.status}</td>
+                                                        
+                                                        {/* Status Teks Dinamis */}
+                                                        <td className={`p-2 font-semibold ${tx.status === 'Selesai' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                                            {tx.status}
+                                                        </td>
+                                                        
                                                         <td className="p-2">
-                                                            <a 
-                                                                href={`https://mail.google.com/mail/?view=cm&fs=1&to=${tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
-                                                                target="_blank" 
-                                                                rel="noopener noreferrer" 
-                                                                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap"
-                                                            >
-                                                                <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
-                                                            </a>
+                                                            <div className="flex gap-2">
+                                                                <a 
+                                                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
+                                                                    target="_blank" 
+                                                                    rel="noopener noreferrer" 
+                                                                    className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center"
+                                                                >
+                                                                    <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
+                                                                </a>
+                                                                
+                                                                {/* Tombol Tandai Selesai */}
+                                                                {tx.status !== 'Selesai' && (
+                                                                    <button 
+                                                                        onClick={() => handleCompleteOrder(tx.id)}
+                                                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center"
+                                                                    >
+                                                                        <i className="fa-solid fa-check mr-1"></i> Tandai Selesai
+                                                                    </button>
+                                                                )}
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                 ))}
