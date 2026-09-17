@@ -171,7 +171,8 @@
                 if (!error) {
                     showToast("✅ Pengaturan Profil & Rekening Berhasil Disimpan!");
                 } else {
-                    showToast("❌ Gagal menyimpan profil.");
+                    console.error("Error Profil:", error);
+                    showToast("❌ Gagal: " + error.message);
                 }
             };
 
@@ -182,6 +183,9 @@
                     if (!error) {
                         setProducts(products.map(p => p.id === editProduct.id ? editProduct : p));
                         showToast("✅ Produk Diperbarui!");
+                    } else {
+                        console.error("Error Update Produk:", error);
+                        showToast("❌ Gagal Update Produk: " + error.message);
                     }
                 } else {
                     const newProduct = { ...editProduct, salesCount: 0, rating: 5.0 };
@@ -190,6 +194,9 @@
                     if (!error && data) {
                         setProducts([data[0], ...products]);
                         showToast("🎉 Produk Baru Diterbitkan!");
+                    } else {
+                        console.error("Error Tambah Produk:", error);
+                        showToast("❌ Gagal Tambah Produk: " + error.message);
                     }
                 }
                 setEditProduct(null);
@@ -212,6 +219,9 @@
                     if (!error) {
                         setLinks(links.map(l => l.id === editLink.id ? editLink : l));
                         showToast("✅ Tautan Diperbarui!");
+                    } else {
+                        console.error("Error Update Link:", error);
+                        showToast("❌ Gagal Update Link: " + error.message);
                     }
                 } else {
                     const newLink = { ...editLink, id: `link-${Date.now()}` };
@@ -219,6 +229,9 @@
                     if (!error) {
                         setLinks([...links, newLink]);
                         showToast("🎉 Tautan Baru Dibuat!");
+                    } else {
+                        console.error("Error Tambah Link:", error);
+                        showToast("❌ Gagal Tambah Link: " + error.message);
                     }
                 }
                 setEditLink(null);
