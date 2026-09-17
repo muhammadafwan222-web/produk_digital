@@ -72,7 +72,6 @@
             instagram: "https://instagram.com",
             tiktok: "https://tiktok.com",
             youtube: "https://youtube.com",
-            // PIN DIHAPUS DARI SINI
             bankBriNorek: "8801288293019",
             bankBriNama: "Agust Tommy",
             danaNomor: "082351544347",
@@ -117,7 +116,6 @@
 
             useEffect(() => {
                 async function fetchAllData() {
-                    // Cek Sesi Login Supabase saat dimuat
                     const { data: { session } } = await supabaseClient.auth.getSession();
                     if (session) {
                         setIsAdminUnlocked(true);
@@ -138,7 +136,6 @@
                 fetchAllData();
             }, []);
 
-            // FUNGSI LOGIN SUPABASE
             const handleLoginAdmin = async (e) => {
                 e.preventDefault();
                 
@@ -158,7 +155,6 @@
                 }
             };
 
-            // FUNGSI LOGOUT SUPABASE
             const handleLogoutAdmin = async () => {
                 await supabaseClient.auth.signOut();
                 setIsAdminUnlocked(false);
@@ -285,14 +281,21 @@
                 }
             }; 
             
+            // FUNGSI SHARE VIRAL YANG TELAH DIPERBARUI
             const handleShareViral = (platform) => {
                 const storeUrl = window.location.href;
                 const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
                 
                 if (platform === 'wa') {
                     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                } else if (platform === 'tw') {
-                    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
+                } else if (platform === 'fb') {
+                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`, '_blank');
+                } else if (platform === 'fb_group') {
+                    // SILAKAN GANTI URL DI BAWAH INI DENGAN LINK GRUP FACEBOOK ANDA
+                    window.open(`https://www.facebook.com/groups/ID_GRUP_ANDA`, '_blank'); 
+                } else if (platform === 'copy') {
+                    navigator.clipboard.writeText(storeUrl);
+                    alert("Link toko berhasil disalin! Silakan paste di bio atau postingan Instagram/TikTok Anda.");
                 }
                 
                 setTimeout(() => {
@@ -331,7 +334,6 @@
                     )}
 
                     <main className="flex-grow">
-                        {/* FORM LOGIN ADMIN MENGGUNAKAN EMAIL & PASSWORD SUPABASE */}
                         {viewMode === 'pin_prompt' && (
                             <div className="max-w-sm mx-auto my-20 px-4">
                                 <form onSubmit={handleLoginAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
@@ -383,13 +385,20 @@
                                     <h3 className="font-bold text-white text-sm mb-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> Dapatkan Bonus Eksklusif!</h3>
                                     <p className="text-xs text-slate-300 mb-3">Bantu bagikan toko ini ke sosial media kamu untuk membuka kode <strong>Diskon 20%</strong> untuk semua produk.</p>
                                     
+                                    {/* AREA TOMBOL SHARE YANG TELAH DIPERBARUI */}
                                     {!isBonusUnlocked ? (
-                                        <div className="flex gap-2 justify-center">
-                                            <button onClick={() => handleShareViral('wa')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-4 py-2 rounded-xl font-bold transition flex items-center">
-                                                <i className="fa-brands fa-whatsapp mr-1.5 text-base"></i> Share WhatsApp
+                                        <div className="flex flex-wrap gap-2 justify-center mt-2">
+                                            <button onClick={() => handleShareViral('wa')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center">
+                                                <i className="fa-brands fa-whatsapp mr-1.5 text-sm"></i> WhatsApp
                                             </button>
-                                            <button onClick={() => handleShareViral('tw')} className="bg-blue-500 hover:bg-blue-400 text-white text-xs px-4 py-2 rounded-xl font-bold transition flex items-center">
-                                                <i className="fa-brands fa-twitter mr-1.5 text-base"></i> Share Twitter
+                                            <button onClick={() => handleShareViral('fb')} className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center">
+                                                <i className="fa-brands fa-facebook mr-1.5 text-sm"></i> Facebook
+                                            </button>
+                                            <button onClick={() => handleShareViral('fb_group')} className="bg-blue-800 hover:bg-blue-700 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center">
+                                                <i className="fa-solid fa-users mr-1.5 text-sm"></i> FB Group
+                                            </button>
+                                            <button onClick={() => handleShareViral('copy')} className="bg-slate-600 hover:bg-slate-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center w-full sm:w-auto justify-center">
+                                                <i className="fa-solid fa-link mr-1.5 text-sm"></i> Salin Link (IG/TikTok)
                                             </button>
                                         </div>
                                     ) : (
@@ -457,8 +466,6 @@
                                         <button onClick={() => setEditLink({ title: '', url: '', badge: '', highlight: false })} className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl">
                                             <i className="fa-solid fa-link mr-1"></i> Tambah Link Bio
                                         </button>
-                                        
-                                        {/* TOMBOL LOGOUT DITAMBAHKAN DI SINI */}
                                         <button onClick={handleLogoutAdmin} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl">
                                             <i className="fa-solid fa-right-from-bracket mr-1.5"></i> Keluar
                                         </button>
@@ -518,7 +525,6 @@
                                                 <label className="block text-slate-300 mb-1">Nomor WhatsApp Admin (628...)</label>
                                                 <input type="text" value={creator.whatsapp} onChange={e => setCreator({...creator, whatsapp: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none" />
                                             </div>
-                                            {/* INPUT PIN DIHAPUS DARI SINI */}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3 text-xs">
