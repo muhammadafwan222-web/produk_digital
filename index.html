@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mizal Digital - Link in Bio & Digital Storefront</title>
+    <title>Agust Digital - Link in Bio & Digital Storefront</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,17 +15,11 @@
                 extend: {
                     colors: {
                         brand: {
-                            50: '#f0f5ff',
-                            100: '#e5edff',
-                            500: '#6366f1',
-                            600: '#4f46e5',
-                            700: '#4338ca',
-                            900: '#312e81',
+                            50: '#f0f5ff', 100: '#e5edff', 500: '#6366f1',
+                            600: '#4f46e5', 700: '#4338ca', 900: '#312e81',
                         },
                         emerald: {
-                            400: '#34d399',
-                            500: '#10b981',
-                            600: '#059669',
+                            400: '#34d399', 500: '#10b981', 600: '#059669',
                         }
                     }
                 }
@@ -46,52 +40,32 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0f172a;
-            color: #f8fafc;
-        }
-        .glass-card {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .glass-card-hover:hover {
-            background: rgba(30, 41, 59, 0.9);
-            border-color: rgba(99, 102, 241, 0.4);
-            transform: translateY(-2px);
-        }
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 9999px;
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
+        .glass-card-hover:hover { background: rgba(30, 41, 59, 0.9); border-color: rgba(99, 102, 241, 0.4); transform: translateY(-2px); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
 
     <div id="root" class="flex-grow flex flex-col"></div>
 
-    const { useState, useEffect, useMemo } = React;
+    <!-- PERBAIKAN: Tag pembuka script ditambahkan di sini -->
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
 
         // === INISIALISASI SUPABASE ===
         const { createClient } = supabase;
-        // GANTI DENGAN KREDENSIAL ASLI DARI DASHBOARD SUPABASE KAMU
         const SUPABASE_URL = 'https://cjwbrmolzxnhvigolcfk.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqd2JybW9senhuaHZpZ29sY2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODQzMjYsImV4cCI6MjEwNTE2MDMyNn0.mbsRC05ibE0cbQrm2WpCbwOltcjy2aF1aguWRru9JSY'; 
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Initial Data Defaults
         const DEFAULT_CREATOR = {
-            id: 1, // Kita set ID 1 agar selalu update di baris yang sama
-            name: "Mizal Digital",
-            username: "mizaldigital",
+            id: 1,
+            name: "Produk Digital",
+            username: "Agust digital",
             verified: true,
             avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300",
             bio: "Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy.",
@@ -100,29 +74,26 @@
             tiktok: "https://tiktok.com",
             youtube: "https://youtube.com",
             pin: "4905",
-            bankBcaNorek: "8801288293019",
-            bankBcaNama: "Agust Tommy",
+            bankBRINorek: "8801288293019",
+            bankBRINama: "Agust Tommy",
             danaNomor: "082351544347",
-            danaNama: "Agus Digital",
+            danaNama: "Agus Tommy",
             qrisUrl: ""
         };
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
         function App() {
-            // State Terpusat
             const [creator, setCreator] = useState(DEFAULT_CREATOR);
             const [links, setLinks] = useState([]);
             const [transactions, setTransactions] = useState([]);
             const [products, setProducts] = useState([]);
 
-            // View & Admin Auth State
             const [viewMode, setViewMode] = useState('store'); 
             const [adminTab, setAdminTab] = useState('overview'); 
             const [isAdminUnlocked, setIsAdminUnlocked] = useState(false);
             const [inputPin, setInputPin] = useState('');
 
-            // Modals & Form States
             const [selectedCategory, setSelectedCategory] = useState('Semua');
             const [checkoutProduct, setCheckoutProduct] = useState(null);
             const [checkoutStep, setCheckoutStep] = useState(1);
@@ -140,29 +111,23 @@
                 setTimeout(() => setToastMessage(null), 3500);
             };
 
-            // === 1. FETCH SEMUA DATA DARI SUPABASE ===
             useEffect(() => {
                 async function fetchAllData() {
-                    // Ambil Profil Creator
                     const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id', 1).single();
                     if (creatorData) setCreator(creatorData);
 
-                    // Ambil Produk
                     const { data: prodData } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
                     if (prodData) setProducts(prodData);
 
-                    // Ambil Links
                     const { data: linkData } = await supabaseClient.from('links').select('*');
                     if (linkData) setLinks(linkData);
 
-                    // Ambil Transaksi
                     const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
                     if (txData) setTransactions(txData);
                 }
                 fetchAllData();
             }, []);
 
-            // === 2. FUNGSI ADMIN & AUTENTIKASI ===
             const handleUnlockAdmin = (e) => {
                 e.preventDefault();
                 if (inputPin === creator.pin) {
@@ -175,7 +140,6 @@
                 }
             };
 
-            // === 3. FUNGSI SIMPAN CREATOR KE DB ===
             const handleSaveCreator = async (e) => {
                 e.preventDefault();
                 const creatorToSave = { ...creator, id: 1 };
@@ -187,7 +151,6 @@
                 }
             };
 
-            // === 4. FUNGSI PRODUK ===
             const handleSaveProduct = async (e) => {
                 e.preventDefault();
                 if (editProduct.id && !editProduct.id.toString().startsWith('prod-')) {
@@ -218,7 +181,6 @@
                 }
             };
 
-            // === 5. FUNGSI LINKS BIO ===
             const handleSaveLink = async (e) => {
                 e.preventDefault();
                 if (editLink.id) {
@@ -248,7 +210,6 @@
                 }
             };
 
-            // === 6. FUNGSI TRANSAKSI CHECKOUT ===
             const saveTransactionToDB = async (status, paymentMethod) => {
                 const newTx = {
                     id: `INV-${Date.now().toString().slice(-6)}`,
@@ -263,11 +224,9 @@
                     downloadUrl: checkoutProduct.downloadUrl
                 };
 
-                // Insert Transaksi
                 await supabaseClient.from('transactions').insert([newTx]);
                 setTransactions([newTx, ...transactions]);
 
-                // Update Sales Count Produk
                 const updatedSales = (checkoutProduct.salesCount || 0) + 1;
                 await supabaseClient.from('products').update({ salesCount: updatedSales }).eq('id', checkoutProduct.id);
                 setProducts(products.map(p => p.id === checkoutProduct.id ? { ...p, salesCount: updatedSales } : p));
@@ -290,36 +249,12 @@
                 setCheckoutStep(4);
             };
 
-            // Helpers
+            // PERBAIKAN: Deklarasi ganda dan kode nyasar telah dihapus dari bagian ini
             const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0), [transactions]);
-            const filteredProducts = useMemo(() => selectedCategory === 'Semua' ? products : products.filter(p => p.category === selectedCategory), [products, selectedCategory]);
-
-                setTransactions([newTx, ...transactions]);
-                // Update sales count (idealnya ini juga di-update ke DB, tapi untuk demo state sudah cukup)
-                setProducts(products.map(p => p.id === checkoutProduct.id ? { ...p, salesCount: p.salesCount + 1 } : p));
-                setCheckoutStep(4);
-            };
-
-            const generateWAConfirmLink = () => {
-                const text = `Halo Admin ${creator.name}, saya telah melunasi pembayaran untuk pesanan:
-                
-*Produk:* ${checkoutProduct?.title}
-*Total:* ${formatIDR(checkoutProduct?.price)}
-*Metode:* ${selectedPayment === 'bank' ? 'Transfer Bank BCA' : selectedPayment === 'dana' ? 'DANA' : 'QRIS'}
-*Nama Pembeli:* ${buyerName}
-*Email:* ${buyerEmail}
-
-Mohon kirimkan akses produk digitalnya, terima kasih!`;
-                return `https://wa.me/${creator.whatsapp}?text=${encodeURIComponent(text)}`;
-            };
-
-            const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + tx.amount, 0), [transactions]);
             const filteredProducts = useMemo(() => selectedCategory === 'Semua' ? products : products.filter(p => p.category === selectedCategory), [products, selectedCategory]);
 
             return (
                 <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-                    
-                    {/* Sticky Header */}
                     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 py-3 px-4 shadow-xl">
                         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
@@ -345,7 +280,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                     )}
 
                     <main className="flex-grow">
-                        {/* PIN PROMPT VIEW */}
                         {viewMode === 'pin_prompt' && (
                             <div className="max-w-sm mx-auto my-20 px-4">
                                 <form onSubmit={handleUnlockAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
@@ -354,20 +288,12 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                     </div>
                                     <h2 className="text-base font-bold text-white">Masukan PIN Admin</h2>
                                     <p className="text-xs text-slate-400">Default PIN: <code className="bg-slate-800 px-1 rounded text-indigo-300">{creator.pin}</code></p>
-                                    <input
-                                        type="password"
-                                        maxLength="6"
-                                        placeholder="PIN Admin"
-                                        value={inputPin}
-                                        onChange={e => setInputPin(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-center text-lg tracking-widest text-white outline-none focus:border-indigo-500"
-                                    />
+                                    <input type="password" maxLength="6" placeholder="PIN Admin" value={inputPin} onChange={e => setInputPin(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-center text-lg tracking-widest text-white outline-none focus:border-indigo-500" />
                                     <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl">Buka Dashboard</button>
                                 </form>
                             </div>
                         )}
 
-                        {/* STORE VIEW (PUBLIC BUYER) */}
                         {viewMode === 'store' && (
                             <div className="max-w-md mx-auto min-h-screen pb-20 px-4 pt-6">
                                 <div className="text-center flex flex-col items-center mb-6">
@@ -425,7 +351,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                             </div>
                         )}
 
-                        {/* ADMIN DASHBOARD VIEW */}
                         {viewMode === 'admin' && (
                             <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-2xl">
@@ -443,7 +368,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                     </div>
                                 </div>
 
-                                {/* Admin Navigation Tabs */}
                                 <div className="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto text-xs font-semibold">
                                     <button onClick={() => setAdminTab('overview')} className={`px-4 py-2 rounded-lg ${adminTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Ringkasan & Stats</button>
                                     <button onClick={() => setAdminTab('profile')} className={`px-4 py-2 rounded-lg ${adminTab === 'profile' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Profil & Pembayaran</button>
@@ -452,7 +376,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                     <button onClick={() => setAdminTab('orders')} className={`px-4 py-2 rounded-lg ${adminTab === 'orders' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Riwayat Pesanan</button>
                                 </div>
 
-                                {/* TAB 1: OVERVIEW */}
                                 {adminTab === 'overview' && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="glass-card p-5 rounded-2xl">
@@ -470,7 +393,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                     </div>
                                 )}
 
-                                {/* TAB 2: PROFILE & PAYMENT SETTINGS */}
                                 {adminTab === 'profile' && (
                                     <form onSubmit={handleSaveCreator} className="glass-card p-6 rounded-2xl space-y-4 max-w-2xl">
                                         <h3 className="font-bold text-sm text-indigo-400 uppercase border-b border-slate-800 pb-2">Informasi Profil Toko</h3>
@@ -531,7 +453,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                     </form>
                                 )}
 
-                                {/* TAB 3: MANAGE PRODUCTS */}
                                 {adminTab === 'products' && (
                                     <div className="space-y-3">
                                         {products.map(p => (
@@ -552,7 +473,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                     </div>
                                 )}
 
-                                {/* TAB 4: MANAGE LINKS */}
                                 {adminTab === 'links' && (
                                     <div className="space-y-3">
                                         {links.map(l => (
@@ -570,7 +490,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                     </div>
                                 )}
 
-                                {/* TAB 5: ORDERS HISTORY */}
                                 {adminTab === 'orders' && (
                                     <div className="glass-card rounded-2xl p-4 overflow-x-auto">
                                         <table className="w-full text-xs text-left">
@@ -609,7 +528,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                         )}
                     </main>
 
-                    {/* BUYER CHECKOUT MODAL */}
                     {checkoutProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
@@ -661,22 +579,7 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                                             </div>
                                         )}
 
-                                       <button onClick={() => {
-                                            const newTx = {
-                                                id: `INV-${Date.now().toString().slice(-6)}`,
-                                                buyerName: buyerName,
-                                                buyerEmail: buyerEmail,
-                                                productTitle: checkoutProduct.title,
-                                                amount: checkoutProduct.price,
-                                                paymentMethod: selectedPayment === 'bank' ? 'BANK BCA' : 'DANA',
-                                                date: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-                                                status: "Menunggu Konfirmasi",
-                                                downloadUrl: checkoutProduct.downloadUrl
-                                            };
-                                            setTransactions([newTx, ...transactions]);
-                                            window.open(generateWAConfirmLink(), '_blank');
-                                            setCheckoutProduct(null);
-                                        }} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl">
+                                       <button onClick={handleCheckoutWhatsApp} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl">
                                             <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran via WhatsApp
                                         </button>
                                         <button onClick={handleSimulatePaymentSuccess} className="w-full bg-slate-800 text-slate-400 text-[11px] py-2 rounded-xl">(Simulasi Pembayaran Lunas)</button>
@@ -695,7 +598,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                         </div>
                     )}
 
-                    {/* MODAL EDIT PRODUK */}
                     {editProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <form onSubmit={handleSaveProduct} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs">
@@ -738,7 +640,6 @@ Mohon kirimkan akses produk digitalnya, terima kasih!`;
                         </div>
                     )}
 
-                    {/* MODAL EDIT LINK */}
                     {editLink && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <form onSubmit={handleSaveLink} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs">
