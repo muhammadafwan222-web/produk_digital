@@ -78,23 +78,23 @@
 
     <div id="root" class="flex-grow flex flex-col"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useMemo } = React;
+    const { useState, useEffect, useMemo } = React;
 
-        // === INISIALISASI SUPABASE (DIPINDAH KE SINI) ===
+        // === INISIALISASI SUPABASE ===
         const { createClient } = supabase;
         // GANTI DENGAN KREDENSIAL ASLI DARI DASHBOARD SUPABASE KAMU
-        const SUPABASE_URL = 'https://cjwbrmolzxnhvigolcfk.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqd2JybW9senhuaHZpZ29sY2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODQzMjYsImV4cCI6MjEwNTE2MDMyNn0.mbsRC05ibE0cbQrm2WpCbwOltcjy2aF1aguWRru9JSY'; 
+        const SUPABASE_URL = 'https://xyz123.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5c...'; 
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // Initial Data Defaults
         const DEFAULT_CREATOR = {
+            id: 1, // Kita set ID 1 agar selalu update di baris yang sama
             name: "Mizal Digital",
             username: "mizaldigital",
             verified: true,
             avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300",
-            bio: "Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy. Siap tingkatkan omset usahamu! 🔥",
+            bio: "Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy.",
             whatsapp: "6282351544347",
             instagram: "https://instagram.com",
             tiktok: "https://tiktok.com",
@@ -104,53 +104,16 @@
             bankBcaNama: "Agust Tommy",
             danaNomor: "082351544347",
             danaNama: "Agus Digital",
-            qrisUrl: "https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=https://lynk.id/mizaldigital"
+            qrisUrl: ""
         };
-
-        const DEFAULT_LINKS = [
-            { id: 'l1', title: '💬 Konsultasi Privat 1-on-1 (WhatsApp)', url: 'https://wa.me/6281234567890', badge: 'Slot Terbatas', highlight: true },
-            { id: 'l2', title: '🌐 Website & Portofolio Karya', url: 'https://example.com', badge: '' },
-            { id: 'l3', title: '🚀 Join Gratis VIP Telegram Community', url: 'https://t.me', badge: '10K+ Member' }
-        ];
-
-        const DEFAULT_PRODUCTS = [
-            {
-                id: "prod-1",
-                title: "E-Book: Mastered Instagram Content Strategy 2026",
-                category: "E-Book",
-                price: 99000,
-                rating: 4.9,
-                salesCount: 142,
-                coverUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600",
-                description: "Panduan lengkap 150+ halaman menyusun konten viral, copywriting konversi tinggi, dan monetisasi akun dari nol.",
-                downloadUrl: "https://drive.google.com/file/d/demo-ebook-instagram/view?usp=sharing",
-                fileType: "PDF Document"
-            }
-        ];
-
-        const DEFAULT_TRANSACTIONS = [
-            {
-                id: "INV-202609-881",
-                buyerName: "Budi Santoso",
-                buyerEmail: "budi.santoso@gmail.com",
-                buyerPhone: "081298765432",
-                productTitle: "E-Book: Mastered Instagram Content Strategy 2026",
-                amount: 99000,
-                paymentMethod: "BANK BCA",
-                date: "16 Sep 2026, 14:20",
-                status: "Lunas & Terkirim"
-            }
-        ];
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
 
         function App() {
-            // Persistent State Initialization (Hanya non-produk yang pakai LocalStorage sekarang)
-            const [creator, setCreator] = useState(() => JSON.parse(localStorage.getItem('mizal_creator')) || DEFAULT_CREATOR);
-            const [links, setLinks] = useState(() => JSON.parse(localStorage.getItem('mizal_links')) || DEFAULT_LINKS);
-            const [transactions, setTransactions] = useState(() => JSON.parse(localStorage.getItem('mizal_transactions')) || DEFAULT_TRANSACTIONS);
-            
-            // State Produk menggunakan Database Supabase
+            // State Terpusat
+            const [creator, setCreator] = useState(DEFAULT_CREATOR);
+            const [links, setLinks] = useState([]);
+            const [transactions, setTransactions] = useState([]);
             const [products, setProducts] = useState([]);
 
             // View & Admin Auth State
@@ -169,34 +132,37 @@
             const [selectedPayment, setSelectedPayment] = useState('bank');
             const [toastMessage, setToastMessage] = useState(null);
 
-            // Admin Product & Link Form States
             const [editProduct, setEditProduct] = useState(null);
             const [editLink, setEditLink] = useState(null);
-
-            // Menarik data produk dari Supabase secara otomatis
-            useEffect(() => {
-                async function fetchProducts() {
-                    const { data, error } = await supabaseClient.from('products').select('*');
-                    if (data && data.length > 0) {
-                        setProducts(data);
-                    } else {
-                        // Jika belum ada data di server, gunakan default
-                        setProducts(DEFAULT_PRODUCTS); 
-                    }
-                }
-                fetchProducts();
-            }, []);
-
-            // Save state updates to LocalStorage untuk komponen yang belum masuk DB
-            useEffect(() => { localStorage.setItem('mizal_creator', JSON.stringify(creator)); }, [creator]);
-            useEffect(() => { localStorage.setItem('mizal_links', JSON.stringify(links)); }, [links]);
-            useEffect(() => { localStorage.setItem('mizal_transactions', JSON.stringify(transactions)); }, [transactions]);
 
             const showToast = (msg) => {
                 setToastMessage(msg);
                 setTimeout(() => setToastMessage(null), 3500);
             };
 
+            // === 1. FETCH SEMUA DATA DARI SUPABASE ===
+            useEffect(() => {
+                async function fetchAllData() {
+                    // Ambil Profil Creator
+                    const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id', 1).single();
+                    if (creatorData) setCreator(creatorData);
+
+                    // Ambil Produk
+                    const { data: prodData } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
+                    if (prodData) setProducts(prodData);
+
+                    // Ambil Links
+                    const { data: linkData } = await supabaseClient.from('links').select('*');
+                    if (linkData) setLinks(linkData);
+
+                    // Ambil Transaksi
+                    const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
+                    if (txData) setTransactions(txData);
+                }
+                fetchAllData();
+            }, []);
+
+            // === 2. FUNGSI ADMIN & AUTENTIKASI ===
             const handleUnlockAdmin = (e) => {
                 e.preventDefault();
                 if (inputPin === creator.pin) {
@@ -209,94 +175,125 @@
                 }
             };
 
-            const handleSaveCreator = (e) => {
+            // === 3. FUNGSI SIMPAN CREATOR KE DB ===
+            const handleSaveCreator = async (e) => {
                 e.preventDefault();
-                showToast("✅ Pengaturan Profil & Rekening Berhasil Disimpan!");
+                const creatorToSave = { ...creator, id: 1 };
+                const { error } = await supabaseClient.from('creator').upsert(creatorToSave);
+                if (!error) {
+                    showToast("✅ Pengaturan Profil & Rekening Berhasil Disimpan!");
+                } else {
+                    showToast("❌ Gagal menyimpan profil.");
+                }
             };
 
-            // === FUNGSI SIMPAN PRODUK KE DATABASE ===
+            // === 4. FUNGSI PRODUK ===
             const handleSaveProduct = async (e) => {
                 e.preventDefault();
-                
                 if (editProduct.id && !editProduct.id.toString().startsWith('prod-')) {
-                    // Update data ke server jika ID berasal dari database (biasanya UUID atau ID integer)
-                    const { error } = await supabaseClient
-                        .from('products')
-                        .update(editProduct)
-                        .eq('id', editProduct.id);
-                        
+                    const { error } = await supabaseClient.from('products').update(editProduct).eq('id', editProduct.id);
                     if (!error) {
                         setProducts(products.map(p => p.id === editProduct.id ? editProduct : p));
-                        showToast("✅ Produk Berhasil Diperbarui di Database!");
-                    } else {
-                        showToast("❌ Gagal memperbarui produk.");
+                        showToast("✅ Produk Diperbarui!");
                     }
                 } else {
-                    // Simpan produk baru ke server
                     const newProduct = { ...editProduct, salesCount: 0, rating: 5.0 };
-                    delete newProduct.id; // Biarkan Supabase yang mengenerate ID baru (pastikan tabel Supabase auto-increment/UUID)
-
-                    const { data, error } = await supabaseClient
-                        .from('products')
-                        .insert([newProduct])
-                        .select(); // Mengembalikan data yang baru diinput
-                        
+                    delete newProduct.id;
+                    const { data, error } = await supabaseClient.from('products').insert([newProduct]).select();
                     if (!error && data) {
                         setProducts([data[0], ...products]);
-                        showToast("🎉 Produk Baru Berhasil Diterbitkan ke Database!");
-                    } else {
-                        showToast("❌ Gagal menyimpan produk. Cek koneksi Supabase.");
+                        showToast("🎉 Produk Baru Diterbitkan!");
                     }
                 }
                 setEditProduct(null);
             };
 
-            // === FUNGSI HAPUS PRODUK DARI DATABASE ===
             const handleDeleteProduct = async (id) => {
-                if (confirm("Apakah Anda yakin ingin menghapus produk ini secara permanen?")) {
+                if (confirm("Hapus produk ini secara permanen?")) {
                     const { error } = await supabaseClient.from('products').delete().eq('id', id);
                     if (!error) {
                         setProducts(products.filter(p => p.id !== id));
-                        showToast("🗑️ Produk Telah Dihapus dari Database.");
-                    } else {
-                        showToast("❌ Gagal menghapus produk.");
+                        showToast("🗑️ Produk Dihapus.");
                     }
                 }
             };
 
-            const handleSaveLink = (e) => {
+            // === 5. FUNGSI LINKS BIO ===
+            const handleSaveLink = async (e) => {
                 e.preventDefault();
                 if (editLink.id) {
-                    setLinks(links.map(l => l.id === editLink.id ? editLink : l));
-                    showToast("✅ Tautan Berhasil Diperbarui!");
+                    const { error } = await supabaseClient.from('links').update(editLink).eq('id', editLink.id);
+                    if (!error) {
+                        setLinks(links.map(l => l.id === editLink.id ? editLink : l));
+                        showToast("✅ Tautan Diperbarui!");
+                    }
                 } else {
-                    const created = { ...editLink, id: `link-${Date.now()}` };
-                    setLinks([...links, created]);
-                    showToast("🎉 Tautan Baru Dibuat!");
+                    const newLink = { ...editLink, id: `link-${Date.now()}` };
+                    const { error } = await supabaseClient.from('links').insert([newLink]);
+                    if (!error) {
+                        setLinks([...links, newLink]);
+                        showToast("🎉 Tautan Baru Dibuat!");
+                    }
                 }
                 setEditLink(null);
             };
 
-            const handleDeleteLink = (id) => {
+            const handleDeleteLink = async (id) => {
                 if (confirm("Hapus tautan ini?")) {
-                    setLinks(links.filter(l => l.id !== id));
-                    showToast("🗑️ Tautan Dihapus.");
+                    const { error } = await supabaseClient.from('links').delete().eq('id', id);
+                    if (!error) {
+                        setLinks(links.filter(l => l.id !== id));
+                        showToast("🗑️ Tautan Dihapus.");
+                    }
                 }
             };
 
-            const handleSimulatePaymentSuccess = () => {
+            // === 6. FUNGSI TRANSAKSI CHECKOUT ===
+            const saveTransactionToDB = async (status, paymentMethod) => {
                 const newTx = {
                     id: `INV-${Date.now().toString().slice(-6)}`,
-                    buyerName: buyerName || "Pembeli Baru",
-                    buyerEmail: buyerEmail || "pembeli@email.com",
-                    buyerPhone: buyerPhone || "08123456789",
+                    buyerName: buyerName,
+                    buyerEmail: buyerEmail,
+                    buyerPhone: buyerPhone || "-",
                     productTitle: checkoutProduct.title,
                     amount: checkoutProduct.price,
-                    paymentMethod: selectedPayment === 'bank' ? 'BANK BCA' : selectedPayment === 'dana' ? 'DANA' : 'QRIS',
+                    paymentMethod: paymentMethod,
                     date: new Date().toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
-                    status: "Lunas & Terkirim",
+                    status: status,
                     downloadUrl: checkoutProduct.downloadUrl
                 };
+
+                // Insert Transaksi
+                await supabaseClient.from('transactions').insert([newTx]);
+                setTransactions([newTx, ...transactions]);
+
+                // Update Sales Count Produk
+                const updatedSales = (checkoutProduct.salesCount || 0) + 1;
+                await supabaseClient.from('products').update({ salesCount: updatedSales }).eq('id', checkoutProduct.id);
+                setProducts(products.map(p => p.id === checkoutProduct.id ? { ...p, salesCount: updatedSales } : p));
+                
+                return newTx;
+            };
+
+            const handleCheckoutWhatsApp = async () => {
+                const paymentMethodStr = selectedPayment === 'bank' ? 'BANK BCA' : 'DANA';
+                await saveTransactionToDB("Menunggu Konfirmasi", paymentMethodStr);
+                
+                const text = `Halo Admin ${creator.name}, saya telah melunasi pembayaran: \n\n*Produk:* ${checkoutProduct.title}\n*Total:* ${formatIDR(checkoutProduct.price)}\n*Metode:* ${paymentMethodStr}\n*Nama:* ${buyerName}\n*Email:* ${buyerEmail}\n\nMohon kirimkan aksesnya, terima kasih!`;
+                window.open(`https://wa.me/${creator.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+                setCheckoutProduct(null);
+            };
+
+            const handleSimulatePaymentSuccess = async () => {
+                const paymentMethodStr = selectedPayment === 'bank' ? 'BANK BCA' : 'DANA';
+                await saveTransactionToDB("Lunas & Terkirim", paymentMethodStr);
+                setCheckoutStep(4);
+            };
+
+            // Helpers
+            const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0), [transactions]);
+            const filteredProducts = useMemo(() => selectedCategory === 'Semua' ? products : products.filter(p => p.category === selectedCategory), [products, selectedCategory]);
+
                 setTransactions([newTx, ...transactions]);
                 // Update sales count (idealnya ini juga di-update ke DB, tapi untuk demo state sudah cukup)
                 setProducts(products.map(p => p.id === checkoutProduct.id ? { ...p, salesCount: p.salesCount + 1 } : p));
