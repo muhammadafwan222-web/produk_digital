@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agust Digital - Link in Bio & Digital Storefront</title>
+    <title>Mizal Digital - Link in Bio & Digital Storefront</title>
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -63,8 +63,8 @@
 
         const DEFAULT_CREATOR = {
             id: 1,
-            name: "Agust Digital",
-            username: "Agustdigital",
+            name: "Mizal Digital",
+            username: "mizaldigital",
             verified: true,
             avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300",
             bio: "Berbagi template, e-book, dan kursus praktis untuk optimasi bisnis digital & creator economy.",
@@ -76,7 +76,11 @@
             bankBriNama: "Agust Tommy",
             danaNomor: "082351544347",
             danaNama: "Agus Digital",
-            qrisUrl: ""
+            qrisUrl: "",
+            // === DATA DEFAULT BONUS SPESIAL ===
+            bonusTitle: "Dapatkan Bonus Eksklusif!",
+            bonusDescription: "Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan Produk Digital Gratis secara instan.",
+            bonusUrl: "https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE"
         };
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
@@ -279,7 +283,7 @@
                 }
             }; 
             
-            // === FUNGSI SHARE VIRAL (MEGA PROFESIONAL) ===
+            // === FUNGSI SHARE VIRAL ===
             const handleShareViral = (platform) => {
                 const storeUrl = window.location.href;
                 const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
@@ -342,22 +346,8 @@
                                     <h2 className="text-base font-bold text-white">Login Admin</h2>
                                     <p className="text-xs text-slate-400">Masukkan kredensial Supabase Anda</p>
                                     
-                                    <input 
-                                        type="email" 
-                                        placeholder="Email Admin" 
-                                        value={email} 
-                                        onChange={e => setEmail(e.target.value)} 
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" 
-                                        required
-                                    />
-                                    <input 
-                                        type="password" 
-                                        placeholder="Password" 
-                                        value={password} 
-                                        onChange={e => setPassword(e.target.value)} 
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" 
-                                        required
-                                    />
+                                    <input type="email" placeholder="Email Admin" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" required />
+                                    <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" required />
                                     
                                     <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl">Buka Dashboard</button>
                                 </form>
@@ -379,11 +369,11 @@
                                     </div>
                                 </div>
 
-                                {/* === AREA BONUS SPESIAL (MEGA PROFESIONAL UI) === */}
+                                {/* === AREA BONUS SPESIAL (DINAMIS DARI DATABASE) === */}
                                 <div className="mb-8 glass-card p-4 rounded-2xl border border-indigo-500/40 bg-indigo-950/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(99,102,241,0.15)]">
                                     <div className="absolute top-0 right-0 bg-gradient-to-r from-pink-500 to-indigo-600 text-[9px] font-bold px-3 py-1 rounded-bl-xl uppercase shadow-lg text-white tracking-wider">Bonus Spesial</div>
-                                    <h3 className="font-bold text-white text-sm mb-1 mt-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> Dapatkan Bonus Eksklusif!</h3>
-                                    <p className="text-xs text-slate-300 mb-4">Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan <strong>Produk Digital Gratis</strong> secara instan.</p>
+                                    <h3 className="font-bold text-white text-sm mb-1 mt-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> {creator.bonusTitle || 'Dapatkan Bonus Eksklusif!'}</h3>
+                                    <p className="text-xs text-slate-300 mb-4">{creator.bonusDescription || 'Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan Produk Digital Gratis secara instan.'}</p>
                                     
                                     {!isBonusUnlocked ? (
                                         <div className="flex flex-wrap gap-2 justify-center mt-2">
@@ -404,8 +394,7 @@
                                         <div className="bg-slate-900 border border-emerald-500/40 p-5 rounded-xl inline-block w-full shadow-[0_0_20px_rgba(16,185,129,0.15)] mt-1 transition-all duration-500 transform scale-100">
                                             <span className="text-[11px] text-emerald-400 block mb-3 font-extrabold uppercase tracking-widest animate-pulse">🎉 Bonus Berhasil Dibuka 🎉</span>
                                             
-                                            {/* GANTI LINK "https://drive.google.com/..." DI BAWAH INI DENGAN LINK PRODUK GRATIS ANDA */}
-                                            <a href="https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE" target="_blank" rel="noopener noreferrer" className="inline-block w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5">
+                                            <a href={creator.bonusUrl || '#'} target="_blank" rel="noopener noreferrer" className="inline-block w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5">
                                                 <i className="fa-solid fa-cloud-arrow-down mr-2 text-sm"></i> Unduh Produk Gratis
                                             </a>
                                             
@@ -551,6 +540,23 @@
                                             <div>
                                                 <label className="block text-slate-300 mb-1">Atas Nama DANA</label>
                                                 <input type="text" value={creator.danaNama} onChange={e => setCreator({...creator, danaNama: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
+                                            </div>
+                                        </div>
+
+                                        {/* === PENGATURAN BONUS SPESIAL DI PANEL ADMIN === */}
+                                        <h3 className="font-bold text-sm text-pink-400 uppercase border-b border-slate-800 pb-2 pt-4">Pengaturan Bonus Spesial (Share)</h3>
+                                        <div className="grid grid-cols-1 gap-3 text-xs mb-4">
+                                            <div>
+                                                <label className="block text-slate-300 mb-1">Judul Bonus</label>
+                                                <input type="text" value={creator.bonusTitle || ''} onChange={e => setCreator({...creator, bonusTitle: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" placeholder="Misal: Dapatkan E-Book Gratis!" />
+                                            </div>
+                                            <div>
+                                                <label className="block text-slate-300 mb-1">Deskripsi Singkat</label>
+                                                <textarea rows="2" value={creator.bonusDescription || ''} onChange={e => setCreator({...creator, bonusDescription: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" placeholder="Bantu bagikan toko ini..."></textarea>
+                                            </div>
+                                            <div>
+                                                <label className="block text-slate-300 mb-1">Link File Bonus (G-Drive/Notion)</label>
+                                                <input type="url" value={creator.bonusUrl || ''} onChange={e => setCreator({...creator, bonusUrl: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" placeholder="https://..." />
                                             </div>
                                         </div>
 
