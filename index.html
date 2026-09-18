@@ -139,6 +139,7 @@
 
             // State Toko & Detail Produk
             const [selectedCategory, setSelectedCategory] = useState('Semua');
+            const [searchQuery, setSearchQuery] = useState('');
             const [selectedDetailProduct, setSelectedDetailProduct] = useState(null); 
             const [checkoutProduct, setCheckoutProduct] = useState(null); 
             const [checkoutStep, setCheckoutStep] = useState(1);
@@ -416,7 +417,20 @@
             };
 
             const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0), [transactions]);
-            const filteredProducts = useMemo(() => selectedCategory === 'Semua' ? products : products.filter(p => p.category === selectedCategory), [products, selectedCategory]);
+            
+            const filteredProducts = useMemo(() => {
+                let result = products;
+                if (selectedCategory !== 'Semua') {
+                    result = result.filter(p => p.category === selectedCategory);
+                }
+                if (searchQuery.trim() !== '') {
+                    result = result.filter(p => 
+                        p.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        (p.description && p.description.toLowerCase().includes(searchQuery.toLowerCase()))
+                    );
+                }
+                return result;
+            }, [products, selectedCategory, searchQuery]);
 
             if (isLoading) {
                 return (
@@ -550,13 +564,29 @@
                                     )}
                                 </div>
 
-                                {/* PRODUCTS SECTION */}
-                                <div className="mb-4 flex items-center justify-between">
-                                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
-                                    <div className="flex gap-1 overflow-x-auto text-xs pb-1">
-                                        {['Semua', 'E-Book', 'Template', 'Kursus/Video'].map(cat => (
-                                            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition ${selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>{cat}</button>
-                                        ))}
+                                {/* PRODUCTS SECTION (Dengan Search Bar) */}
+                                <div className="mb-4 space-y-3">
+                                    <div className="flex items-center justify-between">
+                                        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
+                                        <div className="flex gap-1 overflow-x-auto text-xs pb-1">
+                                            {['Semua', 'E-Book', 'Template', 'Kursus/Video'].map(cat => (
+                                                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition ${selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>{cat}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Kolom Pencarian */}
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <i className="fa-solid fa-magnifying-glass text-slate-500 text-xs"></i>
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            placeholder="Cari produk digital..." 
+                                            value={searchQuery}
+                                            onChange={(e) => setSearchQuery(e.target.value)}
+                                            className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500 transition shadow-inner"
+                                        />
                                     </div>
                                 </div>
 
@@ -584,7 +614,7 @@
                                     )) : (
                                         <div className="text-center py-8 glass-card rounded-2xl">
                                             <i className="fa-solid fa-box-open text-slate-600 text-3xl mb-3"></i>
-                                            <p className="text-xs text-slate-500">Belum ada produk di kategori ini.</p>
+                                            <p className="text-xs text-slate-500">Produk tidak ditemukan.</p>
                                         </div>
                                     )}
                                 </div>
