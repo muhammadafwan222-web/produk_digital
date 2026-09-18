@@ -111,7 +111,6 @@
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
         
-        // Helper: Format Nomor WA agar selalu menggunakan kode negara
         const formatWANumber = (num) => {
             if (!num) return "";
             let formatted = num.replace(/\D/g, '');
@@ -153,13 +152,20 @@
             const [editProduct, setEditProduct] = useState(null);
             const [editLink, setEditLink] = useState(null);
             
-            // State Fitur Bonus
+            // State Fitur Bonus & Verifikasi Share
             const [isBonusUnlocked, setIsBonusUnlocked] = useState(false);
+            const [showShareModal, setShowShareModal] = useState(false);
 
             // Fungsi Notifikasi
             const showToast = (msg) => {
                 setToastMessage(msg);
                 setTimeout(() => setToastMessage(null), 3500);
+            };
+
+            // Caption Viral Berantai
+            const getViralCaption = () => {
+                const storeUrl = window.location.href;
+                return `🎁 *GRATIS! Akses Produk Digital Eksklusif dari ${creator.name}* 🚀\n\nSaya baru saja mengklaim bonus produk digital secara GRATIS!\n\nKamu juga bisa dapatkan sekarang:\n1. Klik link toko: ${storeUrl}\n2. Bagikan pesan ini ke teman/sosmed kamu\n3. Langsung unduh bonusnya!\n\n⚡ *Bantu bagikan ke yang lain agar semua bisa dapat bonus gratisnya!*`;
             };
 
             // Fetch Data saat komponen dimuat
@@ -175,16 +181,11 @@
                         const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id', 1).single();
                         
                         if (creatorData) {
-                            // LOGIKA PELACAKAN PENGUNJUNG BARU
                             if (!localStorage.getItem('hasVisited')) {
                                 const newVisitorCount = (creatorData.visitorCount || 0) + 1;
-                                
-                                // Update ke Supabase
                                 await supabaseClient.from('creator')
                                     .update({ visitorCount: newVisitorCount })
                                     .eq('id', 1);
-                                    
-                                // Update State & LocalStorage
                                 setCreator({ ...creatorData, visitorCount: newVisitorCount });
                                 localStorage.setItem('hasVisited', 'true');
                             } else {
@@ -376,39 +377,42 @@
                 }
             }; 
             
-            // Share Viral (Bonus) - Diperbarui untuk update Share
+            // Trigger Buka Aplikasi Social Media & Buka Modal Konfirmasi
             const handleShareViral = async (platform) => {
                 const storeUrl = window.location.href;
-                const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
+                const captionText = getViralCaption();
                 
                 try {
                     if (platform === 'wa') {
-                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                        window.open(`https://wa.me/?text=${encodeURIComponent(captionText)}`, '_blank');
                     } else if (platform === 'fb') {
                         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`, '_blank');
                     } else if (platform === 'ig') {
-                        await navigator.clipboard.writeText(storeUrl);
-                        showToast("✅ Link disalin! Silakan bagikan ke Bio IG Anda.");
+                        await navigator.clipboard.writeText(captionText);
+                        showToast("✅ Caption disalin! Silakan tempel di Story/Bio IG.");
                         setTimeout(() => window.open(`https://instagram.com`, '_blank'), 1000);
                     } else if (platform === 'copy') {
-                        await navigator.clipboard.writeText(storeUrl);
-                        showToast("✅ Link berhasil disalin!");
+                        await navigator.clipboard.writeText(captionText);
+                        showToast("✅ Teks viral & link berhasil disalin!");
                     }
 
-                    // LOGIKA UPDATE JUMLAH SHARE
-                    const newShareCount = (creator.shareCount || 0) + 1;
-                    await supabaseClient.from('creator')
-                        .update({ shareCount: newShareCount })
-                        .eq('id', 1);
-                    setCreator(prev => ({ ...prev, shareCount: newShareCount }));
-                    
-                    setTimeout(() => {
-                        setIsBonusUnlocked(true);
-                        showToast("🎉 Terima kasih telah membagikan! Bonus Eksklusif berhasil dibuka.");
-                    }, 1500);
+                    setShowShareModal(true);
                 } catch (err) {
-                    showToast("❌ Gagal menyalin link.");
+                    showToast("❌ Gagal menyalin pesan.");
                 }
+            };
+
+            // Eksekusi Konfirmasi Share (Membuka Akses Bonus)
+            const handleConfirmShare = async () => {
+                const newShareCount = (creator.shareCount || 0) + 1;
+                await supabaseClient.from('creator')
+                    .update({ shareCount: newShareCount })
+                    .eq('id', 1);
+                
+                setCreator(prev => ({ ...prev, shareCount: newShareCount }));
+                setIsBonusUnlocked(true);
+                setShowShareModal(false);
+                showToast("🎉 Terima kasih! Bonus Eksklusif berhasil dibuka.");
             };
 
             const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0), [transactions]);
@@ -490,7 +494,6 @@
                                         {creator.whatsapp && <a href={`https://wa.me/${formatWANumber(creator.whatsapp)}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400 hover:-translate-y-1 transition"><i className="fa-brands fa-whatsapp"></i></a>}
                                     </div>
                                     
-                                    {/* TAMBAHKAN KODE INI UNTUK MENAMPILKAN ANGKA PENGUNJUNG & SHARE */}
                                     <div className="flex gap-4 mt-5 pt-4 border-t border-slate-800/80 w-full justify-center text-xs text-slate-400 font-medium">
                                         <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
                                             <i className="fa-solid fa-eye text-indigo-400"></i> {creator.visitorCount || 0} Pengunjung
@@ -636,7 +639,6 @@
                                             <p className="text-2xl font-extrabold text-white mt-2 relative z-10">{products.length} Item</p>
                                         </div>
 
-                                        {/* TAMBAHKAN KARTU INI */}
                                         <div className="glass-card p-5 rounded-2xl md:col-span-3 grid grid-cols-2 gap-4 mt-2">
                                             <div>
                                                 <span className="text-xs font-bold text-slate-400 uppercase">Total Pengunjung</span>
@@ -831,7 +833,42 @@
                         )}
                     </main>
 
-                    {/* MODAL DETAIL & ISI PRODUK DIGITAL */}
+                    {/* MODAL KONFIRMASI SHARE VIRAL */}
+                    {showShareModal && (
+                        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl text-center">
+                                <div className="w-12 h-12 bg-pink-500/20 text-pink-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                                    <i className="fa-solid fa-paper-plane"></i>
+                                </div>
+                                <h3 className="font-bold text-base text-white">Langkah Terakhir: Konfirmasi Share</h3>
+                                <p className="text-xs text-slate-300">
+                                    Pastikan Anda telah membagikan pesan di bawah ini ke sosial media Anda agar orang lain juga ikut mengklaim produk digital gratis!
+                                </p>
+                                
+                                <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-left text-[11px] text-slate-300 relative">
+                                    <pre className="whitespace-pre-wrap font-sans leading-relaxed">{getViralCaption()}</pre>
+                                    <button 
+                                        onClick={async () => {
+                                            await navigator.clipboard.writeText(getViralCaption());
+                                            showToast("📋 Caption viral berhasil disalin!");
+                                        }}
+                                        className="mt-2 bg-slate-800 hover:bg-slate-700 text-indigo-300 text-[10px] px-2.5 py-1 rounded-lg font-bold flex items-center gap-1"
+                                    >
+                                        <i className="fa-solid fa-copy"></i> Salin Caption
+                                    </button>
+                                </div>
+
+                                <div className="flex gap-2 pt-2">
+                                    <button onClick={() => setShowShareModal(false)} className="w-1/3 bg-slate-800 hover:bg-slate-700 text-xs py-2.5 rounded-xl transition">Batal</button>
+                                    <button onClick={handleConfirmShare} className="w-2/3 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 font-bold text-xs py-2.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+                                        <i className="fa-solid fa-check mr-1"></i> Saya Sudah Membagikan
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MODAL DETAIL PRODUK */}
                     {selectedDetailProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto relative">
@@ -848,13 +885,11 @@
                                     </div>
                                     <h2 className="text-base font-bold text-white">{selectedDetailProduct.title}</h2>
                                     
-                                    {/* Penjelasan Ringkas */}
                                     <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-xs">
                                         <h4 className="font-semibold text-slate-300 mb-1"><i className="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Penjelasan Produk</h4>
                                         <p className="text-slate-400 leading-relaxed">{selectedDetailProduct.description || 'Tidak ada deskripsi singkat.'}</p>
                                     </div>
 
-                                    {/* Isi & Modul / E-Book Content */}
                                     <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-xs">
                                         <h4 className="font-semibold text-slate-300 mb-2"><i className="fa-solid fa-list-check text-emerald-400 mr-1"></i> Isi & Materi Pembelajaran</h4>
                                         <div className="text-slate-300 whitespace-pre-line leading-relaxed bg-slate-900/80 p-3 rounded-lg border border-slate-800/80 font-sans">
@@ -862,7 +897,6 @@
                                         </div>
                                     </div>
 
-                                    {/* Keranjang & Ringkasan Pembelian */}
                                     <div className="bg-indigo-950/40 border border-indigo-500/30 p-3.5 rounded-xl flex items-center justify-between">
                                         <div>
                                             <span className="text-[10px] text-indigo-300 block uppercase font-bold">Keranjang Pembelian</span>
@@ -886,7 +920,7 @@
                         </div>
                     )}
 
-                    {/* MODAL CHECKOUT & AJUAN PEMBELIAN */}
+                    {/* MODAL CHECKOUT & PEMBELIAN */}
                     {checkoutProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
