@@ -61,6 +61,16 @@
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+        
+        .loader {
+            border-top-color: #6366f1;
+            -webkit-animation: spinner 1.5s linear infinite;
+            animation: spinner 1.5s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
@@ -94,13 +104,26 @@
             qrisUrl: "",
             bonusTitle: "Dapatkan Bonus Eksklusif!",
             bonusDescription: "Bantu bagikan toko ini ke sosial media kamu untuk mendapatkan Produk Digital Gratis secara instan.",
-            bonusUrl: "https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE"
+            bonusUrl: "https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE",
+            visitorCount: 0,
+            shareCount: 0
         };
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
+        
+        // Helper: Format Nomor WA agar selalu menggunakan kode negara
+        const formatWANumber = (num) => {
+            if (!num) return "";
+            let formatted = num.replace(/\D/g, '');
+            if (formatted.startsWith('0')) {
+                formatted = '62' + formatted.substring(1);
+            }
+            return formatted;
+        };
 
         function App() {
             // State Utama
+            const [isLoading, setIsLoading] = useState(true);
             const [creator, setCreator] = useState(DEFAULT_CREATOR);
             const [links, setLinks] = useState([]);
             const [transactions, setTransactions] = useState([]);
@@ -115,10 +138,10 @@
             const [email, setEmail] = useState('');
             const [password, setPassword] = useState('');
 
-            // State Toko & Checkout
+            // State Toko & Detail Produk
             const [selectedCategory, setSelectedCategory] = useState('Semua');
-            const [searchQuery, setSearchQuery] = useState('');
-            const [checkoutProduct, setCheckoutProduct] = useState(null);
+            const [selectedDetailProduct, setSelectedDetailProduct] = useState(null); 
+            const [checkoutProduct, setCheckoutProduct] = useState(null); 
             const [checkoutStep, setCheckoutStep] = useState(1);
             const [buyerName, setBuyerName] = useState('');
             const [buyerEmail, setBuyerEmail] = useState('');
@@ -142,22 +165,47 @@
             // Fetch Data saat komponen dimuat
             useEffect(() => {
                 async function fetchAllData() {
-                    const { data: { session } } = await supabaseClient.auth.getSession();
-                    if (session) {
-                        setIsAdminUnlocked(true);
+                    setIsLoading(true);
+                    try {
+                        const { data: { session } } = await supabaseClient.auth.getSession();
+                        if (session) {
+                            setIsAdminUnlocked(true);
+                        }
+
+                        const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id', 1).single();
+                        
+                        if (creatorData) {
+                            // LOGIKA PELACAKAN PENGUNJUNG BARU
+                            if (!localStorage.getItem('hasVisited')) {
+                                const newVisitorCount = (creatorData.visitorCount || 0) + 1;
+                                
+                                // Update ke Supabase
+                                await supabaseClient.from('creator')
+                                    .update({ visitorCount: newVisitorCount })
+                                    .eq('id', 1);
+                                    
+                                // Update State & LocalStorage
+                                setCreator({ ...creatorData, visitorCount: newVisitorCount });
+                                localStorage.setItem('hasVisited', 'true');
+                            } else {
+                                setCreator(creatorData);
+                            }
+                        }
+
+                        const { data: prodData } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
+                        if (prodData) setProducts(prodData);
+
+                        const { data: linkData } = await supabaseClient.from('links').select('*');
+                        if (linkData) setLinks(linkData);
+
+                        const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
+                        if (txData) setTransactions(txData);
+                    } catch (error) {
+                        console.error("Terjadi kesalahan saat memuat data:", error);
+                        showToast("⚠️ Gagal memuat data dari server, menampilkan data default.");
+                    } finally {
+                        setIsLoading(false);
                     }
-
-                    const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id', 1).single();
-                    if (creatorData) setCreator(creatorData);
-
-                    const { data: prodData } = await supabaseClient.from('products').select('*').order('id', { ascending: false });
-                    if (prodData) setProducts(prodData);
-
-                    const { data: linkData } = await supabaseClient.from('links').select('*');
-                    if (linkData) setLinks(linkData);
-
-                    const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
-                    if (txData) setTransactions(txData);
                 }
                 fetchAllData();
             }, []);
@@ -165,6 +213,7 @@
             // Login Admin
             const handleLoginAdmin = async (e) => {
                 e.preventDefault();
+                setIsLoading(true);
                 const { data, error } = await supabaseClient.auth.signInWithPassword({
                     email: email,
                     password: password,
@@ -179,6 +228,7 @@
                     setPassword('');
                     showToast("🔓 Akses Admin Diberikan!");
                 }
+                setIsLoading(false);
             };
 
             // Logout Admin
@@ -192,9 +242,10 @@
             // Simpan Profil
             const handleSaveCreator = async (e) => {
                 e.preventDefault();
-                const creatorToSave = { ...creator, id: 1 };
+                const creatorToSave = { ...creator, id: 1, whatsapp: formatWANumber(creator.whatsapp) };
                 const { error } = await supabaseClient.from('creator').upsert(creatorToSave);
                 if (!error) {
+                    setCreator(creatorToSave);
                     showToast("✅ Pengaturan Profil & Rekening Berhasil Disimpan!");
                 } else {
                     console.error("Error Profil:", error);
@@ -211,7 +262,6 @@
                         setProducts(products.map(p => p.id === editProduct.id ? editProduct : p));
                         showToast("✅ Produk Diperbarui!");
                     } else {
-                        console.error("Error Update Produk:", error);
                         showToast("❌ Gagal Update Produk: " + error.message);
                     }
                 } else {
@@ -222,7 +272,6 @@
                         setProducts([data[0], ...products]);
                         showToast("🎉 Produk Baru Diterbitkan!");
                     } else {
-                        console.error("Error Tambah Produk:", error);
                         showToast("❌ Gagal Tambah Produk: " + error.message);
                     }
                 }
@@ -249,7 +298,6 @@
                         setLinks(links.map(l => l.id === editLink.id ? editLink : l));
                         showToast("✅ Tautan Diperbarui!");
                     } else {
-                        console.error("Error Update Link:", error);
                         showToast("❌ Gagal Update Link: " + error.message);
                     }
                 } else {
@@ -259,7 +307,6 @@
                         setLinks([...links, newLink]);
                         showToast("🎉 Tautan Baru Dibuat!");
                     } else {
-                        console.error("Error Tambah Link:", error);
                         showToast("❌ Gagal Tambah Link: " + error.message);
                     }
                 }
@@ -306,8 +353,9 @@
                 const paymentMethodStr = selectedPayment === 'bank' ? 'BANK BRI' : 'DANA';
                 await saveTransactionToDB("Menunggu Konfirmasi", paymentMethodStr);
                 
+                const adminWA = formatWANumber(creator.whatsapp);
                 const text = `Halo Admin ${creator.name}, saya telah melunasi pembayaran: \n\n*Produk:* ${checkoutProduct.title}\n*Total:* ${formatIDR(checkoutProduct.price)}\n*Metode:* ${paymentMethodStr}\n*Nama:* ${buyerName}\n*Email:* ${buyerEmail}\n\nMohon kirimkan aksesnya, terima kasih!`;
-                window.open(`https://wa.me/${creator.whatsapp}?text=${encodeURIComponent(text)}`, '_blank');
+                window.open(`https://wa.me/${adminWA}?text=${encodeURIComponent(text)}`, '_blank');
                 setCheckoutProduct(null);
             };
             
@@ -328,55 +376,54 @@
                 }
             }; 
             
-            // Share Viral (Bonus)
-            const handleShareViral = (platform) => {
+            // Share Viral (Bonus) - Diperbarui untuk update Share
+            const handleShareViral = async (platform) => {
                 const storeUrl = window.location.href;
                 const text = `Halo! Kunjungi platform kreator keren dari ${creator.name} untuk e-book & produk digital terbaik. Cek di sini: ${storeUrl}`;
                 
-                if (platform === 'wa') {
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                } else if (platform === 'fb') {
-                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`, '_blank');
-                } else if (platform === 'ig') {
-                    navigator.clipboard.writeText(storeUrl);
-                    alert("Link toko berhasil disalin! Silakan bagikan ke Story atau Bio Instagram Anda.");
-                    window.open(`https://instagram.com`, '_blank');
-                } else if (platform === 'copy') {
-                    navigator.clipboard.writeText(storeUrl);
-                    alert("Link toko berhasil disalin! Silakan paste di bio atau postingan media sosial Anda.");
-                }
-                
-                setTimeout(() => {
-                    setIsBonusUnlocked(true);
-                    showToast("🎉 Terima kasih telah membagikan! Bonus Eksklusif berhasil dibuka.");
-                }, 1500);
-            };
+                try {
+                    if (platform === 'wa') {
+                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+                    } else if (platform === 'fb') {
+                        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`, '_blank');
+                    } else if (platform === 'ig') {
+                        await navigator.clipboard.writeText(storeUrl);
+                        showToast("✅ Link disalin! Silakan bagikan ke Bio IG Anda.");
+                        setTimeout(() => window.open(`https://instagram.com`, '_blank'), 1000);
+                    } else if (platform === 'copy') {
+                        await navigator.clipboard.writeText(storeUrl);
+                        showToast("✅ Link berhasil disalin!");
+                    }
 
-            // Share Produk Individu
-            const handleShareProduct = (product, platform) => {
-                const storeUrl = window.location.href;
-                const text = `Cek produk digital menarik ini: *${product.title}* seharga ${formatIDR(product.price)}. Dapatkan sekarang di: ${storeUrl}`;
-                
-                if (platform === 'wa') {
-                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-                } else if (platform === 'fb') {
-                    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(storeUrl)}`, '_blank');
-                } else if (platform === 'copy') {
-                    navigator.clipboard.writeText(text);
-                    showToast("✅ Info produk berhasil disalin!");
+                    // LOGIKA UPDATE JUMLAH SHARE
+                    const newShareCount = (creator.shareCount || 0) + 1;
+                    await supabaseClient.from('creator')
+                        .update({ shareCount: newShareCount })
+                        .eq('id', 1);
+                    setCreator(prev => ({ ...prev, shareCount: newShareCount }));
+                    
+                    setTimeout(() => {
+                        setIsBonusUnlocked(true);
+                        showToast("🎉 Terima kasih telah membagikan! Bonus Eksklusif berhasil dibuka.");
+                    }, 1500);
+                } catch (err) {
+                    showToast("❌ Gagal menyalin link.");
                 }
             };
 
             const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0), [transactions]);
-            
-            // Filter Produk Berdasarkan Kategori & Pencarian
-            const filteredProducts = useMemo(() => {
-                let result = selectedCategory === 'Semua' ? products : products.filter(p => p.category === selectedCategory);
-                if (searchQuery.trim() !== '') {
-                    result = result.filter(p => p.title.toLowerCase().includes(searchQuery.toLowerCase()));
-                }
-                return result;
-            }, [products, selectedCategory, searchQuery]);
+            const filteredProducts = useMemo(() => selectedCategory === 'Semua' ? products : products.filter(p => p.category === selectedCategory), [products, selectedCategory]);
+
+            if (isLoading) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-slate-950">
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="loader ease-linear rounded-full border-4 border-t-4 border-slate-800 h-12 w-12 mb-4"></div>
+                            <p className="text-slate-400 font-medium text-sm animate-pulse">Memuat data platform...</p>
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
@@ -384,16 +431,18 @@
                     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 py-3 px-4 shadow-xl">
                         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">M</div>
+                                <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white">
+                                    {creator.name.charAt(0).toUpperCase()}
+                                </div>
                                 <span className="font-bold text-sm text-white">{creator.name} Platform</span>
                             </div>
 
                             <div className="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-                                <button onClick={() => setViewMode('store')} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'store' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>
-                                    <i className="fa-solid fa-store mr-1.5"></i>Toko (Pengunjung)
+                                <button onClick={() => setViewMode('store')} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'store' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                                    <i className="fa-solid fa-store mr-1.5"></i>Toko
                                 </button>
-                                <button onClick={() => { if(isAdminUnlocked) setViewMode('admin'); else setViewMode('pin_prompt'); }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'admin' ? 'bg-purple-600 text-white' : 'text-slate-400'}`}>
-                                    <i className="fa-solid fa-lock mr-1.5"></i>Kelola Admin
+                                <button onClick={() => { if(isAdminUnlocked) setViewMode('admin'); else setViewMode('pin_prompt'); }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'admin' || viewMode === 'pin_prompt' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                                    <i className="fa-solid fa-lock mr-1.5"></i>Admin
                                 </button>
                             </div>
                         </div>
@@ -401,7 +450,8 @@
 
                     {/* TOAST MESSAGE */}
                     {toastMessage && (
-                        <div className="fixed bottom-6 right-6 z-50 bg-slate-800 text-white border border-indigo-500/50 px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold">
+                        <div className="fixed bottom-6 right-6 z-50 bg-slate-800 text-white border border-indigo-500/50 px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold transform transition-all duration-300 translate-y-0 opacity-100 flex items-center gap-2">
+                            <i className="fa-solid fa-bell text-indigo-400"></i>
                             {toastMessage}
                         </div>
                     )}
@@ -412,15 +462,15 @@
                             <div className="max-w-sm mx-auto my-20 px-4">
                                 <form onSubmit={handleLoginAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
                                     <div className="w-12 h-12 bg-indigo-500/20 text-indigo-400 rounded-full flex items-center justify-center mx-auto text-xl">
-                                        <i className="fa-solid fa-lock"></i>
+                                        <i className="fa-solid fa-shield-halved"></i>
                                     </div>
                                     <h2 className="text-base font-bold text-white">Login Admin</h2>
-                                    <p className="text-xs text-slate-400">Masukkan kredensial Supabase Anda</p>
+                                    <p className="text-xs text-slate-400">Masukkan email dan sandi Supabase Anda</p>
                                     
                                     <input type="email" placeholder="Email Admin" value={email} onChange={e => setEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" required />
                                     <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-indigo-500" required />
                                     
-                                    <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl">Buka Dashboard</button>
+                                    <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl transition">Buka Dashboard</button>
                                 </form>
                             </div>
                         )}
@@ -429,15 +479,25 @@
                         {viewMode === 'store' && (
                             <div className="max-w-md mx-auto min-h-screen pb-20 px-4 pt-6">
                                 <div className="text-center flex flex-col items-center mb-6">
-                                    <img src={creator.avatar} className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-500/40 p-1 bg-slate-900 mb-3" alt="Creator Avatar" />
+                                    <img src={creator.avatar} className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-500/40 p-1 bg-slate-900 mb-3 shadow-lg shadow-indigo-500/20" alt="Creator Avatar" />
                                     <h1 className="text-xl font-bold text-white flex items-center gap-1.5">{creator.name} {creator.verified && <i className="fa-solid fa-circle-check text-indigo-400 text-sm"></i>}</h1>
                                     <p className="text-xs text-indigo-400 font-medium mb-3">@{creator.username}</p>
                                     <p className="text-xs text-slate-300 leading-relaxed max-w-xs mb-4">{creator.bio}</p>
                                     <div className="flex gap-3">
-                                        {creator.instagram && <a href={creator.instagram} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-pink-400"><i className="fa-brands fa-instagram"></i></a>}
-                                        {creator.tiktok && <a href={creator.tiktok} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-cyan-400"><i className="fa-brands fa-tiktok"></i></a>}
-                                        {creator.youtube && <a href={creator.youtube} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-red-400"><i className="fa-brands fa-youtube"></i></a>}
-                                        {creator.whatsapp && <a href={`https://wa.me/${creator.whatsapp}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400"><i className="fa-brands fa-whatsapp"></i></a>}
+                                        {creator.instagram && <a href={creator.instagram} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-pink-400 hover:-translate-y-1 transition"><i className="fa-brands fa-instagram"></i></a>}
+                                        {creator.tiktok && <a href={creator.tiktok} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-cyan-400 hover:-translate-y-1 transition"><i className="fa-brands fa-tiktok"></i></a>}
+                                        {creator.youtube && <a href={creator.youtube} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-red-400 hover:-translate-y-1 transition"><i className="fa-brands fa-youtube"></i></a>}
+                                        {creator.whatsapp && <a href={`https://wa.me/${formatWANumber(creator.whatsapp)}`} target="_blank" className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300 hover:text-emerald-400 hover:-translate-y-1 transition"><i className="fa-brands fa-whatsapp"></i></a>}
+                                    </div>
+                                    
+                                    {/* TAMBAHKAN KODE INI UNTUK MENAMPILKAN ANGKA PENGUNJUNG & SHARE */}
+                                    <div className="flex gap-4 mt-5 pt-4 border-t border-slate-800/80 w-full justify-center text-xs text-slate-400 font-medium">
+                                        <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                                            <i className="fa-solid fa-eye text-indigo-400"></i> {creator.visitorCount || 0} Pengunjung
+                                        </div>
+                                        <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                                            <i className="fa-solid fa-share-nodes text-pink-400"></i> {creator.shareCount || 0} Dibagikan
+                                        </div>
                                     </div>
                                 </div>
 
@@ -477,73 +537,52 @@
 
                                 {/* LINKS SECTION */}
                                 <div className="space-y-2.5 mb-8">
-                                    {links.map(link => (
+                                    {links.length > 0 ? links.map(link => (
                                         <a key={link.id} href={link.url} target="_blank" className={`glass-card p-3.5 rounded-xl flex items-center justify-between transition hover:border-indigo-500/50 ${link.highlight ? 'border-indigo-500/50 bg-indigo-950/30' : ''}`}>
                                             <span className="text-xs font-semibold text-slate-100">{link.title}</span>
                                             {link.badge && <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2 py-0.5 rounded-full">{link.badge}</span>}
                                         </a>
-                                    ))}
+                                    )) : (
+                                        <p className="text-xs text-center text-slate-500 italic">Belum ada tautan ditambahkan.</p>
+                                    )}
                                 </div>
 
                                 {/* PRODUCTS SECTION */}
-                                <div className="mb-4">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                                            <i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital
-                                        </h2>
-                                        <div className="flex gap-1 overflow-x-auto text-xs pb-1">
-                                            {['Semua', 'E-Book', 'Template', 'Kursus/Video'].map(cat => (
-                                                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-2.5 py-1 rounded-lg whitespace-nowrap ${selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400'}`}>{cat}</button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    
-                                    {/* KOLOM PENCARIAN */}
-                                    <div className="relative mb-4">
-                                        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
-                                            <i className="fa-solid fa-search"></i>
-                                        </div>
-                                        <input 
-                                            type="text" 
-                                            placeholder="Cari nama produk digital..." 
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="w-full bg-slate-900 border border-slate-700/60 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white outline-none focus:border-indigo-500 shadow-inner" 
-                                        />
+                                <div className="mb-4 flex items-center justify-between">
+                                    <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
+                                    <div className="flex gap-1 overflow-x-auto text-xs pb-1">
+                                        {['Semua', 'E-Book', 'Template', 'Kursus/Video'].map(cat => (
+                                            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition ${selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>{cat}</button>
+                                        ))}
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
-                                    {filteredProducts.length === 0 ? (
-                                        <div className="text-center py-8 text-slate-400 text-xs">Produk tidak ditemukan.</div>
-                                    ) : (
-                                        filteredProducts.map(product => (
-                                            <div key={product.id} className="glass-card rounded-2xl overflow-hidden flex flex-col hover:border-indigo-500/40 transition">
-                                                <div className="h-44 w-full bg-slate-900 relative">
-                                                    <img src={product.coverUrl} className="w-full h-full object-cover" alt={product.title} />
-                                                    <span className="absolute top-3 left-3 bg-slate-900/80 text-indigo-300 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase backdrop-blur-md">{product.category}</span>
-                                                </div>
-                                                <div className="p-4 flex flex-col flex-grow">
-                                                    <h3 className="font-bold text-slate-100 text-sm mb-1">{product.title}</h3>
-                                                    <p className="text-xs text-slate-400 mb-3 line-clamp-2">{product.description}</p>
-                                                    
-                                                    {/* TOMBOL SHARE PRODUK */}
-                                                    <div className="flex gap-2 mb-3">
-                                                        <button onClick={() => handleShareProduct(product, 'wa')} className="text-[10px] bg-slate-800 hover:bg-emerald-600 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg transition"><i className="fa-brands fa-whatsapp"></i></button>
-                                                        <button onClick={() => handleShareProduct(product, 'fb')} className="text-[10px] bg-slate-800 hover:bg-blue-600 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg transition"><i className="fa-brands fa-facebook"></i></button>
-                                                        <button onClick={() => handleShareProduct(product, 'copy')} className="text-[10px] bg-slate-800 hover:bg-slate-600 text-slate-300 hover:text-white px-2 py-1.5 rounded-lg transition"><i className="fa-solid fa-link"></i> Salin</button>
+                                    {filteredProducts.length > 0 ? filteredProducts.map(product => (
+                                        <div key={product.id} onClick={() => setSelectedDetailProduct(product)} className="glass-card rounded-2xl overflow-hidden flex flex-col hover:border-indigo-500/40 transition cursor-pointer group">
+                                            <div className="h-44 w-full bg-slate-900 relative overflow-hidden">
+                                                <img src={product.coverUrl} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={product.title} />
+                                                <span className="absolute top-3 left-3 bg-slate-900/80 text-indigo-300 text-[10px] px-2.5 py-1 rounded-full font-bold uppercase backdrop-blur-md">{product.category}</span>
+                                            </div>
+                                            <div className="p-4 flex flex-col flex-grow">
+                                                <h3 className="font-bold text-slate-100 text-sm mb-1">{product.title}</h3>
+                                                <p className="text-xs text-slate-400 mb-4 line-clamp-2">{product.description}</p>
+                                                <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                                                    <div>
+                                                        <span className="text-[10px] text-slate-500 uppercase block">Harga</span>
+                                                        <span className="text-base font-extrabold text-emerald-400">{formatIDR(product.price)}</span>
                                                     </div>
-
-                                                    <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
-                                                        <div>
-                                                            <span className="text-[10px] text-slate-500 uppercase block">Harga</span>
-                                                            <span className="text-base font-extrabold text-emerald-400">{formatIDR(product.price)}</span>
-                                                        </div>
-                                                        <button onClick={() => { setCheckoutProduct(product); setCheckoutStep(1); }} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition hover:-translate-y-0.5">Beli Sekarang</button>
-                                                    </div>
+                                                    <button onClick={(e) => { e.stopPropagation(); setSelectedDetailProduct(product); }} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition hover:-translate-y-0.5 flex items-center gap-1.5">
+                                                        <i className="fa-solid fa-eye text-xs"></i> Lihat Detail
+                                                    </button>
                                                 </div>
                                             </div>
-                                        ))
+                                        </div>
+                                    )) : (
+                                        <div className="text-center py-8 glass-card rounded-2xl">
+                                            <i className="fa-solid fa-box-open text-slate-600 text-3xl mb-3"></i>
+                                            <p className="text-xs text-slate-500">Belum ada produk di kategori ini.</p>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -557,41 +596,60 @@
                                         <h1 className="text-xl font-extrabold text-white">Panel Kelola Toko & Pengaturan Admin</h1>
                                         <p className="text-xs text-slate-400 mt-1">Atur profil toko, nomor rekening/DANA, produk digital, dan tautan bio kamu.</p>
                                     </div>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => setEditProduct({ title: '', category: 'E-Book', price: '', description: '', downloadUrl: '', coverUrl: '' })} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl">
+                                    <div className="flex flex-wrap gap-2">
+                                        <button onClick={() => setEditProduct({ title: '', category: 'E-Book', price: '', description: '', details: '', downloadUrl: '', coverUrl: '' })} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition shadow-lg shadow-indigo-500/20">
                                             <i className="fa-solid fa-plus mr-1"></i> Tambah Produk
                                         </button>
-                                        <button onClick={() => setEditLink({ title: '', url: '', badge: '', highlight: false })} className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl">
+                                        <button onClick={() => setEditLink({ title: '', url: '', badge: '', highlight: false })} className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition shadow-lg shadow-purple-500/20">
                                             <i className="fa-solid fa-link mr-1"></i> Tambah Link Bio
                                         </button>
-                                        <button onClick={handleLogoutAdmin} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl">
+                                        <button onClick={handleLogoutAdmin} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-red-500/20">
                                             <i className="fa-solid fa-right-from-bracket mr-1.5"></i> Keluar
                                         </button>
                                     </div>
                                 </div>
 
-                                <div className="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto text-xs font-semibold">
-                                    <button onClick={() => setAdminTab('overview')} className={`px-4 py-2 rounded-lg whitespace-nowrap ${adminTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Ringkasan & Stats</button>
-                                    <button onClick={() => setAdminTab('profile')} className={`px-4 py-2 rounded-lg whitespace-nowrap ${adminTab === 'profile' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Profil & Pembayaran</button>
-                                    <button onClick={() => setAdminTab('products')} className={`px-4 py-2 rounded-lg whitespace-nowrap ${adminTab === 'products' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Kelola Produk ({products.length})</button>
-                                    <button onClick={() => setAdminTab('links')} className={`px-4 py-2 rounded-lg whitespace-nowrap ${adminTab === 'links' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Tautan Bio ({links.length})</button>
-                                    <button onClick={() => setAdminTab('orders')} className={`px-4 py-2 rounded-lg whitespace-nowrap ${adminTab === 'orders' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}>Riwayat Pesanan</button>
+                                <div className="flex gap-2 border-b border-slate-800 pb-2 overflow-x-auto text-xs font-semibold scrollbar-hide">
+                                    <button onClick={() => setAdminTab('overview')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'overview' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Ringkasan & Stats</button>
+                                    <button onClick={() => setAdminTab('profile')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'profile' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Profil & Pembayaran</button>
+                                    <button onClick={() => setAdminTab('products')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'products' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Kelola Produk ({products.length})</button>
+                                    <button onClick={() => setAdminTab('links')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'links' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Tautan Bio ({links.length})</button>
+                                    <button onClick={() => setAdminTab('orders')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'orders' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Riwayat Pesanan</button>
                                 </div>
 
                                 {/* ADMIN TAB: OVERVIEW */}
                                 {adminTab === 'overview' && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div className="glass-card p-5 rounded-2xl">
-                                            <span className="text-xs font-bold text-slate-400 uppercase">Total Omset Penjualan</span>
-                                            <p className="text-2xl font-extrabold text-emerald-400 mt-2">{formatIDR(totalRevenue)}</p>
+                                        <div className="glass-card p-5 rounded-2xl relative overflow-hidden">
+                                            <div className="absolute -right-4 -top-4 text-emerald-500/10 text-7xl"><i className="fa-solid fa-money-bill-wave"></i></div>
+                                            <span className="text-xs font-bold text-slate-400 uppercase relative z-10">Total Omset Penjualan</span>
+                                            <p className="text-2xl font-extrabold text-emerald-400 mt-2 relative z-10">{formatIDR(totalRevenue)}</p>
                                         </div>
-                                        <div className="glass-card p-5 rounded-2xl">
-                                            <span className="text-xs font-bold text-slate-400 uppercase">Transaksi Berhasil</span>
-                                            <p className="text-2xl font-extrabold text-white mt-2">{transactions.length} Pesanan</p>
+                                        <div className="glass-card p-5 rounded-2xl relative overflow-hidden">
+                                            <div className="absolute -right-4 -top-4 text-indigo-500/10 text-7xl"><i className="fa-solid fa-cart-shopping"></i></div>
+                                            <span className="text-xs font-bold text-slate-400 uppercase relative z-10">Transaksi Berhasil</span>
+                                            <p className="text-2xl font-extrabold text-white mt-2 relative z-10">{transactions.length} Pesanan</p>
                                         </div>
-                                        <div className="glass-card p-5 rounded-2xl">
-                                            <span className="text-xs font-bold text-slate-400 uppercase">Produk Aktif</span>
-                                            <p className="text-2xl font-extrabold text-white mt-2">{products.length} Item</p>
+                                        <div className="glass-card p-5 rounded-2xl relative overflow-hidden">
+                                            <div className="absolute -right-4 -top-4 text-purple-500/10 text-7xl"><i className="fa-solid fa-box-open"></i></div>
+                                            <span className="text-xs font-bold text-slate-400 uppercase relative z-10">Produk Aktif</span>
+                                            <p className="text-2xl font-extrabold text-white mt-2 relative z-10">{products.length} Item</p>
+                                        </div>
+
+                                        {/* TAMBAHKAN KARTU INI */}
+                                        <div className="glass-card p-5 rounded-2xl md:col-span-3 grid grid-cols-2 gap-4 mt-2">
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-400 uppercase">Total Pengunjung</span>
+                                                <p className="text-2xl font-extrabold text-indigo-400 mt-2">
+                                                    <i className="fa-solid fa-users text-lg mr-2"></i>{creator.visitorCount || 0}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <span className="text-xs font-bold text-slate-400 uppercase">Total Dibagikan (Share)</span>
+                                                <p className="text-2xl font-extrabold text-pink-400 mt-2">
+                                                    <i className="fa-solid fa-bullhorn text-lg mr-2"></i>{creator.shareCount || 0}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
@@ -603,11 +661,11 @@
                                         <div className="grid grid-cols-2 gap-3 text-xs">
                                             <div>
                                                 <label className="block text-slate-300 mb-1">Nama Toko/Kreator</label>
-                                                <input type="text" value={creator.name} onChange={e => setCreator({...creator, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
+                                                <input type="text" value={creator.name} onChange={e => setCreator({...creator, name: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" required />
                                             </div>
                                             <div>
                                                 <label className="block text-slate-300 mb-1">Username (@)</label>
-                                                <input type="text" value={creator.username} onChange={e => setCreator({...creator, username: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
+                                                <input type="text" value={creator.username} onChange={e => setCreator({...creator, username: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" required />
                                             </div>
                                         </div>
                                         <div className="text-xs">
@@ -622,8 +680,8 @@
                                         <h3 className="font-bold text-sm text-emerald-400 uppercase border-b border-slate-800 pb-2 pt-2">Pengaturan Pembayaran & Kontak</h3>
                                         <div className="grid grid-cols-1 gap-3 text-xs">
                                             <div>
-                                                <label className="block text-slate-300 mb-1">Nomor WhatsApp Admin (628...)</label>
-                                                <input type="text" value={creator.whatsapp} onChange={e => setCreator({...creator, whatsapp: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
+                                                <label className="block text-slate-300 mb-1">Nomor WhatsApp Admin (Akan diformat otomatis ke 62...)</label>
+                                                <input type="text" value={creator.whatsapp} onChange={e => setCreator({...creator, whatsapp: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" placeholder="Misal: 08123456789" required />
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3 text-xs">
@@ -663,14 +721,14 @@
                                             </div>
                                         </div>
 
-                                        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl mt-4">Simpan Perubahan Profil & Rekening</button>
+                                        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl mt-4 transition">Simpan Perubahan Profil & Rekening</button>
                                     </form>
                                 )}
 
                                 {/* ADMIN TAB: PRODUCTS */}
                                 {adminTab === 'products' && (
                                     <div className="space-y-3">
-                                        {products.map(p => (
+                                        {products.length > 0 ? products.map(p => (
                                             <div key={p.id} className="glass-card p-4 rounded-xl flex items-center justify-between text-xs">
                                                 <div className="flex items-center gap-3">
                                                     <img src={p.coverUrl} className="w-12 h-12 rounded-lg object-cover" alt="Cover" />
@@ -680,145 +738,217 @@
                                                     </div>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <button onClick={() => setEditProduct(p)} className="bg-slate-800 hover:bg-slate-700 text-indigo-300 px-3 py-1.5 rounded-lg">Edit</button>
-                                                    <button onClick={() => handleDeleteProduct(p.id)} className="bg-slate-800 hover:bg-slate-700 text-red-400 px-3 py-1.5 rounded-lg">Hapus</button>
+                                                    <button onClick={() => setEditProduct(p)} className="bg-slate-800 hover:bg-slate-700 text-indigo-300 px-3 py-1.5 rounded-lg transition">Edit</button>
+                                                    <button onClick={() => handleDeleteProduct(p.id)} className="bg-slate-800 hover:bg-slate-700 text-red-400 px-3 py-1.5 rounded-lg transition">Hapus</button>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="text-center py-6 text-slate-500 text-xs italic">Belum ada produk, silakan tambah produk baru.</div>
+                                        )}
                                     </div>
                                 )}
 
                                 {/* ADMIN TAB: LINKS */}
                                 {adminTab === 'links' && (
                                     <div className="space-y-3">
-                                        {links.map(l => (
+                                        {links.length > 0 ? links.map(l => (
                                             <div key={l.id} className="glass-card p-4 rounded-xl flex items-center justify-between text-xs">
                                                 <div>
                                                     <div className="font-bold text-white">{l.title}</div>
                                                     <div className="text-slate-400 text-[10px]">{l.url}</div>
                                                 </div>
                                                 <div className="flex gap-2">
-                                                    <button onClick={() => setEditLink(l)} className="bg-slate-800 text-indigo-300 px-3 py-1.5 rounded-lg">Edit</button>
-                                                    <button onClick={() => handleDeleteLink(l.id)} className="bg-slate-800 text-red-400 px-3 py-1.5 rounded-lg">Hapus</button>
+                                                    <button onClick={() => setEditLink(l)} className="bg-slate-800 hover:bg-slate-700 text-indigo-300 px-3 py-1.5 rounded-lg transition">Edit</button>
+                                                    <button onClick={() => handleDeleteLink(l.id)} className="bg-slate-800 hover:bg-slate-700 text-red-400 px-3 py-1.5 rounded-lg transition">Hapus</button>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : (
+                                            <div className="text-center py-6 text-slate-500 text-xs italic">Belum ada link, silakan tambah link baru.</div>
+                                        )}
                                     </div>
                                 )}
 
                                 {/* ADMIN TAB: ORDERS */}
                                 {adminTab === 'orders' && (
                                     <div className="glass-card rounded-2xl p-4 overflow-x-auto">
-                                        <table className="w-full text-xs text-left">
-                                            <thead>
-                                                <tr className="border-b border-slate-800 text-slate-400">
-                                                    <th className="p-2 whitespace-nowrap">Invoice</th>
-                                                    <th className="p-2 whitespace-nowrap">Pembeli</th>
-                                                    <th className="p-2 whitespace-nowrap">Produk</th>
-                                                    <th className="p-2 whitespace-nowrap">Metode</th>
-                                                    <th className="p-2 whitespace-nowrap">Total</th>
-                                                    <th className="p-2 whitespace-nowrap">Status</th>
-                                                    <th className="p-2 whitespace-nowrap">Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-800/60">
-                                                {transactions.map(tx => (
-                                                    <tr key={tx.id}>
-                                                        <td className="p-2 font-mono text-indigo-300">{tx.id}</td>
-                                                        <td className="p-2"><strong>{tx.buyerName}</strong><br/><span className="text-[10px] text-slate-400">{tx.buyerEmail}</span></td>
-                                                        <td className="p-2 min-w-[150px]">{tx.productTitle}</td>
-                                                        <td className="p-2">{tx.paymentMethod}</td>
-                                                        <td className="p-2 font-bold text-emerald-400">{formatIDR(tx.amount)}</td>
-                                                        
-                                                        <td className={`p-2 font-semibold ${tx.status === 'Selesai' ? 'text-emerald-400' : 'text-amber-400'}`}>
-                                                            {tx.status}
-                                                        </td>
-                                                        
-                                                        <td className="p-2">
-                                                            <div className="flex gap-2">
-                                                                <a 
-                                                                    href={`https://mail.google.com/mail/?view=cm&fs=1&to=${tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
-                                                                    target="_blank" 
-                                                                    rel="noopener noreferrer" 
-                                                                    className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center"
-                                                                >
-                                                                    <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
-                                                                </a>
-                                                                
-                                                                {tx.status !== 'Selesai' && (
-                                                                    <button 
-                                                                        onClick={() => handleCompleteOrder(tx.id)}
-                                                                        className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center"
-                                                                    >
-                                                                        <i className="fa-solid fa-check mr-1"></i> Tandai Selesai
-                                                                    </button>
-                                                                )}
-                                                            </div>
-                                                        </td>
+                                        {transactions.length > 0 ? (
+                                            <table className="w-full text-xs text-left">
+                                                <thead>
+                                                    <tr className="border-b border-slate-800 text-slate-400">
+                                                        <th className="p-2 whitespace-nowrap">Invoice</th>
+                                                        <th className="p-2 whitespace-nowrap">Pembeli</th>
+                                                        <th className="p-2 whitespace-nowrap">Produk</th>
+                                                        <th className="p-2 whitespace-nowrap">Metode</th>
+                                                        <th className="p-2 whitespace-nowrap">Total</th>
+                                                        <th className="p-2 whitespace-nowrap">Status</th>
+                                                        <th className="p-2 whitespace-nowrap">Aksi</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800/60">
+                                                    {transactions.map(tx => (
+                                                        <tr key={tx.id}>
+                                                            <td className="p-2 font-mono text-indigo-300">{tx.id}</td>
+                                                            <td className="p-2"><strong>{tx.buyerName}</strong><br/><span className="text-[10px] text-slate-400">{tx.buyerEmail}</span></td>
+                                                            <td className="p-2 min-w-[150px]">{tx.productTitle}</td>
+                                                            <td className="p-2">{tx.paymentMethod}</td>
+                                                            <td className="p-2 font-bold text-emerald-400">{formatIDR(tx.amount)}</td>
+                                                            
+                                                            <td className={`p-2 font-semibold ${tx.status === 'Selesai' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                                                                {tx.status}
+                                                            </td>
+                                                            
+                                                            <td className="p-2">
+                                                                <div className="flex gap-2">
+                                                                    <a 
+                                                                        href={`https://mail.google.com/mail/?view=cm&fs=1&to=${tx.buyerEmail}&su=${encodeURIComponent('Akses Pesanan: ' + tx.productTitle)}&body=${encodeURIComponent('Halo ' + tx.buyerName + ',\n\nTerima kasih sudah berbelanja. Berikut adalah link akses produk digital Anda:\n' + tx.downloadUrl + '\n\nSalam Hangat.')}`} 
+                                                                        target="_blank" 
+                                                                        rel="noopener noreferrer" 
+                                                                        className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center transition"
+                                                                    >
+                                                                        <i className="fa-solid fa-envelope mr-1"></i> Kirim Link
+                                                                    </a>
+                                                                    
+                                                                    {tx.status !== 'Selesai' && (
+                                                                        <button 
+                                                                            onClick={() => handleCompleteOrder(tx.id)}
+                                                                            className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-[10px] whitespace-nowrap flex items-center transition"
+                                                                        >
+                                                                            <i className="fa-solid fa-check mr-1"></i> Tandai Selesai
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        ) : (
+                                            <div className="text-center py-6 text-slate-500 text-xs italic">Belum ada riwayat pesanan.</div>
+                                        )}
                                     </div>
                                 )}
                             </div>
                         )}
                     </main>
 
-                    {/* MODAL CHECKOUT */}
+                    {/* MODAL DETAIL & ISI PRODUK DIGITAL */}
+                    {selectedDetailProduct && (
+                        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto relative">
+                                <div className="flex justify-between items-center border-b border-slate-800 pb-2 sticky top-0 bg-slate-900 z-10 pt-2">
+                                    <span className="text-xs font-bold uppercase text-indigo-400 tracking-wider"><i className="fa-solid fa-book-open mr-1.5"></i> Detail Produk</span>
+                                    <button onClick={() => setSelectedDetailProduct(null)} className="text-slate-400 hover:text-white transition"><i className="fa-solid fa-xmark text-lg"></i></button>
+                                </div>
+
+                                <div className="space-y-3">
+                                    <img src={selectedDetailProduct.coverUrl} className="w-full h-48 object-cover rounded-xl border border-slate-800" alt={selectedDetailProduct.title} />
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-2.5 py-0.5 rounded-full font-bold">{selectedDetailProduct.category}</span>
+                                        <span className="text-lg font-extrabold text-emerald-400">{formatIDR(selectedDetailProduct.price)}</span>
+                                    </div>
+                                    <h2 className="text-base font-bold text-white">{selectedDetailProduct.title}</h2>
+                                    
+                                    {/* Penjelasan Ringkas */}
+                                    <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-xs">
+                                        <h4 className="font-semibold text-slate-300 mb-1"><i className="fa-solid fa-circle-info text-indigo-400 mr-1"></i> Penjelasan Produk</h4>
+                                        <p className="text-slate-400 leading-relaxed">{selectedDetailProduct.description || 'Tidak ada deskripsi singkat.'}</p>
+                                    </div>
+
+                                    {/* Isi & Modul / E-Book Content */}
+                                    <div className="bg-slate-950/60 p-3 rounded-xl border border-slate-800 text-xs">
+                                        <h4 className="font-semibold text-slate-300 mb-2"><i className="fa-solid fa-list-check text-emerald-400 mr-1"></i> Isi & Materi Pembelajaran</h4>
+                                        <div className="text-slate-300 whitespace-pre-line leading-relaxed bg-slate-900/80 p-3 rounded-lg border border-slate-800/80 font-sans">
+                                            {selectedDetailProduct.details || "• Bab 1: Pengenalan & Konsep Dasar\n• Bab 2: Langkah Strategis & Implementasi\n• Bab 3: Studi Kasus & Template Praktis\n• Bab 4: Panduan Optimasi Akhir\n• Bonus: Modul Tambahan & Resources"}
+                                        </div>
+                                    </div>
+
+                                    {/* Keranjang & Ringkasan Pembelian */}
+                                    <div className="bg-indigo-950/40 border border-indigo-500/30 p-3.5 rounded-xl flex items-center justify-between">
+                                        <div>
+                                            <span className="text-[10px] text-indigo-300 block uppercase font-bold">Keranjang Pembelian</span>
+                                            <span className="text-xs text-slate-300">1 Item: <strong>{selectedDetailProduct.title}</strong></span>
+                                        </div>
+                                        <span className="text-sm font-extrabold text-emerald-400">{formatIDR(selectedDetailProduct.price)}</span>
+                                    </div>
+
+                                    <button 
+                                        onClick={() => {
+                                            setCheckoutProduct(selectedDetailProduct);
+                                            setCheckoutStep(1);
+                                            setSelectedDetailProduct(null);
+                                        }} 
+                                        className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg transition flex items-center justify-center gap-2"
+                                    >
+                                        <i className="fa-solid fa-cart-shopping"></i> Lanjut ke Pembelian
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* MODAL CHECKOUT & AJUAN PEMBELIAN */}
                     {checkoutProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
                                 <div className="flex justify-between items-center border-b border-slate-800 pb-2">
-                                    <h3 className="font-bold text-sm text-white">Beli {checkoutProduct.title}</h3>
-                                    <button onClick={() => setCheckoutProduct(null)} className="text-slate-400 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
+                                    <h3 className="font-bold text-sm text-white truncate max-w-[250px]">Beli: {checkoutProduct.title}</h3>
+                                    <button onClick={() => setCheckoutProduct(null)} className="text-slate-400 hover:text-white transition"><i className="fa-solid fa-xmark text-lg"></i></button>
                                 </div>
 
                                 {checkoutStep === 1 && (
                                     <div className="space-y-3">
-                                        <input type="text" placeholder="Nama Lengkap *" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500" />
-                                        <input type="email" placeholder="Email Aktif *" value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500" />
-                                        <button onClick={() => { if(!buyerName || !buyerEmail) return showToast("Isi data pembeli!"); setCheckoutStep(2); }} className="w-full bg-indigo-600 font-bold text-xs py-3 rounded-xl hover:bg-indigo-500 transition">Lanjut ke Pembayaran</button>
+                                        <div className="bg-indigo-950/30 border border-indigo-500/20 p-2.5 rounded-xl text-xs text-indigo-300">
+                                            Isi data pembeli di bawah ini untuk menerima akses e-book/produk digital Anda.
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] text-slate-300 mb-1">Nama Lengkap *</label>
+                                            <input type="text" placeholder="Masukkan nama lengkap" value={buyerName} onChange={e => setBuyerName(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500" required />
+                                        </div>
+                                        <div>
+                                            <label className="block text-[11px] text-slate-300 mb-1">Email Aktif *</label>
+                                            <input type="email" placeholder="contoh@email.com" value={buyerEmail} onChange={e => setBuyerEmail(e.target.value)} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-indigo-500" required />
+                                        </div>
+                                        <button onClick={() => { if(!buyerName || !buyerEmail) return showToast("⚠️ Isi nama dan email pembeli terlebih dahulu!"); setCheckoutStep(2); }} className="w-full bg-indigo-600 font-bold text-xs py-3 rounded-xl hover:bg-indigo-500 transition shadow-lg shadow-indigo-500/20">Lanjut ke Pembayaran</button>
                                     </div>
                                 )}
 
                                 {checkoutStep === 2 && (
                                     <div className="space-y-3 text-xs">
-                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer hover:border-indigo-500/50">
+                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer hover:border-indigo-500/50 transition">
                                             <input type="radio" checked={selectedPayment === 'bank'} onChange={() => setSelectedPayment('bank')} className="accent-indigo-500" />
                                             <div><strong>Transfer Bank BRI</strong></div>
                                         </label>
-                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer hover:border-indigo-500/50">
+                                        <label className="flex items-center gap-3 p-3 rounded-xl border border-slate-800 bg-slate-950 cursor-pointer hover:border-indigo-500/50 transition">
                                             <input type="radio" checked={selectedPayment === 'dana'} onChange={() => setSelectedPayment('dana')} className="accent-indigo-500" />
                                             <div><strong>Transfer DANA</strong></div>
                                         </label>
                                         <div className="flex gap-2">
                                             <button onClick={() => setCheckoutStep(1)} className="w-1/3 bg-slate-800 hover:bg-slate-700 py-2.5 rounded-xl transition">Kembali</button>
-                                            <button onClick={() => setCheckoutStep(3)} className="w-2/3 bg-indigo-600 hover:bg-indigo-500 font-bold py-2.5 rounded-xl transition">Lihat No. Rekening</button>
+                                            <button onClick={() => setCheckoutStep(3)} className="w-2/3 bg-indigo-600 hover:bg-indigo-500 font-bold py-2.5 rounded-xl transition">Lihat Rekening Pembayaran</button>
                                         </div>
                                     </div>
                                 )}
 
                                 {checkoutStep === 3 && (
                                     <div className="text-center space-y-4 text-xs">
-                                        <div className="bg-amber-500/10 p-2.5 rounded-xl text-amber-300 font-bold">Total Tagihan: {formatIDR(checkoutProduct.price)}</div>
+                                        <div className="bg-amber-500/10 p-2.5 rounded-xl text-amber-300 font-bold border border-amber-500/20">Total Tagihan: {formatIDR(checkoutProduct.price)}</div>
                                         
                                         {selectedPayment === 'bank' ? (
-                                            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-left">
+                                            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-left shadow-inner">
                                                 <div className="text-[10px] text-slate-400">Transfer Bank BRI:</div>
-                                                <div className="font-mono text-lg font-bold text-indigo-400">{creator.bankBriNorek}</div>
+                                                <div className="font-mono text-lg font-bold text-indigo-400 tracking-wider">{creator.bankBriNorek}</div>
                                                 <div>a/n {creator.bankBriNama}</div>
                                             </div>
                                         ) : (
-                                            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-left">
+                                            <div className="bg-slate-950 border border-slate-800 p-4 rounded-xl text-left shadow-inner">
                                                 <div className="text-[10px] text-slate-400">Transfer DANA:</div>
-                                                <div className="font-mono text-lg font-bold text-blue-400">{creator.danaNomor}</div>
+                                                <div className="font-mono text-lg font-bold text-blue-400 tracking-wider">{creator.danaNomor}</div>
                                                 <div>a/n {creator.danaNama}</div>
                                             </div>
                                         )}
 
-                                       <button onClick={handleCheckoutWhatsApp} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl transition">
-                                            <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran via WhatsApp
+                                       <button onClick={handleCheckoutWhatsApp} className="w-full bg-emerald-600 hover:bg-emerald-500 font-bold text-xs py-3 rounded-xl transition shadow-lg shadow-emerald-500/20">
+                                            <i className="fa-brands fa-whatsapp mr-1"></i> Konfirmasi Pembayaran (WhatsApp)
                                         </button>
                                     </div>
                                 )}
@@ -829,7 +959,7 @@
                     {/* MODAL EDIT PRODUK */}
                     {editProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-                            <form onSubmit={handleSaveProduct} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs">
+                            <form onSubmit={handleSaveProduct} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs max-h-[90vh] overflow-y-auto">
                                 <h3 className="font-bold text-white text-sm border-b border-slate-800 pb-2">Kelola Produk Digital</h3>
                                 <div>
                                     <label className="block text-slate-300 mb-1">Judul Produk</label>
@@ -858,8 +988,12 @@
                                     <input type="url" value={editProduct.coverUrl} onChange={e => setEditProduct({...editProduct, coverUrl: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
                                 </div>
                                 <div>
-                                    <label className="block text-slate-300 mb-1">Deskripsi</label>
+                                    <label className="block text-slate-300 mb-1">Deskripsi Singkat</label>
                                     <textarea rows="2" value={editProduct.description} onChange={e => setEditProduct({...editProduct, description: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500"></textarea>
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 mb-1">Penjelasan Detail & Isi E-Book</label>
+                                    <textarea rows="4" placeholder="• Bab 1: ...&#10;• Bab 2: ..." value={editProduct.details || ''} onChange={e => setEditProduct({...editProduct, details: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500"></textarea>
                                 </div>
                                 <div className="flex gap-2 pt-2">
                                     <button type="button" onClick={() => setEditProduct(null)} className="w-1/3 bg-slate-800 hover:bg-slate-700 transition py-2 rounded-xl">Batal</button>
@@ -884,7 +1018,7 @@
                                 </div>
                                 <div>
                                     <label className="block text-slate-300 mb-1">Teks Badge (Opsional)</label>
-                                    <input type="text" value={editLink.badge} onChange={e => setEditLink({...editLink, badge: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" />
+                                    <input type="text" value={editLink.badge} onChange={e => setEditLink({...editLink, badge: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500" placeholder="Misal: BARU" />
                                 </div>
                                 <div className="flex gap-2 pt-2">
                                     <button type="button" onClick={() => setEditLink(null)} className="w-1/3 bg-slate-800 hover:bg-slate-700 transition py-2 rounded-xl">Batal</button>
