@@ -5,6 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produk Digital - Link in Bio & Digital Storefront</title>
     <meta id="meta-description" name="description" content="Koleksi artikel, tutorial, informasi, dan produk digital.">
+    <meta id="og-title" property="og:title" content="Blog & Inspirasi | Produk Digital">
+    <meta id="og-description" property="og:description" content="Koleksi artikel, tutorial, informasi, dan produk digital.">
+    <meta id="og-url" property="og:url" content="">
+    <meta id="og-image" property="og:image" content="">
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Produk Digital">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta id="twitter-title" name="twitter:title" content="Blog & Inspirasi | Produk Digital">
+    <meta id="twitter-description" name="twitter:description" content="Koleksi artikel, tutorial, informasi, dan produk digital.">
+    <meta id="twitter-image" name="twitter:image" content="">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -82,6 +92,32 @@
         .blog-tag { font-size:10px; padding:4px 8px; border-radius:999px; background:rgba(99,102,241,.12); border:1px solid rgba(99,102,241,.24); color:#a5b4fc; }
         .dropzone { border:1.5px dashed #475569; }
         .dropzone:hover { border-color:#6366f1; background:rgba(99,102,241,.05); }
+
+        /* ===== SHARE CARD WHATSAPP STATUS ===== */
+        .share-card-preview {
+            width: min(100%, 360px);
+            aspect-ratio: 4 / 5;
+            border-radius: 24px;
+            overflow: hidden;
+            position: relative;
+            background: radial-gradient(circle at 15% 10%, rgba(34,211,238,.25), transparent 32%), linear-gradient(160deg,#0f172a,#111827 58%,#052e2a);
+            border: 1px solid rgba(255,255,255,.10);
+            box-shadow: 0 24px 70px rgba(0,0,0,.45);
+            isolation: isolate;
+        }
+        .share-card-preview::after {
+            content:""; position:absolute; inset:0; pointer-events:none;
+            background:linear-gradient(180deg,rgba(2,6,23,.06) 0%,rgba(2,6,23,.02) 34%,rgba(2,6,23,.78) 76%,rgba(2,6,23,.97) 100%);
+            z-index:1;
+        }
+        .share-card-preview .scp-cover { position:absolute; inset:0 0 42% 0; width:100%; height:58%; object-fit:cover; opacity:.94; z-index:0; }
+        .share-card-preview .scp-content { position:absolute; inset:auto 22px 20px 22px; z-index:2; }
+        .share-card-preview .scp-brand { display:flex; align-items:center; gap:8px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a5f3fc; margin-bottom:10px; }
+        .share-card-preview .scp-title { font-size:24px; line-height:1.15; font-weight:900; color:white; text-shadow:0 2px 16px rgba(0,0,0,.5); }
+        .share-card-preview .scp-meta { font-size:10px; color:#cbd5e1; margin-top:9px; display:flex; gap:8px; flex-wrap:wrap; }
+        .share-card-preview .scp-cta { margin-top:14px; display:inline-flex; align-items:center; gap:7px; padding:8px 12px; border-radius:999px; background:linear-gradient(90deg,#06b6d4,#14b8a6); color:#fff; font-size:10px; font-weight:900; }
+        .share-card-preview-empty { display:flex; align-items:center; justify-content:center; height:58%; font-size:44px; color:#334155; }
+        @media (max-width:640px){ .share-card-preview .scp-title{font-size:21px;} .share-card-preview .scp-content{inset:auto 18px 18px 18px;} }
 
         .loader {
             border-top-color: #6366f1;
@@ -241,6 +277,9 @@
             const [commentText, setCommentText] = useState('');
             const [blogComments, setBlogComments] = useState([]);
             const [pendingComments, setPendingComments] = useState([]);
+            const [blogSharePost, setBlogSharePost] = useState(null);
+            const [blogSharePreviewUrl, setBlogSharePreviewUrl] = useState('');
+            const [blogShareBusy, setBlogShareBusy] = useState(false);
 
             // State Navigasi & Admin
             const [viewMode, setViewMode] = useState('store'); 
@@ -366,20 +405,52 @@
                 } else showToast('❌ Moderasi komentar gagal.');
             };
 
-            // SEO title dinamis sesuai halaman/artikel.
+            // SEO title dinamis sesuai halaman/artikel + metadata social.
             useEffect(() => {
                 const meta = document.getElementById('meta-description');
+                const ogTitle = document.getElementById('og-title');
+                const ogDesc = document.getElementById('og-description');
+                const ogUrl = document.getElementById('og-url');
+                const ogImage = document.getElementById('og-image');
+                const twTitle = document.getElementById('twitter-title');
+                const twDesc = document.getElementById('twitter-description');
+                const twImage = document.getElementById('twitter-image');
                 if (blogView === 'article' && selectedBlogPost) {
+                    const desc = plainTextFromHtml(selectedBlogPost.excerpt || selectedBlogPost.content_html || '').slice(0,155);
+                    const shareUrl = getBlogPostUrl(selectedBlogPost);
                     document.title = `${selectedBlogPost.title} | ${creator.name}`;
-                    if (meta) meta.content = selectedBlogPost.excerpt || plainTextFromHtml(selectedBlogPost.content_html || '').slice(0,155);
+                    if (meta) meta.content = desc;
+                    if (ogTitle) ogTitle.content = selectedBlogPost.title;
+                    if (ogDesc) ogDesc.content = desc;
+                    if (ogUrl) ogUrl.content = shareUrl;
+                    if (ogImage) ogImage.content = selectedBlogPost.cover_url || '';
+                    if (twTitle) twTitle.content = selectedBlogPost.title;
+                    if (twDesc) twDesc.content = desc;
+                    if (twImage) twImage.content = selectedBlogPost.cover_url || '';
                 } else if (blogView === 'home') {
                     document.title = `Blog & Inspirasi | ${creator.name}`;
-                    if (meta) meta.content = `Artikel, tutorial, informasi, inspirasi, dan wawasan dari ${creator.name}.`;
+                    const desc = `Artikel, tutorial, informasi, inspirasi, dan wawasan dari ${creator.name}.`;
+                    if (meta) meta.content = desc;
+                    if (ogTitle) ogTitle.content = document.title;
+                    if (ogDesc) ogDesc.content = desc;
+                    if (ogUrl) ogUrl.content = window.location.href.split('#')[0];
+                    if (twTitle) twTitle.content = document.title;
+                    if (twDesc) twDesc.content = desc;
+                    if (ogImage) ogImage.content = '';
+                    if (twImage) twImage.content = '';
                 } else {
                     document.title = `${creator.name} - Link in Bio & Digital Storefront`;
-                    if (meta) meta.content = creator.bio || 'Koleksi artikel, tutorial, informasi, dan produk digital.';
+                    const desc = creator.bio || 'Koleksi artikel, tutorial, informasi, dan produk digital.';
+                    if (meta) meta.content = desc;
+                    if (ogTitle) ogTitle.content = document.title;
+                    if (ogDesc) ogDesc.content = desc;
+                    if (ogUrl) ogUrl.content = window.location.href.split('#')[0];
+                    if (twTitle) twTitle.content = document.title;
+                    if (twDesc) twDesc.content = desc;
+                    if (ogImage) ogImage.content = creator.avatar || '';
+                    if (twImage) twImage.content = creator.avatar || '';
                 }
-            }, [blogView, selectedBlogPost, creator.name]);
+            }, [blogView, selectedBlogPost, creator.name, creator.bio, creator.avatar]);
 
             // Login Admin
             const handleLoginAdmin = async (e) => {
@@ -604,6 +675,221 @@
                     showToast("🎉 Terima kasih! Bonus Eksklusif berhasil dibuka.");
                 } catch (e) {
                     showToast("⚠️ Terjadi kesalahan saat mencatat pembagian.");
+                }
+            };
+
+            // ===== SHARE BLOG KE STATUS WHATSAPP =====
+            const getBlogPostUrl = (post) => {
+                const base = window.location.origin + window.location.pathname + window.location.search;
+                return `${base}#post/${encodeURIComponent(post.slug)}`;
+            };
+
+            const getBlogShareCaption = (post) => {
+                const url = getBlogPostUrl(post);
+                const excerpt = plainTextFromHtml(post.excerpt || post.content_html || '').slice(0, 180);
+                return `📚 *${post.title}*\n\n${excerpt}${excerpt.length >= 180 ? '…' : ''}\n\n🔗 Baca artikel lengkap:\n${url}\n\n✨ ${creator.name}`;
+            };
+
+            const loadImageForCanvas = (src) => new Promise((resolve) => {
+                if (!src) return resolve(null);
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                const timer = setTimeout(() => resolve(null), 7000);
+                img.onload = () => { clearTimeout(timer); resolve(img); };
+                img.onerror = () => { clearTimeout(timer); resolve(null); };
+                img.src = src;
+            });
+
+            const roundRectPath = (ctx, x, y, w, h, r) => {
+                const rr = Math.min(r, w / 2, h / 2);
+                ctx.beginPath();
+                ctx.moveTo(x + rr, y);
+                ctx.arcTo(x + w, y, x + w, y + h, rr);
+                ctx.arcTo(x + w, y + h, x, y + h, rr);
+                ctx.arcTo(x, y + h, x, y, rr);
+                ctx.arcTo(x, y, x + w, y, rr);
+                ctx.closePath();
+            };
+
+            const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines) => {
+                const words = String(text || '').split(/\s+/).filter(Boolean);
+                const lines = [];
+                let line = '';
+                for (const word of words) {
+                    const test = line ? `${line} ${word}` : word;
+                    if (ctx.measureText(test).width <= maxWidth) {
+                        line = test;
+                    } else {
+                        if (line) lines.push(line);
+                        line = word;
+                        if (lines.length >= maxLines) break;
+                    }
+                }
+                if (lines.length < maxLines && line) lines.push(line);
+                if (lines.length === maxLines && words.length > 0) {
+                    const visible = lines[lines.length - 1] || '';
+                    lines[lines.length - 1] = visible.replace(/[.,;:!?-]?$/, '') + '…';
+                }
+                lines.forEach((ln, i) => ctx.fillText(ln, x, y + (i * lineHeight)));
+                return lines.length;
+            };
+
+            const createBlogShareCard = async (post) => {
+                await (document.fonts?.ready || Promise.resolve());
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080;
+                canvas.height = 1350;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) throw new Error('Canvas tidak tersedia.');
+
+                const bg = ctx.createLinearGradient(0, 0, 1080, 1350);
+                bg.addColorStop(0, '#0b1220');
+                bg.addColorStop(.58, '#0f172a');
+                bg.addColorStop(1, '#052e2b');
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, 1080, 1350);
+
+                const glow1 = ctx.createRadialGradient(120, 90, 10, 120, 90, 430);
+                glow1.addColorStop(0, 'rgba(34,211,238,.36)');
+                glow1.addColorStop(1, 'rgba(34,211,238,0)');
+                ctx.fillStyle = glow1;
+                ctx.fillRect(0, 0, 600, 520);
+
+                const glow2 = ctx.createRadialGradient(940, 1220, 20, 940, 1220, 460);
+                glow2.addColorStop(0, 'rgba(20,184,166,.25)');
+                glow2.addColorStop(1, 'rgba(20,184,166,0)');
+                ctx.fillStyle = glow2;
+                ctx.fillRect(580, 900, 500, 450);
+
+                const coverH = 610;
+                const cover = await loadImageForCanvas(post.cover_url || '');
+                if (cover) {
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(0, 0, 1080, coverH);
+                    ctx.clip();
+                    const scale = Math.max(1080 / cover.width, coverH / cover.height);
+                    const dw = cover.width * scale;
+                    const dh = cover.height * scale;
+                    const dx = (1080 - dw) / 2;
+                    const dy = (coverH - dh) / 2;
+                    ctx.globalAlpha = .96;
+                    ctx.drawImage(cover, dx, dy, dw, dh);
+                    ctx.restore();
+                } else {
+                    const top = ctx.createLinearGradient(0, 0, 1080, coverH);
+                    top.addColorStop(0, 'rgba(15,23,42,.2)');
+                    top.addColorStop(1, 'rgba(6,78,59,.78)');
+                    ctx.fillStyle = top;
+                    ctx.fillRect(0, 0, 1080, coverH);
+                    ctx.fillStyle = 'rgba(255,255,255,.06)';
+                    ctx.font = '900 150px Inter, Arial, sans-serif';
+                    ctx.fillText('BLOG', 72, 320);
+                }
+
+                const overlay = ctx.createLinearGradient(0, 200, 0, 720);
+                overlay.addColorStop(0, 'rgba(2,6,23,0)');
+                overlay.addColorStop(1, 'rgba(2,6,23,.97)');
+                ctx.fillStyle = overlay;
+                ctx.fillRect(0, 120, 1080, 600);
+
+                roundRectPath(ctx, 62, 58, 350, 54, 27);
+                ctx.fillStyle = 'rgba(2,6,23,.62)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(165,243,252,.32)';
+                ctx.stroke();
+                ctx.fillStyle = '#a5f3fc';
+                ctx.font = '800 24px Inter, Arial, sans-serif';
+                ctx.fillText('✦ ' + String(creator.name || 'BLOG').toUpperCase().slice(0, 26), 84, 94);
+
+                const label = (post.labels || [])[0] || 'INFORMASI';
+                ctx.fillStyle = '#67e8f9';
+                ctx.font = '800 22px Inter, Arial, sans-serif';
+                ctx.fillText('#' + String(label).slice(0, 24), 68, 682);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 58px Inter, Arial, sans-serif';
+                const titleLines = drawWrappedText(ctx, String(post.title || 'Artikel Blog'), 68, 755, 944, 68, 3);
+
+                const bodyTop = 755 + (titleLines * 68) + 26;
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '500 24px Inter, Arial, sans-serif';
+                const excerpt = plainTextFromHtml(post.excerpt || post.content_html || '').slice(0, 210);
+                drawWrappedText(ctx, excerpt, 68, bodyTop, 920, 35, 3);
+
+                roundRectPath(ctx, 68, 1168, 944, 106, 24);
+                const cta = ctx.createLinearGradient(68, 1168, 1012, 1274);
+                cta.addColorStop(0, '#0891b2');
+                cta.addColorStop(1, '#059669');
+                ctx.fillStyle = cta;
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 26px Inter, Arial, sans-serif';
+                ctx.fillText('Baca selengkapnya di website', 102, 1212);
+                ctx.font = '600 21px Inter, Arial, sans-serif';
+                ctx.fillText(window.location.host || 'website Anda', 102, 1248);
+                ctx.font = '900 23px Inter, Arial, sans-serif';
+                ctx.fillText('↗', 944, 1228);
+
+                return canvas;
+            };
+
+            const prepareBlogShare = async (post) => {
+                setBlogSharePost(post);
+                setBlogShareBusy(true);
+                try {
+                    const canvas = await createBlogShareCard(post);
+                    setBlogSharePreviewUrl(canvas.toDataURL('image/png', 1.0));
+                } catch (e) {
+                    console.warn('Share card preview:', e);
+                    setBlogSharePreviewUrl('');
+                } finally {
+                    setBlogShareBusy(false);
+                }
+            };
+
+            const downloadBlogShareCard = async (post = blogSharePost) => {
+                if (!post) return;
+                try {
+                    const canvas = await createBlogShareCard(post);
+                    canvas.toBlob((blob) => {
+                        if (!blob) return;
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${slugify(post.title || 'artikel')}-status-wa.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        setTimeout(() => URL.revokeObjectURL(url), 1500);
+                    }, 'image/png');
+                } catch (e) {
+                    showToast('❌ Kartu share gagal dibuat.');
+                }
+            };
+
+            const shareBlogToWhatsAppStatus = async (post) => {
+                if (!post) return;
+                setBlogShareBusy(true);
+                try {
+                    const canvas = await createBlogShareCard(post);
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+                    const caption = getBlogShareCaption(post);
+                    if (blob && navigator.share && navigator.canShare) {
+                        const file = new File([blob], `${slugify(post.title || 'artikel')}-status-wa.png`, { type: 'image/png' });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({ files: [file], title: post.title, text: caption });
+                            showToast('✅ Pilih WhatsApp → Status Saya untuk mempublikasikan.');
+                            return;
+                        }
+                    }
+                    const waUrl = `https://wa.me/?text=${encodeURIComponent(caption)}`;
+                    window.open(waUrl, '_blank', 'noopener,noreferrer');
+                    showToast('✅ WhatsApp dibuka dengan judul dan link artikel. Simpan kartu gambar untuk Status.');
+                } catch (e) {
+                    if (e?.name !== 'AbortError') showToast('⚠️ Pembagian dibatalkan atau browser tidak mendukung.');
+                } finally {
+                    setBlogShareBusy(false);
                 }
             };
 
@@ -950,9 +1236,12 @@
                                                         </div>
                                                         <h2 className="text-xl md:text-2xl font-extrabold text-white leading-snug">{post.title}</h2>
                                                         <p className="text-xs md:text-sm text-slate-400 mt-2 line-clamp-3">{post.excerpt || plainTextFromHtml(post.content_html)}</p>
-                                                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-800">
+                                                                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-800 gap-2">
                                                             <span className="text-[10px] text-slate-500"><i className="fa-regular fa-calendar mr-1"></i>{new Date(post.published_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})} · {post.author_name || creator.name}</span>
-                                                            <span className="text-xs text-cyan-300 font-bold">Baca artikel <i className="fa-solid fa-arrow-right ml-1"></i></span>
+                                                            <div className="flex items-center gap-2 shrink-0">
+                                                                <button onClick={(e)=>{e.stopPropagation();prepareBlogShare(post);}} className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold"><i className="fa-brands fa-whatsapp mr-1"></i>WA Status</button>
+                                                                <span className="text-xs text-cyan-300 font-bold">Baca <i className="fa-solid fa-arrow-right ml-1"></i></span>
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </article>
@@ -991,9 +1280,10 @@
                                         <div className="flex flex-wrap gap-2 mb-4">{(selectedBlogPost.labels||[]).map(l=><span key={l} className="blog-tag">#{l}</span>)}</div>
                                         <h1 className="text-3xl md:text-5xl font-black text-white leading-tight">{selectedBlogPost.title}</h1>
                                         <div className="mt-4 text-xs text-slate-500"><i className="fa-regular fa-calendar mr-1"></i>{new Date(selectedBlogPost.published_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})} · {selectedBlogPost.author_name || creator.name}</div>
-                                        <div className="flex gap-2 mt-5 pb-5 border-b border-slate-800">
-                                            <button onClick={()=>navigator.share ? navigator.share({title:selectedBlogPost.title,url:window.location.href}) : navigator.clipboard.writeText(window.location.href).then(()=>showToast('✅ Link artikel disalin.'))} className="px-3 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 hover:text-white"><i className="fa-solid fa-share-nodes mr-1"></i> Bagikan</button>
-                                            <button onClick={()=>{navigator.clipboard.writeText(window.location.href);showToast('✅ Link permalink disalin.')}} className="px-3 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 hover:text-white"><i className="fa-solid fa-link mr-1"></i> Salin Link</button>
+                                        <div className="flex flex-wrap gap-2 mt-5 pb-5 border-b border-slate-800">
+                                            <button onClick={()=>prepareBlogShare(selectedBlogPost)} className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs text-white font-bold"><i className="fa-brands fa-whatsapp mr-1"></i> Status WhatsApp</button>
+                                            <button onClick={()=>navigator.share ? navigator.share({title:selectedBlogPost.title,text:getBlogShareCaption(selectedBlogPost),url:getBlogPostUrl(selectedBlogPost)}) : navigator.clipboard.writeText(getBlogShareCaption(selectedBlogPost)).then(()=>showToast('✅ Judul + caption artikel disalin.'))} className="px-3 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 hover:text-white"><i className="fa-solid fa-share-nodes mr-1"></i> Bagikan</button>
+                                            <button onClick={()=>{navigator.clipboard.writeText(getBlogPostUrl(selectedBlogPost));showToast('✅ Link permalink disalin')}} className="px-3 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 hover:text-white"><i className="fa-solid fa-link mr-1"></i> Salin Link</button>
                                         </div>
                                         <div className="article-body mt-7" dangerouslySetInnerHTML={{__html:sanitizeHtml(selectedBlogPost.content_html || '')}}></div>
                                     </div>
@@ -1296,6 +1586,48 @@
                             </div>
                         )}
                     </main>
+
+                    {/* MODAL SHARE ARTIKEL KE STATUS WHATSAPP */}
+                    {blogSharePost && (
+                        <div className="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
+                            <div className="bg-slate-900 border border-cyan-500/30 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-y-auto p-5 md:p-7 shadow-2xl">
+                                <div className="flex items-start justify-between gap-4 mb-5">
+                                    <div>
+                                        <div className="text-[10px] text-cyan-300 uppercase tracking-[0.18em] font-black">Share Card Artikel</div>
+                                        <h3 className="text-lg md:text-xl font-black text-white mt-1">Bagikan <span className="text-cyan-300">judul blog</span> ke Status WhatsApp</h3>
+                                        <p className="text-xs text-slate-400 mt-1">Kartu 4:5 dibuat agar judul artikel terlihat jelas saat dibagikan sebagai Status.</p>
+                                    </div>
+                                    <button onClick={()=>{setBlogSharePost(null);setBlogSharePreviewUrl('');}} className="text-slate-400 hover:text-white"><i className="fa-solid fa-xmark text-xl"></i></button>
+                                </div>
+                                <div className="grid md:grid-cols-[360px_1fr] gap-6 items-start">
+                                    <div className="flex justify-center">
+                                        {blogSharePreviewUrl ? <img src={blogSharePreviewUrl} alt="Preview share artikel" className="share-card-preview object-cover" /> : (
+                                            <div className="share-card-preview flex items-center justify-center">
+                                                <div className="text-center text-slate-500 text-xs px-8"><i className="fa-solid fa-wand-magic-sparkles text-3xl mb-3"></i><div>{blogShareBusy ? 'Membuat kartu share…' : 'Preview belum tersedia'}</div></div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="space-y-4">
+                                        <div className="bg-slate-950/70 border border-slate-800 rounded-2xl p-4">
+                                            <div className="text-[10px] uppercase tracking-wider font-bold text-slate-500 mb-2">Judul yang ikut dibagikan</div>
+                                            <div className="text-base font-extrabold text-white leading-snug">{blogSharePost.title}</div>
+                                            <div className="mt-3 text-xs text-slate-400 whitespace-pre-line leading-relaxed">{getBlogShareCaption(blogSharePost)}</div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <button disabled={blogShareBusy} onClick={()=>shareBlogToWhatsAppStatus(blogSharePost)} className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-bold text-xs py-3 rounded-xl"><i className="fa-brands fa-whatsapp mr-1.5"></i>{blogShareBusy ? 'Menyiapkan…' : 'Bagikan ke WhatsApp'}</button>
+                                            <button disabled={blogShareBusy} onClick={()=>downloadBlogShareCard(blogSharePost)} className="bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white font-bold text-xs py-3 rounded-xl"><i className="fa-solid fa-image mr-1.5"></i>Simpan Kartu Status</button>
+                                        </div>
+                                        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 p-4 text-[11px] text-slate-400 leading-relaxed">
+                                            <b className="text-amber-300">Tips:</b> di Android, tekan <b className="text-slate-200">Bagikan ke WhatsApp</b>, lalu pilih <b className="text-slate-200">Status Saya</b>. Bila browser tidak mendukung file sharing, simpan kartu gambar lalu upload ke Status WhatsApp secara manual.
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(blogSharePost.labels || []).slice(0,5).map(label=><span key={label} className="blog-tag">#{label}</span>)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     {/* MODAL KONFIRMASI SHARE VIRAL */}
                     {showShareModal && (
