@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Produk Digital - Link in Bio & Digital Storefront</title>
+    <meta id="meta-description" name="description" content="Koleksi artikel, tutorial, informasi, dan produk digital.">
     
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -62,6 +63,26 @@
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
         
+        /* ===== BLOG / CONTENT HUB ===== */
+        .blog-shell { max-width: 1180px; margin: 0 auto; padding: 30px 16px 80px; }
+        .blog-hero { background: radial-gradient(circle at 10% 10%, rgba(99,102,241,.35), transparent 35%), linear-gradient(135deg, #111827, #0f172a 65%, #111827); border:1px solid rgba(99,102,241,.25); }
+        .blog-cover { aspect-ratio: 16/9; object-fit: cover; width:100%; }
+        .article-body { color:#cbd5e1; line-height:1.9; font-size:.96rem; }
+        .article-body h1,.article-body h2,.article-body h3 { color:#fff; margin:1.4em 0 .55em; line-height:1.3; }
+        .article-body p { margin: .9em 0; }
+        .article-body img { max-width:100%; height:auto; border-radius:14px; margin:1rem 0; }
+        .article-body a { color:#818cf8; text-decoration:underline; }
+        .article-body blockquote { border-left:4px solid #6366f1; padding:.6rem 1rem; margin:1rem 0; background:rgba(99,102,241,.08); border-radius:0 10px 10px 0; }
+        .article-body pre { overflow:auto; background:#020617; border:1px solid #1e293b; padding:1rem; border-radius:12px; }
+        .article-body table { width:100%; border-collapse:collapse; display:block; overflow:auto; }
+        .article-body th,.article-body td { border:1px solid #334155; padding:.6rem; }
+        .line-clamp-3 { display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+        .blog-card { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+        .blog-card:hover { transform:translateY(-4px); border-color:rgba(99,102,241,.45); box-shadow:0 18px 40px rgba(0,0,0,.22); }
+        .blog-tag { font-size:10px; padding:4px 8px; border-radius:999px; background:rgba(99,102,241,.12); border:1px solid rgba(99,102,241,.24); color:#a5b4fc; }
+        .dropzone { border:1.5px dashed #475569; }
+        .dropzone:hover { border-color:#6366f1; background:rgba(99,102,241,.05); }
+
         .loader {
             border-top-color: #6366f1;
             -webkit-animation: spinner 1.5s linear infinite;
@@ -120,6 +141,88 @@
             return formatted;
         };
 
+        // ===== BLOG ENGINE: Blogger/Blogspot XML compatible =====
+        const escapeHtml = (value = '') => String(value)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+
+        const slugify = (text = '') => String(text).toLowerCase()
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-')
+            .replace(/-+/g, '-').slice(0, 90);
+
+        const plainTextFromHtml = (html = '') => {
+            const el = document.createElement('div');
+            el.innerHTML = html;
+            return (el.textContent || el.innerText || '').replace(/\s+/g, ' ').trim();
+        };
+
+        const getFirstImage = (html = '') => {
+            const m = String(html).match(/<img[^>]+src=["']([^"']+)["']/i);
+            return m ? m[1] : '';
+        };
+
+        const sanitizeHtml = (html = '') => {
+            const doc = new DOMParser().parseFromString(`<div id="safe-root">${html}</div>`, 'text/html');
+            doc.querySelectorAll('script,iframe,object,embed,style,link,meta,base,form,input,textarea,button').forEach(n => n.remove());
+            doc.querySelectorAll('*').forEach(el => {
+                [...el.attributes].forEach(attr => {
+                    const n = attr.name.toLowerCase();
+                    const v = attr.value || '';
+                    if (n.startsWith('on') || n === 'srcdoc' || ((n === 'href' || n === 'src') && /^\s*javascript:/i.test(v))) {
+                        el.removeAttribute(attr.name);
+                    }
+                });
+                if (el.tagName === 'A') {
+                    const href = el.getAttribute('href') || '';
+                    if (href && !/^(https?:|mailto:|tel:|\/|#)/i.test(href)) el.removeAttribute('href');
+                    el.setAttribute('target','_blank');
+                    el.setAttribute('rel','noopener noreferrer nofollow');
+                }
+            });
+            return doc.querySelector('#safe-root')?.innerHTML || '';
+        };
+
+        const extractBloggerEntries = (xmlText) => {
+            const xml = new DOMParser().parseFromString(xmlText, 'text/xml');
+            const parserError = xml.querySelector('parsererror');
+            if (parserError) throw new Error('File XML tidak valid.');
+            const entries = [...xml.getElementsByTagName('entry')];
+            const posts = [];
+            entries.forEach((entry, index) => {
+                const title = entry.getElementsByTagName('title')[0]?.textContent?.trim() || '';
+                const contentNode = entry.getElementsByTagName('content')[0];
+                const content = contentNode?.textContent || '';
+                const typeNode = [...entry.getElementsByTagName('category')].find(c => (c.getAttribute('scheme') || '').includes('kind') && c.getAttribute('term')?.includes('#post'));
+                const hasPostCategory = !!typeNode;
+                if (!title && !content) return;
+                if (entries.length > 0 && !hasPostCategory && !content) return;
+                const legacyId = entry.getElementsByTagName('id')[0]?.textContent?.trim() || `xml-${index}`;
+                const published = entry.getElementsByTagName('published')[0]?.textContent?.trim() || entry.getElementsByTagName('updated')[0]?.textContent?.trim() || new Date().toISOString();
+                const updated = entry.getElementsByTagName('updated')[0]?.textContent?.trim() || published;
+                const author = entry.getElementsByTagName('author')[0]?.getElementsByTagName('name')[0]?.textContent?.trim() || 'Admin';
+                const labels = [...entry.getElementsByTagName('category')].map(c => c.getAttribute('term')).filter(Boolean).filter(term => !term.includes('#'));
+                const clean = sanitizeHtml(content);
+                posts.push({
+                    legacy_id: legacyId,
+                    title: title || 'Tanpa Judul',
+                    slug: slugify(title) || `artikel-${index + 1}`,
+                    content_html: clean,
+                    excerpt: plainTextFromHtml(clean).slice(0, 220),
+                    cover_url: getFirstImage(clean),
+                    author_name: author,
+                    published_at: new Date(published).toISOString(),
+                    updated_at: new Date(updated).toISOString(),
+                    status: (() => {
+                        const draftNode = entry.getElementsByTagName('app:draft')[0] || entry.getElementsByTagName('draft')[0];
+                        return draftNode?.textContent?.trim().toLowerCase() === 'yes' ? 'draft' : 'published';
+                    })(),
+                    labels,
+                });
+            });
+            return posts;
+        };
+
         function App() {
             // State Utama
             const [isLoading, setIsLoading] = useState(true);
@@ -127,6 +230,17 @@
             const [links, setLinks] = useState([]);
             const [transactions, setTransactions] = useState([]);
             const [products, setProducts] = useState([]);
+            const [blogPosts, setBlogPosts] = useState([]);
+            const [blogView, setBlogView] = useState('store');
+            const [selectedBlogPost, setSelectedBlogPost] = useState(null);
+            const [blogSearch, setBlogSearch] = useState('');
+            const [blogCategory, setBlogCategory] = useState('Semua');
+            const [blogXmlFile, setBlogXmlFile] = useState(null);
+            const [blogImporting, setBlogImporting] = useState(false);
+            const [commentName, setCommentName] = useState('');
+            const [commentText, setCommentText] = useState('');
+            const [blogComments, setBlogComments] = useState([]);
+            const [pendingComments, setPendingComments] = useState([]);
 
             // State Navigasi & Admin
             const [viewMode, setViewMode] = useState('store'); 
@@ -208,6 +322,10 @@
 
                         const { data: txData } = await supabaseClient.from('transactions').select('*').order('date', { ascending: false });
                         if (txData) setTransactions(txData);
+
+                        const { data: blogData } = await supabaseClient.from('blog_posts')
+                            .select('*').eq('status', 'published').order('published_at', { ascending: false });
+                        if (blogData) setBlogPosts(blogData);
                     } catch (error) {
                         console.error("Terjadi kesalahan saat memuat data:", error);
                         showToast("⚠️ Gagal memuat data dari server, menampilkan data default.");
@@ -217,6 +335,51 @@
                 }
                 fetchAllData();
             }, []);
+
+            // URL hash membuat artikel mudah dibagikan seperti permalink Blogspot.
+            useEffect(() => {
+                const openFromHash = () => {
+                    const hash = window.location.hash.replace(/^#/, '');
+                    if (hash.startsWith('post/')) {
+                        const slug = decodeURIComponent(hash.slice(5));
+                        const found = blogPosts.find(p => p.slug === slug);
+                        if (found) { setSelectedBlogPost(found); setBlogView('article'); }
+                    }
+                };
+                openFromHash();
+                window.addEventListener('hashchange', openFromHash);
+                return () => window.removeEventListener('hashchange', openFromHash);
+            }, [blogPosts]);
+
+            useEffect(() => {
+                if (adminTab === 'blog' && isAdminUnlocked) {
+                    supabaseClient.from('blog_comments').select('*').eq('is_approved', false).order('created_at', {ascending:false})
+                        .then(({data}) => setPendingComments(data || []));
+                }
+            }, [adminTab, isAdminUnlocked]);
+
+            const moderateComment = async (commentId, approved) => {
+                const { error } = await supabaseClient.from('blog_comments').update({is_approved: approved}).eq('id', commentId);
+                if (!error) {
+                    setPendingComments(prev => prev.filter(c => c.id !== commentId));
+                    showToast(approved ? '✅ Komentar disetujui.' : '🗑️ Komentar ditolak.');
+                } else showToast('❌ Moderasi komentar gagal.');
+            };
+
+            // SEO title dinamis sesuai halaman/artikel.
+            useEffect(() => {
+                const meta = document.getElementById('meta-description');
+                if (blogView === 'article' && selectedBlogPost) {
+                    document.title = `${selectedBlogPost.title} | ${creator.name}`;
+                    if (meta) meta.content = selectedBlogPost.excerpt || plainTextFromHtml(selectedBlogPost.content_html || '').slice(0,155);
+                } else if (blogView === 'home') {
+                    document.title = `Blog & Inspirasi | ${creator.name}`;
+                    if (meta) meta.content = `Artikel, tutorial, informasi, inspirasi, dan wawasan dari ${creator.name}.`;
+                } else {
+                    document.title = `${creator.name} - Link in Bio & Digital Storefront`;
+                    if (meta) meta.content = creator.bio || 'Koleksi artikel, tutorial, informasi, dan produk digital.';
+                }
+            }, [blogView, selectedBlogPost, creator.name]);
 
             // Login Admin
             const handleLoginAdmin = async (e) => {
@@ -419,36 +582,110 @@
             };
 
             // Eksekusi Konfirmasi Share (Membuka Akses Bonus)
-            // Eksekusi Konfirmasi Share (Membuka Akses Bonus)
-const handleConfirmShare = async () => {
-    try {
-        // 1. OPTIMISTIC UPDATE: Langsung ubah state UI agar angka seketika bertambah
-        const currentLocalShare = creator.shareCount || 0;
-        const newLocalShare = currentLocalShare + 1;
-        
-        setCreator(prev => ({ ...prev, shareCount: newLocalShare }));
-        setIsBonusUnlocked(true);
-        setShowShareModal(false);
-        showToast("🎉 Terima kasih! Bonus Eksklusif berhasil dibuka.");
+            const handleConfirmShare = async () => {
+                try {
+                    // PERBAIKAN: Ambil angka shareCount paling aktual dari database terlebih dahulu
+                    const { data: latestData } = await supabaseClient.from('creator').select('shareCount').eq('id', 1).single();
+                    const currentShareCount = latestData ? (latestData.shareCount || 0) : (creator.shareCount || 0);
+                    const newShareCount = currentShareCount + 1;
+                    
+                    const { error } = await supabaseClient.from('creator')
+                        .update({ shareCount: newShareCount })
+                        .eq('id', 1);
+                    
+                    if(error) {
+                         console.error("Gagal update shareCount:", error);
+                    } else {
+                        setCreator(prev => ({ ...prev, shareCount: newShareCount }));
+                    }
 
-        // 2. BACKGROUND SYNC: Update database di balik layar
-        const { data: latestData } = await supabaseClient.from('creator').select('shareCount').eq('id', 1).single();
-        
-        // Ambil data paling aktual dari server untuk mencegah bentrok
-        const serverShareCount = latestData ? (latestData.shareCount || 0) : currentLocalShare;
-        const newServerShareCount = serverShareCount + 1;
-        
-        const { error } = await supabaseClient.from('creator')
-            .update({ shareCount: newServerShareCount })
-            .eq('id', 1);
-        
-        if (error) {
-            console.error("Gagal menyimpan share ke database:", error.message);
-        }
-    } catch (e) {
-        console.error("Error jaringan:", e);
-    }
-};
+                    setIsBonusUnlocked(true);
+                    setShowShareModal(false);
+                    showToast("🎉 Terima kasih! Bonus Eksklusif berhasil dibuka.");
+                } catch (e) {
+                    showToast("⚠️ Terjadi kesalahan saat mencatat pembagian.");
+                }
+            };
+
+            // ===== BLOG ACTIONS =====
+            const openBlogPost = async (post) => {
+                setSelectedBlogPost(post);
+                setBlogView('article');
+                window.location.hash = `post/${encodeURIComponent(post.slug)}`;
+                try { await supabaseClient.rpc('increment_blog_view', { p_slug: post.slug }); } catch (e) { console.warn('view counter:', e); }
+                try {
+                    const { data } = await supabaseClient.from('blog_comments').select('*').eq('post_slug', post.slug).eq('is_approved', true).order('created_at', { ascending: false });
+                    setBlogComments(data || []);
+                } catch (e) { setBlogComments([]); }
+            };
+
+            const backToBlog = () => {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+                setSelectedBlogPost(null);
+                setBlogView('home');
+            };
+
+            const submitBlogComment = async (e) => {
+                e.preventDefault();
+                if (!selectedBlogPost || !commentName.trim() || !commentText.trim()) return;
+                if (commentText.length > 1000) { showToast('❌ Komentar maksimal 1000 karakter.'); return; }
+                const payload = { post_slug: selectedBlogPost.slug, name: commentName.trim().slice(0, 80), comment: commentText.trim().slice(0, 1000) };
+                const { data, error } = await supabaseClient.from('blog_comments').insert(payload).select().single();
+                if (!error) {
+                    setBlogComments(prev => [{...data, is_approved:false}, ...prev]);
+                    setCommentName(''); setCommentText('');
+                    showToast('✅ Komentar terkirim dan menunggu moderasi.');
+                } else showToast('❌ Komentar gagal dikirim.');
+            };
+
+            const importBlogXml = async () => {
+                if (!blogXmlFile) { showToast('❌ Pilih file XML terlebih dahulu.'); return; }
+                setBlogImporting(true);
+                try {
+                    const text = await blogXmlFile.text();
+                    const imported = extractBloggerEntries(text);
+                    if (!imported.length) throw new Error('Tidak menemukan posting artikel dalam XML.');
+                    const used = new Set();
+                    const posts = imported.map((p, i) => {
+                        let s = p.slug || `artikel-${i+1}`;
+                        while (used.has(s)) s = `${p.slug}-${i+1}`;
+                        used.add(s);
+                        return {...p, slug:s};
+                    });
+                    const { error } = await supabaseClient.from('blog_posts').upsert(posts, { onConflict:'legacy_id' });
+                    if (error) throw error;
+                    const { data: fresh } = await supabaseClient.from('blog_posts').select('*').eq('status','published').order('published_at',{ascending:false});
+                    setBlogPosts(fresh || []);
+                    setBlogXmlFile(null);
+                    showToast(`✅ ${posts.length} artikel berhasil diimpor dari XML.`);
+                } catch (err) {
+                    console.error(err);
+                    showToast(`❌ Import XML gagal: ${err.message || 'format tidak dikenali.'}`);
+                } finally { setBlogImporting(false); }
+            };
+
+            const exportBlogXml = () => {
+                const esc = (s='') => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+                const entries = blogPosts.map(p => `\n<entry>\n<title>${esc(p.title)}</title>\n<id>${esc(p.legacy_id || `urn:custom:${p.id}`)}</id>\n<published>${new Date(p.published_at || Date.now()).toISOString()}</published>\n<updated>${new Date(p.updated_at || p.published_at || Date.now()).toISOString()}</updated>\n<author><name>${esc(p.author_name || creator.name)}</name></author>\n<content type="html">${esc(p.content_html || '')}</content>\n${(p.labels || []).map(l=>`<category scheme="http://www.blogger.com/atom/ns#" term="${esc(l)}"/>`).join('')}\n</entry>`).join('');
+                const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">${entries}\n</feed>`;
+                const blob = new Blob([xml], {type:'application/atom+xml;charset=utf-8'});
+                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='blog-backup.xml'; a.click(); URL.revokeObjectURL(a.href);
+            };
+
+            const blogCategories = useMemo(() => {
+                const out = new Set();
+                blogPosts.forEach(p => (p.labels || []).forEach(l => out.add(l)));
+                return ['Semua', ...Array.from(out).sort()];
+            }, [blogPosts]);
+
+            const filteredBlogPosts = useMemo(() => {
+                const q = blogSearch.trim().toLowerCase();
+                return blogPosts.filter(p => {
+                    const inCat = blogCategory === 'Semua' || (p.labels || []).includes(blogCategory);
+                    const hay = `${p.title} ${p.excerpt || ''} ${(p.labels || []).join(' ')}`.toLowerCase();
+                    return inCat && (!q || hay.includes(q));
+                });
+            }, [blogPosts, blogSearch, blogCategory]);
 
             const totalRevenue = useMemo(() => transactions.reduce((sum, tx) => sum + Number(tx.amount || 0), 0), [transactions]);
             
@@ -490,8 +727,11 @@ const handleConfirmShare = async () => {
                             </div>
 
                             <div className="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-                                <button onClick={() => setViewMode('store')} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'store' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                                <button onClick={() => { setViewMode('store'); setBlogView('store'); window.location.hash=''; }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${blogView === 'store' && viewMode === 'store' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
                                     <i className="fa-solid fa-store mr-1.5"></i>Toko
+                                </button>
+                                <button onClick={() => { setViewMode('store'); setBlogView('home'); window.location.hash=''; }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${blogView === 'home' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
+                                    <i className="fa-solid fa-newspaper mr-1.5"></i>Blog
                                 </button>
                                 <button onClick={() => { if(isAdminUnlocked) setViewMode('admin'); else setViewMode('pin_prompt'); }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'admin' || viewMode === 'pin_prompt' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
                                     <i className="fa-solid fa-lock mr-1.5"></i>Admin
@@ -528,7 +768,7 @@ const handleConfirmShare = async () => {
                         )}
 
                         {/* VIEW: STOREFRONT */}
-                        {viewMode === 'store' && (
+                        {viewMode === 'store' && blogView === 'store' && (
                             <div className="max-w-md mx-auto min-h-screen pb-20 px-4 pt-6">
                                 <div className="text-center flex flex-col items-center mb-6">
                                     <img src={creator.avatar} className="w-24 h-24 rounded-full object-cover ring-4 ring-indigo-500/40 p-1 bg-slate-900 mb-3 shadow-lg shadow-indigo-500/20" alt="Creator Avatar" />
@@ -598,6 +838,27 @@ const handleConfirmShare = async () => {
                                     )}
                                 </div>
 
+                                {/* BLOG TERBARU */}
+                                {blogPosts.length > 0 && (
+                                    <section className="mb-8">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-newspaper text-cyan-400 mr-1.5"></i> Artikel Terbaru</h2>
+                                            <button onClick={() => { setBlogView('home'); window.location.hash=''; }} className="text-[10px] text-cyan-300 hover:text-cyan-200">Lihat semua →</button>
+                                        </div>
+                                        <div className="space-y-3">
+                                            {blogPosts.slice(0,3).map(post => (
+                                                <button key={post.id} onClick={() => openBlogPost(post)} className="w-full text-left glass-card rounded-xl p-3 flex gap-3 hover:border-cyan-500/40 transition">
+                                                    {post.cover_url ? <img src={post.cover_url} className="w-20 h-16 rounded-lg object-cover" alt="" /> : <div className="w-20 h-16 rounded-lg bg-slate-800 flex items-center justify-center"><i className="fa-solid fa-newspaper text-slate-500"></i></div>}
+                                                    <div className="min-w-0">
+                                                        <div className="text-[10px] text-cyan-300 mb-1">{new Date(post.published_at).toLocaleDateString('id-ID')}</div>
+                                                        <div className="font-bold text-xs text-white line-clamp-3">{post.title}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </section>
+                                )}
+
                                 {/* PRODUCTS SECTION (Dengan Search Bar) */}
                                 <div className="mb-4 space-y-3">
                                     <div className="flex items-center justify-between">
@@ -655,6 +916,104 @@ const handleConfirmShare = async () => {
                             </div>
                         )}
 
+                        {/* VIEW: BLOG HOME / ARTICLE */}
+                        {viewMode === 'store' && blogView === 'home' && (
+                            <div className="blog-shell">
+                                <section className="blog-hero rounded-3xl p-7 md:p-10 mb-7 overflow-hidden relative">
+                                    <div className="absolute right-0 top-0 w-56 h-56 bg-cyan-400/10 blur-3xl rounded-full"></div>
+                                    <div className="relative max-w-3xl">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-400/10 text-cyan-300 border border-cyan-400/20 text-[10px] font-bold uppercase tracking-widest mb-4"><i className="fa-solid fa-sparkles"></i> Pusat Informasi</div>
+                                        <h1 className="text-3xl md:text-5xl font-black text-white leading-tight">Wawasan, Tutorial & Cerita dari {creator.name}</h1>
+                                        <p className="text-slate-300 mt-4 max-w-2xl text-sm md:text-base">Koleksi artikel yang membantu pengunjung menemukan informasi, tutorial, inspirasi, dan produk digital yang relevan.</p>
+                                        <div className="mt-6 flex flex-col sm:flex-row gap-3">
+                                            <div className="relative flex-1">
+                                                <i className="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-500 text-sm"></i>
+                                                <input value={blogSearch} onChange={e=>setBlogSearch(e.target.value)} placeholder="Cari artikel, tutorial, atau topik..." className="w-full bg-slate-950/70 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-cyan-500" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {filteredBlogPosts.length > 0 && (
+                                    <section className="grid md:grid-cols-12 gap-6">
+                                        <div className="md:col-span-8 space-y-6">
+                                            <div className="flex flex-wrap gap-2">
+                                                {blogCategories.map(c => <button key={c} onClick={()=>setBlogCategory(c)} className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${blogCategory===c?'bg-cyan-600 text-white':'bg-slate-900 text-slate-400 border border-slate-800 hover:border-slate-700'}`}>{c}</button>)}
+                                            </div>
+                                            {filteredBlogPosts.map((post, idx) => (
+                                                <article key={post.id} onClick={()=>openBlogPost(post)} className="glass-card blog-card rounded-2xl overflow-hidden cursor-pointer">
+                                                    {post.cover_url ? <img src={post.cover_url} className="blog-cover" alt={post.title} /> : <div className="blog-cover bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center"><i className="fa-solid fa-newspaper text-5xl text-slate-700"></i></div>}
+                                                    <div className="p-5 md:p-6">
+                                                        <div className="flex items-center gap-2 flex-wrap mb-2">
+                                                            {(post.labels || []).slice(0,4).map(l=><span key={l} className="blog-tag">#{l}</span>)}
+                                                            {idx===0 && <span className="blog-tag bg-emerald-500/10 text-emerald-300 border-emerald-500/20">Unggulan</span>}
+                                                        </div>
+                                                        <h2 className="text-xl md:text-2xl font-extrabold text-white leading-snug">{post.title}</h2>
+                                                        <p className="text-xs md:text-sm text-slate-400 mt-2 line-clamp-3">{post.excerpt || plainTextFromHtml(post.content_html)}</p>
+                                                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-800">
+                                                            <span className="text-[10px] text-slate-500"><i className="fa-regular fa-calendar mr-1"></i>{new Date(post.published_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})} · {post.author_name || creator.name}</span>
+                                                            <span className="text-xs text-cyan-300 font-bold">Baca artikel <i className="fa-solid fa-arrow-right ml-1"></i></span>
+                                                        </div>
+                                                    </div>
+                                                </article>
+                                            ))}
+                                        </div>
+                                        <aside className="md:col-span-4 space-y-5">
+                                            <div className="glass-card rounded-2xl p-5">
+                                                <h3 className="text-sm font-extrabold text-white mb-4">Tentang Blog</h3>
+                                                <p className="text-xs text-slate-400 leading-relaxed">Gunakan halaman ini sebagai pusat informasi. Artikel dari Blogger/Blogspot dapat dikoleksi ke database Supabase melalui import XML di panel admin.</p>
+                                            </div>
+                                            <div className="glass-card rounded-2xl p-5">
+                                                <h3 className="text-sm font-extrabold text-white mb-4">Kategori</h3>
+                                                <div className="space-y-2">{blogCategories.map(c=><button key={c} onClick={()=>setBlogCategory(c)} className="w-full flex items-center justify-between text-left text-xs text-slate-400 hover:text-white"><span>{c}</span><span className="text-slate-600">{c==='Semua'?blogPosts.length:blogPosts.filter(p=>(p.labels||[]).includes(c)).length}</span></button>)}</div>
+                                            </div>
+                                            <div className="glass-card rounded-2xl p-5">
+                                                <h3 className="text-sm font-extrabold text-white mb-3">Terhubung</h3>
+                                                <p className="text-xs text-slate-400 mb-3">Bagikan artikel yang bermanfaat agar lebih banyak pengunjung menemukan website Anda.</p>
+                                                <button onClick={()=>handleShareViral('wa')} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold py-2.5 rounded-xl"><i className="fa-brands fa-whatsapp mr-1"></i> Bagikan via WhatsApp</button>
+                                            </div>
+                                        </aside>
+                                    </section>
+                                )}
+
+                                {filteredBlogPosts.length === 0 && (
+                                    <div className="glass-card rounded-2xl p-12 text-center"><i className="fa-solid fa-newspaper text-5xl text-slate-700 mb-4"></i><p className="text-sm text-slate-400">Belum ada artikel yang cocok dengan pencarian.</p></div>
+                                )}
+                            </div>
+                        )}
+
+                        {viewMode === 'store' && blogView === 'article' && selectedBlogPost && (
+                            <div className="blog-shell">
+                                <button onClick={backToBlog} className="mb-5 text-xs font-semibold text-slate-400 hover:text-white"><i className="fa-solid fa-arrow-left mr-2"></i>Kembali ke Blog</button>
+                                <article className="max-w-4xl mx-auto glass-card rounded-3xl overflow-hidden">
+                                    {selectedBlogPost.cover_url ? <img src={selectedBlogPost.cover_url} className="blog-cover" alt={selectedBlogPost.title} /> : null}
+                                    <div className="p-6 md:p-10">
+                                        <div className="flex flex-wrap gap-2 mb-4">{(selectedBlogPost.labels||[]).map(l=><span key={l} className="blog-tag">#{l}</span>)}</div>
+                                        <h1 className="text-3xl md:text-5xl font-black text-white leading-tight">{selectedBlogPost.title}</h1>
+                                        <div className="mt-4 text-xs text-slate-500"><i className="fa-regular fa-calendar mr-1"></i>{new Date(selectedBlogPost.published_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})} · {selectedBlogPost.author_name || creator.name}</div>
+                                        <div className="flex gap-2 mt-5 pb-5 border-b border-slate-800">
+                                            <button onClick={()=>navigator.share ? navigator.share({title:selectedBlogPost.title,url:window.location.href}) : navigator.clipboard.writeText(window.location.href).then(()=>showToast('✅ Link artikel disalin.'))} className="px-3 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 hover:text-white"><i className="fa-solid fa-share-nodes mr-1"></i> Bagikan</button>
+                                            <button onClick={()=>{navigator.clipboard.writeText(window.location.href);showToast('✅ Link permalink disalin.')}} className="px-3 py-2 rounded-lg bg-slate-800 text-xs text-slate-300 hover:text-white"><i className="fa-solid fa-link mr-1"></i> Salin Link</button>
+                                        </div>
+                                        <div className="article-body mt-7" dangerouslySetInnerHTML={{__html:sanitizeHtml(selectedBlogPost.content_html || '')}}></div>
+                                    </div>
+                                </article>
+
+                                <div className="max-w-4xl mx-auto mt-6 grid md:grid-cols-3 gap-5">
+                                    <div className="md:col-span-2 glass-card rounded-2xl p-5">
+                                        <h3 className="font-extrabold text-white mb-4">Komentar Pengunjung</h3>
+                                        <form onSubmit={submitBlogComment} className="space-y-3 mb-6">
+                                            <input value={commentName} onChange={e=>setCommentName(e.target.value)} placeholder="Nama Anda" maxLength="80" required className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500" />
+                                            <textarea value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Tulis komentar yang bermanfaat..." maxLength="1000" rows="4" required className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-white outline-none focus:border-cyan-500"></textarea>
+                                            <button className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl"><i className="fa-regular fa-paper-plane mr-1"></i> Kirim Komentar</button>
+                                        </form>
+                                        <div className="space-y-3">{blogComments.filter(c=>c.is_approved).map(c=><div key={c.id} className="bg-slate-950/70 rounded-xl p-3 border border-slate-800"><div className="text-xs font-bold text-white">{c.name}</div><div className="text-[10px] text-slate-500 mb-2">{new Date(c.created_at).toLocaleString('id-ID')}</div><div className="text-xs text-slate-300 whitespace-pre-line">{c.comment}</div></div>)}</div>
+                                    </div>
+                                    <aside className="glass-card rounded-2xl p-5 h-fit"><h3 className="font-extrabold text-white mb-3">Artikel Lainnya</h3><div className="space-y-3">{blogPosts.filter(p=>p.id!==selectedBlogPost.id).slice(0,5).map(p=><button key={p.id} onClick={()=>openBlogPost(p)} className="w-full text-left"><div className="text-xs text-slate-200 font-semibold hover:text-cyan-300">{p.title}</div><div className="text-[10px] text-slate-500 mt-1">{new Date(p.published_at).toLocaleDateString('id-ID')}</div></button>)}</div></aside>
+                                </div>
+                            </div>
+                        )}
+
                         {/* VIEW: ADMIN PANEL */}
                         {viewMode === 'admin' && (
                             <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
@@ -682,6 +1041,7 @@ const handleConfirmShare = async () => {
                                     <button onClick={() => setAdminTab('products')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'products' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Kelola Produk ({products.length})</button>
                                     <button onClick={() => setAdminTab('links')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'links' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Tautan Bio ({links.length})</button>
                                     <button onClick={() => setAdminTab('orders')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'orders' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Riwayat Pesanan</button>
+                                    <button onClick={() => setAdminTab('blog')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'blog' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Blog & XML ({blogPosts.length})</button>
                                 </div>
 
                                 {/* ADMIN TAB: OVERVIEW */}
@@ -891,6 +1251,46 @@ const handleConfirmShare = async () => {
                                         ) : (
                                             <div className="text-center py-6 text-slate-500 text-xs italic">Belum ada riwayat pesanan.</div>
                                         )}
+                                    </div>
+                                )}
+                                {/* ADMIN TAB: BLOG & XML */}
+                                {adminTab === 'blog' && (
+                                    <div className="space-y-5">
+                                        <div className="grid lg:grid-cols-2 gap-5">
+                                            <div className="glass-card rounded-2xl p-6">
+                                                <h3 className="font-extrabold text-white text-sm">📦 Import database.xml / Blogger XML</h3>
+                                                <p className="text-xs text-slate-400 mt-2 leading-relaxed">Upload file export Blogger/Blogspot berformat Atom XML. Artikel, judul, isi HTML, label/kategori, penulis, dan tanggal akan dikoleksi ke tabel <code>blog_posts</code>.</p>
+                                                <label className="dropzone mt-4 rounded-2xl p-6 block text-center cursor-pointer">
+                                                    <input type="file" accept=".xml,text/xml,application/xml" onChange={e=>setBlogXmlFile(e.target.files?.[0]||null)} className="hidden" />
+                                                    <i className="fa-solid fa-file-arrow-up text-3xl text-cyan-400 mb-2"></i>
+                                                    <div className="text-xs font-bold text-white">{blogXmlFile ? blogXmlFile.name : 'Pilih database.xml'}</div>
+                                                    <div className="text-[10px] text-slate-500 mt-1">Klik untuk memilih file XML</div>
+                                                </label>
+                                                <button onClick={importBlogXml} disabled={blogImporting} className="w-full mt-3 bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-bold py-3 rounded-xl">{blogImporting ? 'Memproses XML...' : 'Import & Koleksi Artikel'}</button>
+                                            </div>
+                                            <div className="glass-card rounded-2xl p-6">
+                                                <h3 className="font-extrabold text-white text-sm">💾 Backup & Pengelolaan Konten</h3>
+                                                <p className="text-xs text-slate-400 mt-2">Simpan koleksi artikel website sebagai XML agar mudah dipindah atau dicadangkan.</p>
+                                                <div className="grid grid-cols-2 gap-2 mt-4">
+                                                    <button onClick={exportBlogXml} className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-3 rounded-xl"><i className="fa-solid fa-download mr-1"></i> Export XML</button>
+                                                    <button onClick={()=>{setBlogView('home');setViewMode('store');window.location.hash='';}} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl"><i className="fa-solid fa-globe mr-1"></i> Lihat Blog</button>
+                                                </div>
+                                                <div className="mt-4 bg-slate-950/70 rounded-xl border border-slate-800 p-4 text-[10px] text-slate-500 leading-relaxed">Tips: gunakan XML hasil export Blogger untuk memindahkan arsip lama ke website ini. Import berulang aman karena memakai <code>legacy_id</code> sebagai kunci upsert.</div>
+                                            </div>
+                                        </div>
+
+                                        <div className="glass-card rounded-2xl p-4 overflow-x-auto">
+                                            <div className="flex items-center justify-between mb-3"><h3 className="font-extrabold text-white text-sm">Artikel Terkoleksi ({blogPosts.length})</h3><span className="text-[10px] text-slate-500">SEO permalink: #post/slug</span></div>
+                                            <table className="w-full text-xs text-left">
+                                                <thead><tr className="border-b border-slate-800 text-slate-500"><th className="p-2">Judul</th><th className="p-2">Kategori</th><th className="p-2">Tanggal</th><th className="p-2">View</th></tr></thead>
+                                                <tbody>{blogPosts.map(p=><tr key={p.id} className="border-b border-slate-900"><td className="p-2 text-white font-semibold min-w-[250px]">{p.title}</td><td className="p-2 text-slate-400">{(p.labels||[]).join(', ') || '-'}</td><td className="p-2 text-slate-400">{new Date(p.published_at).toLocaleDateString('id-ID')}</td><td className="p-2 text-indigo-300">{p.views || 0}</td></tr>)}</tbody>
+                                            </table>
+                                        </div>
+
+                                        <div className="glass-card rounded-2xl p-4">
+                                            <div className="flex items-center justify-between mb-3"><h3 className="font-extrabold text-white text-sm">Komentar Menunggu Moderasi ({pendingComments.length})</h3><span className="text-[10px] text-amber-300">Periksa sebelum publikasi</span></div>
+                                            {pendingComments.length === 0 ? <div className="text-xs text-slate-500 py-4 text-center">Tidak ada komentar yang menunggu moderasi.</div> : <div className="space-y-3">{pendingComments.map(c => <div key={c.id} className="bg-slate-950/70 border border-slate-800 rounded-xl p-3"><div className="flex items-start justify-between gap-3"><div><div className="text-xs font-bold text-white">{c.name}</div><div className="text-[10px] text-slate-500">{new Date(c.created_at).toLocaleString('id-ID')} · #{c.post_slug}</div></div><div className="flex gap-2"><button onClick={()=>moderateComment(c.id,true)} className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg">Setujui</button><button onClick={()=>moderateComment(c.id,false)} className="bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold px-2.5 py-1.5 rounded-lg">Tolak</button></div></div><div className="text-xs text-slate-300 mt-2 whitespace-pre-line">{c.comment}</div></div>)}</div>}
+                                        </div>
                                     </div>
                                 )}
                             </div>
