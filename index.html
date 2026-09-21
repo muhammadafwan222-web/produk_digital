@@ -108,29 +108,6 @@
         .affiliate-item-desc{display:block;font-size:9px;color:#94a3b8;margin-top:2px}
         .affiliate-go{color:#94a3b8;font-size:11px}
         .affiliate-disclosure{font-size:9px;line-height:1.45;color:#64748b;margin-top:10px}
-        .affiliate-auto-overlay{position:fixed;inset:0;z-index:60;background:rgba(2,6,23,.76);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:18px;animation:affFadeIn .25s ease}
-        .affiliate-auto-modal{width:min(720px,100%);background:linear-gradient(145deg,#0f172a,#111827);border:1px solid rgba(52,211,153,.26);border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.5);overflow:hidden}
-        .affiliate-auto-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
-        .affiliate-auto-kicker{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#34d399}
-        .affiliate-auto-title{font-size:18px;font-weight:900;color:#fff;margin-top:4px}
-        .affiliate-auto-sub{font-size:10px;color:#94a3b8;margin-top:4px;line-height:1.45}
-        .affiliate-auto-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#111827;color:#94a3b8;cursor:pointer}
-        .affiliate-auto-body{padding:18px}
-        .affiliate-auto-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-        .affiliate-auto-card{display:block;text-decoration:none;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;background:rgba(2,6,23,.48);transition:transform .2s,border-color .2s,box-shadow .2s}
-        .affiliate-auto-card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.17);box-shadow:0 15px 32px rgba(0,0,0,.22)}
-        .affiliate-auto-card-top{display:flex;align-items:center;gap:10px}
-        .affiliate-auto-card .affiliate-icon{width:46px;height:46px;flex-basis:46px;border-radius:13px;font-size:21px}
-        .affiliate-auto-platform{font-size:12px;font-weight:900;color:#fff}
-        .affiliate-auto-label{font-size:9px;color:#94a3b8;margin-top:2px}
-        .affiliate-auto-cta{margin-top:12px;padding:9px 11px;border-radius:11px;text-align:center;font-size:10px;font-weight:900;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
-        .affiliate-auto-foot{padding:0 18px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-        .affiliate-auto-disclosure{font-size:9px;color:#64748b;line-height:1.45;max-width:80%}
-        .affiliate-auto-count{font-size:11px;font-weight:900;color:#fbbf24;white-space:nowrap}
-        @keyframes affFadeIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
-        @media(max-width:640px){.affiliate-auto-grid{grid-template-columns:1fr}.affiliate-auto-title{font-size:16px}.affiliate-auto-body{padding:14px}.affiliate-auto-head{padding:14px}.affiliate-auto-foot{padding:0 14px 14px}}
-        @media(max-width:900px){.affiliate-side{position:static}}
-
         /* ===== SHARE CARD WHATSAPP STATUS ===== */
         .share-card-preview {
             width: min(100%, 360px);
@@ -314,7 +291,7 @@
         };
 
 
-        const AffiliateSidebar = ({ post }) => (
+        const AffiliateSidebar = ({ post, affiliateLinks = [] }) => (
             <div className="affiliate-side">
                 <div className="affiliate-panel">
                     <div className="affiliate-panel-title"><i className="fa-solid fa-cart-shopping text-emerald-400"></i> Rekomendasi Produk</div>
@@ -352,10 +329,8 @@
             const [blogSharePost, setBlogSharePost] = useState(null);
             const [blogSharePreviewUrl, setBlogSharePreviewUrl] = useState('');
             const [blogShareBusy, setBlogShareBusy] = useState(false);
-            const [showAffiliateAutoModal, setShowAffiliateAutoModal] = useState(false);
-            const [affiliateLinks, setAffiliateLinks] = useState(AFFILIATE_LINKS);
+            const [affiliateLinks, setAffiliateLinks = useState(AFFILIATE_LINKS);
             const [editAffiliate, setEditAffiliate] = useState(null);
-            const [affiliateAutoCountdown, setAffiliateAutoCountdown] = useState(12);
 
             // State Navigasi & Admin
             const [viewMode, setViewMode] = useState('store'); 
@@ -473,51 +448,36 @@
             }, []);
 
 
-            // Auto affiliate: artikel tetap tampil penuh selama 20 detik.
-            // Setelah 20 detik, browser dicoba membuka Shopee + TikTok Shop
-            // pada tab baru tanpa menutup/menutupi artikel.
+            // Auto affiliate: biarkan artikel tampil normal selama 20 detik.
+            // Setelah 20 detik, coba buka maksimal 2 link affiliate aktif pada tab baru.
+            // Browser tetap berhak memblokir popup otomatis; artikel tidak boleh tertutup.
             useEffect(() => {
-                if (blogView !== 'article' || !selectedBlogPost) {
-                    setShowAffiliateAutoModal(false);
-                    return;
-                }
+                if (blogView !== 'article' || !selectedBlogPost) return;
 
                 const openedKey = `affiliateAutoOpened20s:${selectedBlogPost.slug}`;
                 if (sessionStorage.getItem(openedKey)) return;
 
                 const timer = setTimeout(() => {
                     const activeLinks = affiliateLinks
-                        .filter(x => x.active !== false && x.url)
+                        .filter(item => item && item.active !== false && item.url)
                         .slice(0, 2);
 
                     if (!activeLinks.length) return;
-
                     sessionStorage.setItem(openedKey, '1');
 
-                    let opened = 0;
                     activeLinks.forEach((item, index) => {
-                        // Jeda kecil agar browser memberi kesempatan pada masing-masing tab.
                         setTimeout(() => {
                             try {
-                                const win = window.open(item.url, '_blank');
-                                if (win) {
-                                    opened += 1;
-                                    try { win.opener = null; } catch (e) {}
+                                const popup = window.open(item.url, '_blank', 'noopener,noreferrer');
+                                if (popup) {
+                                    try { popup.opener = null; } catch (e) {}
                                     trackAffiliateClick(item, selectedBlogPost);
                                 }
                             } catch (e) {
                                 console.warn('Auto affiliate diblokir browser:', e);
                             }
-                        }, index * 350);
+                        }, index * 400);
                     });
-
-                    // Jika popup diblokir, blog tetap terbuka dan pengguna diberi
-                    // pilihan manual melalui sidebar yang sudah tersedia.
-                    setTimeout(() => {
-                        if (opened === 0) {
-                            showToast('ℹ️ Browser memblokir pembukaan otomatis. Link Shopee & TikTok tetap tersedia di sidebar.');
-                        }
-                    }, 1200);
                 }, 20000);
 
                 return () => clearTimeout(timer);
@@ -1531,7 +1491,7 @@
                                     </div>
                                 </article>
 
-                                <AffiliateSidebar post={selectedBlogPost} />
+                                <AffiliateSidebar post={selectedBlogPost} affiliateLinks={affiliateLinks} />
 
                                 </div>
 
@@ -1936,6 +1896,7 @@
                             </div>
                         )}
                     </main>
+
 
                     {/* MODAL SHARE ARTIKEL KE STATUS WHATSAPP */}
                     {blogSharePost && (
