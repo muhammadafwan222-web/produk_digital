@@ -157,6 +157,16 @@
         .share-card-preview-empty { display:flex; align-items:center; justify-content:center; height:58%; font-size:44px; color:#334155; }
         @media (max-width:640px){ .share-card-preview .scp-title{font-size:21px;} .share-card-preview .scp-content{inset:auto 18px 18px 18px;} }
 
+        /* ===== TAB MOTIVASI & KARTU STATUS WHATSAPP ===== */
+        .motivation-shell{max-width:1120px;margin:0 auto;padding:34px 16px 90px}
+        .motivation-hero{background:radial-gradient(circle at 12% 8%,rgba(251,191,36,.22),transparent 30%),radial-gradient(circle at 92% 85%,rgba(244,63,94,.16),transparent 32%),linear-gradient(145deg,#111827,#0f172a 64%,#1f172a);border:1px solid rgba(251,191,36,.18)}
+        .motivation-preview-frame{width:min(100%,390px);border-radius:28px;padding:10px;background:linear-gradient(145deg,rgba(251,191,36,.18),rgba(244,63,94,.08));border:1px solid rgba(255,255,255,.08);box-shadow:0 26px 80px rgba(0,0,0,.35)}
+        .motivation-preview-image{display:block;width:100%;aspect-ratio:9/16;object-fit:cover;border-radius:22px}
+        .motivation-quote-card{background:rgba(2,6,23,.55);border:1px solid rgba(255,255,255,.08);transition:transform .2s ease,border-color .2s ease,background .2s ease}
+        .motivation-quote-card:hover{transform:translateY(-2px);border-color:rgba(251,191,36,.28);background:rgba(2,6,23,.72)}
+        .motivation-pill{font-size:10px;padding:5px 9px;border-radius:999px;background:rgba(251,191,36,.10);border:1px solid rgba(251,191,36,.18);color:#fde68a;font-weight:800;letter-spacing:.04em}
+        @media(max-width:640px){.motivation-shell{padding-top:22px}.motivation-preview-frame{width:min(100%,340px)}}
+
         .loader {
             border-top-color: #6366f1;
             -webkit-animation: spinner 1.5s linear infinite;
@@ -219,6 +229,30 @@
                 localStorage.setItem(key,JSON.stringify(data.slice(0,500)));
             } catch(e) {}
         };
+
+        // ===== KOLEKSI MOTIVASI ORIGINAL UNTUK STATUS WHATSAPP =====
+        const MOTIVATION_QUOTES = [
+            { category:'Bisnis', title:'Mulai dari yang bisa dilakukan', quote:'Tidak harus langsung besar. Yang penting mulai, kerjakan, lalu perbaiki sedikit demi sedikit.', footer:'Langkah kecil tetap membawa kita maju.' },
+            { category:'Disiplin', title:'Konsisten lebih penting', quote:'Semangat bisa naik turun. Kebiasaan baik yang membuat pekerjaan tetap berjalan.', footer:'Tetap jalan, meski pelan.' },
+            { category:'Pantang Menyerah', title:'Jangan berhenti di tengah jalan', quote:'Hari yang sulit bukan tanda untuk berhenti. Bisa jadi itu bagian dari proses menuju hasil.', footer:'Istirahat boleh, menyerah jangan.' },
+            { category:'Rezeki & Usaha', title:'Usaha hari ini', quote:'Kerjakan bagianmu dengan jujur, rapi, dan sungguh-sungguh. Hasil akan mengikuti proses.', footer:'Beri yang terbaik pada hari ini.' },
+            { category:'Fokus', title:'Satu target, satu langkah', quote:'Jangan biarkan terlalu banyak tujuan membuat langkahmu berhenti. Pilih satu, kerjakan sampai selesai.', footer:'Fokus membuat energi lebih berarti.' },
+            { category:'Keberanian', title:'Berani mencoba', quote:'Kesempatan sering datang kepada orang yang mau mencoba sebelum merasa benar-benar siap.', footer:'Bergerak dulu, belajar sepanjang jalan.' },
+            { category:'Produktif', title:'Selesaikan yang penting', quote:'Hari yang produktif bukan tentang melakukan semuanya, tetapi menyelesaikan hal yang paling berarti.', footer:'Pilih yang penting. Kerjakan dengan tuntas.' },
+            { category:'Mental Juang', title:'Jatuh bukan akhir', quote:'Kesalahan adalah bagian dari perjalanan. Ambil pelajarannya, bangkit, lalu lanjutkan lagi.', footer:'Bangkit dengan pelajaran baru.' },
+            { category:'Pelanggan', title:'Layanan adalah investasi', quote:'Pelanggan mungkin lupa apa yang kita jual, tetapi mereka akan mengingat bagaimana kita melayani.', footer:'Layani dengan tulus, bangun kepercayaan.' },
+            { category:'Belajar', title:'Terus bertumbuh', quote:'Bisnis yang bertumbuh lahir dari orang yang mau belajar, bertanya, dan memperbaiki diri.', footer:'Setiap hari adalah ruang untuk berkembang.' },
+            { category:'Keuangan', title:'Uang perlu dikelola', quote:'Omzet penting, tetapi kebiasaan mencatat, mengatur, dan menjaga arus kas membuat bisnis lebih sehat.', footer:'Kelola hari ini, siapkan masa depan.' },
+            { category:'Pagi', title:'Hari baru, peluang baru', quote:'Tidak semua hari akan mudah. Tetapi setiap pagi memberi kesempatan untuk membuat satu hal menjadi lebih baik.', footer:'Mulai hari ini dengan niat yang baik.' },
+            { category:'Wirausaha', title:'Bangun perlahan', quote:'Bisnis yang kuat dibangun dari kepercayaan, pelayanan, dan kebiasaan baik yang dilakukan berulang-ulang.', footer:'Bangun fondasi, bukan hanya kecepatan.' },
+            { category:'Optimis', title:'Tetap percaya pada proses', quote:'Mungkin hasilnya belum terlihat sekarang. Teruskan proses yang benar dan beri waktu untuk bertumbuh.', footer:'Sabar bukan diam. Sabar adalah tetap bergerak.' },
+            { category:'Prioritas', title:'Kerjakan satu per satu', quote:'Banyak pekerjaan tidak harus selesai sekaligus. Pecah menjadi langkah kecil agar lebih ringan.', footer:'Satu langkah hari ini sudah cukup.' },
+            { category:'Syukur', title:'Hargai kemajuan', quote:'Jangan hanya melihat yang belum tercapai. Lihat juga seberapa jauh kamu sudah berjalan.', footer:'Syukuri kemajuan, lanjutkan perjalanan.' },
+            { category:'Jualan', title:'Jual solusi, bukan sekadar barang', quote:'Orang membeli karena ada kebutuhan yang ingin diselesaikan. Dengarkan dulu, lalu tawarkan solusi.', footer:'Pahami kebutuhan, hadirkan manfaat.' },
+            { category:'Keluarga', title:'Sukses juga tentang keseimbangan', quote:'Keberhasilan bukan hanya tentang angka. Waktu, kesehatan, hubungan, dan ketenangan juga punya nilai.', footer:'Bangun usaha tanpa kehilangan hal yang berharga.' },
+            { category:'Tekun', title:'Sedikit setiap hari', quote:'Kemajuan kecil yang dilakukan terus-menerus lebih kuat daripada rencana besar yang tidak pernah dimulai.', footer:'Sedikit, rutin, selesai.' },
+            { category:'Penutup', title:'Tetap melangkah', quote:'Apa pun yang terjadi hari ini, ambil pelajarannya dan jadikan besok satu langkah lebih baik.', footer:'Kita belum selesai. Kita sedang bertumbuh.' }
+        ];
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
         
@@ -356,6 +390,12 @@
             const [affiliateLinks, setAffiliateLinks] = useState(AFFILIATE_LINKS);
             const [editAffiliate, setEditAffiliate] = useState(null);
             const [affiliateAutoCountdown, setAffiliateAutoCountdown] = useState(12);
+
+            // State Motivasi / Status WhatsApp
+            const [selectedMotivation, setSelectedMotivation] = useState(MOTIVATION_QUOTES[0]);
+            const [motivationCategory, setMotivationCategory] = useState('Semua');
+            const [motivationPreviewUrl, setMotivationPreviewUrl] = useState('');
+            const [motivationShareBusy, setMotivationShareBusy] = useState(false);
 
             // State Navigasi & Admin
             const [viewMode, setViewMode] = useState('store'); 
@@ -509,10 +549,16 @@
             useEffect(() => {
                 const openFromHash = () => {
                     const hash = window.location.hash.replace(/^#/, '');
+                    if (hash === 'motivasi') {
+                        setSelectedBlogPost(null);
+                        setBlogView('store');
+                        setViewMode('motivation');
+                        return;
+                    }
                     if (hash.startsWith('post/')) {
                         const slug = decodeURIComponent(hash.slice(5));
                         const found = blogPosts.find(p => p.slug === slug);
-                        if (found) { setSelectedBlogPost(found); setBlogView('article'); }
+                        if (found) { setSelectedBlogPost(found); setBlogView('article'); setViewMode('store'); }
                     }
                 };
                 openFromHash();
@@ -1115,6 +1161,217 @@
                 }
             };
 
+            // ===== MOTIVASI / STATUS WHATSAPP =====
+            const motivationCategories = useMemo(() => ['Semua', ...Array.from(new Set(MOTIVATION_QUOTES.map(x => x.category)))], []);
+            const filteredMotivations = useMemo(() => {
+                return motivationCategory === 'Semua'
+                    ? MOTIVATION_QUOTES
+                    : MOTIVATION_QUOTES.filter(x => x.category === motivationCategory);
+            }, [motivationCategory]);
+
+            const getMotivationCaption = (item = selectedMotivation) => {
+                if (!item) return '';
+                const url = window.location.href.split('#')[0];
+                return `✨ *${item.title}*
+
+“${item.quote}”
+
+${item.footer}
+
+🌱 ${creator.name}
+🔗 ${url}`;
+            };
+
+            const createMotivationShareCard = async (item = selectedMotivation) => {
+                if (!item) throw new Error('Motivasi belum dipilih.');
+                await (document.fonts?.ready || Promise.resolve());
+                const canvas = document.createElement('canvas');
+                canvas.width = 1080;
+                canvas.height = 1920;
+                const ctx = canvas.getContext('2d');
+                if (!ctx) throw new Error('Canvas tidak tersedia.');
+
+                const bg = ctx.createLinearGradient(0, 0, 1080, 1920);
+                bg.addColorStop(0, '#0f172a');
+                bg.addColorStop(.48, '#111827');
+                bg.addColorStop(1, '#1f172a');
+                ctx.fillStyle = bg;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const glowA = ctx.createRadialGradient(160, 170, 20, 160, 170, 500);
+                glowA.addColorStop(0, 'rgba(251,191,36,.34)');
+                glowA.addColorStop(1, 'rgba(251,191,36,0)');
+                ctx.fillStyle = glowA;
+                ctx.fillRect(0, 0, 700, 650);
+
+                const glowB = ctx.createRadialGradient(920, 1680, 30, 920, 1680, 520);
+                glowB.addColorStop(0, 'rgba(244,63,94,.22)');
+                glowB.addColorStop(1, 'rgba(244,63,94,0)');
+                ctx.fillStyle = glowB;
+                ctx.fillRect(480, 1150, 600, 770);
+
+                // Dekorasi lingkaran
+                ctx.save();
+                ctx.globalAlpha = .24;
+                ctx.strokeStyle = '#fbbf24';
+                ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(950, 240, 116, 0, Math.PI*2); ctx.stroke();
+                ctx.beginPath(); ctx.arc(950, 240, 154, 0, Math.PI*2); ctx.stroke();
+                ctx.globalAlpha = .12;
+                ctx.fillStyle = '#f43f5e';
+                ctx.beginPath(); ctx.arc(132, 1660, 150, 0, Math.PI*2); ctx.fill();
+                ctx.restore();
+
+                const safeCreator = String(creator.name || 'Inspirasi').slice(0, 30);
+                roundRectPath(ctx, 72, 84, 420, 64, 32);
+                ctx.fillStyle = 'rgba(2,6,23,.60)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(251,191,36,.25)';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.fillStyle = '#fde68a';
+                ctx.font = '900 24px Inter, Arial, sans-serif';
+                ctx.fillText('✦ ' + safeCreator.toUpperCase(), 100, 124);
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '800 23px Inter, Arial, sans-serif';
+                ctx.fillText(String(item.category || 'MOTIVASI').toUpperCase().slice(0, 24), 76, 238);
+
+                ctx.fillStyle = '#fbbf24';
+                ctx.font = '900 54px Inter, Arial, sans-serif';
+                ctx.fillText('MOTIVASI HARI INI', 76, 310);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 76px Inter, Arial, sans-serif';
+                const titleLines = drawWrappedText(ctx, item.title, 76, 430, 900, 88, 3);
+
+                const quoteY = 430 + titleLines * 88 + 48;
+                roundRectPath(ctx, 72, quoteY - 46, 936, 690, 34);
+                ctx.fillStyle = 'rgba(2,6,23,.48)';
+                ctx.fill();
+                ctx.strokeStyle = 'rgba(255,255,255,.08)';
+                ctx.stroke();
+
+                ctx.fillStyle = '#fde68a';
+                ctx.font = '900 84px Georgia, serif';
+                ctx.fillText('“', 112, quoteY + 78);
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = '700 47px Inter, Arial, sans-serif';
+                const qLines = drawWrappedText(ctx, item.quote, 126, quoteY + 145, 840, 68, 7);
+
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '600 29px Inter, Arial, sans-serif';
+                drawWrappedText(ctx, item.footer, 126, quoteY + 145 + qLines * 68 + 60, 820, 42, 3);
+
+                const ctaY = 1550;
+                roundRectPath(ctx, 76, ctaY, 928, 150, 32);
+                const cta = ctx.createLinearGradient(76, ctaY, 1004, ctaY + 150);
+                cta.addColorStop(0, '#d97706');
+                cta.addColorStop(1, '#e11d48');
+                ctx.fillStyle = cta;
+                ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '900 32px Inter, Arial, sans-serif';
+                ctx.fillText('Simpan untuk Status WhatsApp', 116, ctaY + 62);
+                ctx.font = '600 24px Inter, Arial, sans-serif';
+                ctx.fillText('Bagikan semangat baik hari ini.', 116, ctaY + 104);
+
+                ctx.fillStyle = '#64748b';
+                ctx.font = '600 22px Inter, Arial, sans-serif';
+                ctx.fillText('9:16 • 1080 × 1920 px', 78, 1806);
+                ctx.textAlign = 'right';
+                ctx.fillText(safeCreator, 1002, 1806);
+                ctx.textAlign = 'left';
+
+                return canvas;
+            };
+
+            const prepareMotivationCard = async (item = selectedMotivation) => {
+                if (!item) return;
+                setMotivationShareBusy(true);
+                try {
+                    const canvas = await createMotivationShareCard(item);
+                    setMotivationPreviewUrl(canvas.toDataURL('image/png', 1.0));
+                } catch (e) {
+                    console.warn('Motivation card preview:', e);
+                    setMotivationPreviewUrl('');
+                } finally {
+                    setMotivationShareBusy(false);
+                }
+            };
+
+            const selectMotivation = (item) => {
+                setSelectedMotivation(item);
+                setMotivationPreviewUrl('');
+            };
+
+            const randomMotivation = () => {
+                const pool = filteredMotivations.length ? filteredMotivations : MOTIVATION_QUOTES;
+                const item = pool[Math.floor(Math.random() * pool.length)];
+                selectMotivation(item);
+            };
+
+            const downloadMotivationCard = async (item = selectedMotivation) => {
+                try {
+                    const canvas = await createMotivationShareCard(item);
+                    canvas.toBlob((blob) => {
+                        if (!blob) return;
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `${slugify(item.title || 'motivasi')}-status-wa.png`;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        setTimeout(() => URL.revokeObjectURL(url), 1500);
+                        showToast('✅ Kartu motivasi tersimpan. Siap diunggah ke Status WhatsApp.');
+                    }, 'image/png');
+                } catch (e) {
+                    showToast('❌ Kartu motivasi gagal dibuat.');
+                }
+            };
+
+            const shareMotivationToWhatsAppStatus = async (item = selectedMotivation) => {
+                if (!item) return;
+                setMotivationShareBusy(true);
+                try {
+                    const canvas = await createMotivationShareCard(item);
+                    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+                    const caption = getMotivationCaption(item);
+                    if (blob && navigator.share && navigator.canShare) {
+                        const file = new File([blob], `${slugify(item.title || 'motivasi')}-status-wa.png`, { type: 'image/png' });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({ files:[file], title:item.title, text:caption });
+                            showToast('✅ Lanjutkan dengan memilih WhatsApp → Status Saya.');
+                            return;
+                        }
+                    }
+                    window.open(`https://wa.me/?text=${encodeURIComponent(caption)}`, '_blank', 'noopener,noreferrer');
+                    showToast('✅ WhatsApp dibuka. Simpan kartu gambar untuk mengunggahnya sebagai Status.');
+                } catch (e) {
+                    if (e?.name !== 'AbortError') showToast('⚠️ Pembagian dibatalkan atau browser tidak mendukung.');
+                } finally {
+                    setMotivationShareBusy(false);
+                }
+            };
+
+            const copyMotivationCaption = async (item = selectedMotivation) => {
+                try {
+                    await navigator.clipboard.writeText(getMotivationCaption(item));
+                    showToast('✅ Caption motivasi berhasil disalin.');
+                } catch (e) {
+                    showToast('⚠️ Clipboard browser tidak tersedia.');
+                }
+            };
+
+            useEffect(() => {
+                if (viewMode !== 'motivation') return;
+                prepareMotivationCard(selectedMotivation);
+            }, [viewMode, selectedMotivation, creator.name]);
+
             // ===== BLOG ACTIONS =====
             const openBlogPost = async (post) => {
                 setSelectedBlogPost(post);
@@ -1234,12 +1491,15 @@
                                 <span className="font-bold text-sm text-white">{creator.name} Platform</span>
                             </div>
 
-                            <div className="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+                            <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 overflow-x-auto max-w-full whitespace-nowrap">
                                 <button onClick={() => { setViewMode('store'); setBlogView('store'); window.location.hash=''; }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${blogView === 'store' && viewMode === 'store' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
                                     <i className="fa-solid fa-store mr-1.5"></i>Toko
                                 </button>
                                 <button onClick={() => { setViewMode('store'); setBlogView('home'); window.location.hash=''; }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${blogView === 'home' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
                                     <i className="fa-solid fa-newspaper mr-1.5"></i>Blog
+                                </button>
+                                <button onClick={() => { setViewMode('motivation'); window.location.hash='motivasi'; }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'motivation' ? 'bg-amber-500 text-slate-950' : 'text-slate-400 hover:text-slate-200'}`}>
+                                    <i className="fa-solid fa-sun mr-1.5"></i>Motivasi
                                 </button>
                                 <button onClick={() => { if(isAdminUnlocked) setViewMode('admin'); else setViewMode('pin_prompt'); }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${viewMode === 'admin' || viewMode === 'pin_prompt' ? 'bg-purple-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}>
                                     <i className="fa-solid fa-lock mr-1.5"></i>Admin
@@ -1272,6 +1532,105 @@
                                     
                                     <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-500 font-bold text-xs py-3 rounded-xl transition">Buka Dashboard</button>
                                 </form>
+                            </div>
+                        )}
+
+                        {/* VIEW: MOTIVASI */}
+                        {viewMode === 'motivation' && (
+                            <div className="motivation-shell">
+                                <section className="motivation-hero rounded-3xl p-6 md:p-10 mb-7 overflow-hidden relative">
+                                    <div className="absolute -right-10 -top-10 w-56 h-56 bg-amber-400/10 blur-3xl rounded-full"></div>
+                                    <div className="relative max-w-4xl">
+                                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-400/10 text-amber-200 border border-amber-400/20 text-[10px] font-black uppercase tracking-widest">
+                                            <i className="fa-solid fa-sun"></i> Tab Motivasi
+                                        </div>
+                                        <h1 className="text-3xl md:text-5xl font-black text-white leading-tight mt-4">
+                                            Motivasi siap <span className="text-amber-300">Status WhatsApp</span>
+                                        </h1>
+                                        <p className="text-slate-300 mt-4 max-w-2xl text-sm md:text-base leading-relaxed">
+                                            Pilih kata-kata yang paling sesuai dengan suasana hari ini. Kartu otomatis dibuat vertikal 9:16 agar mudah disimpan dan dibagikan ke Status WhatsApp.
+                                        </p>
+                                    </div>
+                                </section>
+
+                                <div className="grid lg:grid-cols-[410px_minmax(0,1fr)] gap-6 items-start">
+                                    <div className="flex flex-col items-center gap-4">
+                                        <div className="motivation-preview-frame">
+                                            {motivationPreviewUrl ? (
+                                                <img src={motivationPreviewUrl} alt="Preview motivasi untuk Status WhatsApp" className="motivation-preview-image" />
+                                            ) : (
+                                                <div className="motivation-preview-image flex items-center justify-center bg-slate-950">
+                                                    <div className="text-center px-8">
+                                                        <i className="fa-solid fa-wand-magic-sparkles text-4xl text-amber-300 mb-3"></i>
+                                                        <div className="text-xs text-slate-500">{motivationShareBusy ? 'Membuat kartu motivasi…' : 'Preview belum tersedia'}</div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className="w-full grid grid-cols-2 gap-2">
+                                            <button onClick={()=>downloadMotivationCard()} disabled={motivationShareBusy} className="bg-cyan-600 hover:bg-cyan-500 disabled:opacity-50 text-white text-xs font-bold py-3 rounded-xl transition">
+                                                <i className="fa-solid fa-download mr-1.5"></i>Simpan Gambar
+                                            </button>
+                                            <button onClick={()=>shareMotivationToWhatsAppStatus()} disabled={motivationShareBusy} className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold py-3 rounded-xl transition">
+                                                <i className="fa-brands fa-whatsapp mr-1.5"></i>{motivationShareBusy ? 'Menyiapkan…' : 'WA Status'}
+                                            </button>
+                                        </div>
+                                        <button onClick={()=>copyMotivationCaption()} className="w-full bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-200 text-xs font-bold py-2.5 rounded-xl transition">
+                                            <i className="fa-solid fa-copy mr-1.5"></i>Salin Caption Motivasi
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-5">
+                                        <div className="glass-card rounded-2xl p-5">
+                                            <div className="flex items-center justify-between gap-3 mb-4">
+                                                <div>
+                                                    <h2 className="text-sm font-extrabold text-white">Pilih Tema Motivasi</h2>
+                                                    <p className="text-[10px] text-slate-500 mt-1">Filter berdasarkan suasana atau kebutuhan Anda.</p>
+                                                </div>
+                                                <button onClick={randomMotivation} className="bg-amber-500 hover:bg-amber-400 text-slate-950 text-[10px] font-black px-3 py-2 rounded-xl">
+                                                    <i className="fa-solid fa-shuffle mr-1"></i> Acak
+                                                </button>
+                                            </div>
+                                            <div className="flex gap-2 overflow-x-auto pb-1">
+                                                {motivationCategories.map(cat => (
+                                                    <button key={cat} onClick={()=>setMotivationCategory(cat)} className={`px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap ${motivationCategory===cat ? 'bg-amber-500 text-slate-950' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'}`}>
+                                                        {cat}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="grid sm:grid-cols-2 gap-3">
+                                            {filteredMotivations.map(item => (
+                                                <button key={`${item.category}-${item.title}`} onClick={()=>selectMotivation(item)} className={`motivation-quote-card text-left rounded-2xl p-4 ${selectedMotivation?.title===item.title ? 'border-amber-400/40 bg-amber-500/5' : ''}`}>
+                                                    <div className="flex items-start justify-between gap-2 mb-2">
+                                                        <span className="motivation-pill">#{item.category}</span>
+                                                        {selectedMotivation?.title===item.title && <i className="fa-solid fa-circle-check text-amber-300 text-sm"></i>}
+                                                    </div>
+                                                    <div className="font-extrabold text-sm text-white leading-snug">{item.title}</div>
+                                                    <p className="text-xs text-slate-400 leading-relaxed mt-2 line-clamp-3">“{item.quote}”</p>
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="glass-card rounded-2xl p-5">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-300">
+                                                    <i className="fa-brands fa-whatsapp"></i>
+                                                </div>
+                                                <div>
+                                                    <div className="text-sm font-extrabold text-white">Cara pakai untuk Status WA</div>
+                                                    <div className="text-[10px] text-slate-500 mt-1">Simpan gambar atau gunakan tombol bagikan dari HP.</div>
+                                                </div>
+                                            </div>
+                                            <div className="grid sm:grid-cols-3 gap-2 mt-4 text-[10px] text-slate-400">
+                                                <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3"><b className="text-slate-200 block mb-1">1. Pilih</b>Pilih tema motivasi yang sesuai.</div>
+                                                <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3"><b className="text-slate-200 block mb-1">2. Simpan</b>Tekan Simpan Gambar untuk menyimpan kartu.</div>
+                                                <div className="bg-slate-950/70 border border-slate-800 rounded-xl p-3"><b className="text-slate-200 block mb-1">3. Bagikan</b>Upload gambar ke Status WhatsApp.</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
