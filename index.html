@@ -319,7 +319,7 @@
                 <div className="affiliate-panel">
                     <div className="affiliate-panel-title"><i className="fa-solid fa-cart-shopping text-emerald-400"></i> Rekomendasi Produk</div>
                     <div className="affiliate-panel-sub">Tetap di halaman artikel sambil melihat referensi belanja dari partner affiliate kami.</div>
-                    {AFFILIATE_LINKS.filter(x=>x.url).map(item=>(
+                    {affiliateLinks.filter(x=>x.active !== false && x.url).map(item=>(
                         <a key={item.platform} href={item.url} target="_blank" rel="nofollow sponsored noopener noreferrer" className="affiliate-item" onClick={()=>trackAffiliateClick(item,post)}>
                             <div className={`affiliate-icon ${item.tone}`}><i className={item.icon}></i></div>
                             <div className="affiliate-item-main"><span className="affiliate-item-name">{item.title}</span><span className="affiliate-item-desc">{item.description}</span></div>
@@ -353,6 +353,8 @@
             const [blogSharePreviewUrl, setBlogSharePreviewUrl] = useState('');
             const [blogShareBusy, setBlogShareBusy] = useState(false);
             const [showAffiliateAutoModal, setShowAffiliateAutoModal] = useState(false);
+            const [affiliateLinks, setAffiliateLinks] = useState(AFFILIATE_LINKS);
+            const [editAffiliate, setEditAffiliate] = useState(null);
             const [affiliateAutoCountdown, setAffiliateAutoCountdown] = useState(12);
 
             // State Navigasi & Admin
@@ -439,6 +441,27 @@
                         const { data: blogData } = await supabaseClient.from('blog_posts')
                             .select('*').eq('status', 'published').order('published_at', { ascending: false });
                         if (blogData) setBlogPosts(blogData);
+
+                        // Affiliate multi-link: Supabase sebagai sumber utama, localStorage sebagai fallback.
+                        try {
+                            const { data: affiliateData, error: affiliateError } = await supabaseClient
+                                .from('affiliate_links')
+                                .select('*')
+                                .order('sort_order', { ascending: true })
+                                .order('id', { ascending: true });
+
+                            if (!affiliateError && Array.isArray(affiliateData) && affiliateData.length) {
+                                setAffiliateLinks(affiliateData);
+                            } else {
+                                const localAffiliate = JSON.parse(localStorage.getItem('bisniku7_affiliate_links') || '[]');
+                                if (Array.isArray(localAffiliate) && localAffiliate.length) setAffiliateLinks(localAffiliate);
+                            }
+                        } catch (affiliateLoadError) {
+                            try {
+                                const localAffiliate = JSON.parse(localStorage.getItem('bisniku7_affiliate_links') || '[]');
+                                if (Array.isArray(localAffiliate) && localAffiliate.length) setAffiliateLinks(localAffiliate);
+                            } catch (e) {}
+                        }
                     } catch (error) {
                         console.error("Terjadi kesalahan saat memuat data:", error);
                         showToast("⚠️ Gagal memuat data dari server, menampilkan data default.");
@@ -503,6 +526,98 @@
                         .then(({data}) => setPendingComments(data || []));
                 }
             }, [adminTab, isAdminUnlocked]);
+
+
+            const persistAffiliateLocal = (items) => {
+                try { localStorage.setItem('bisniku7_affiliate_links', JSON.stringify(items)); } catch(e) {}
+            };
+
+            const saveAffiliateLink = async (e) => {
+                e.preventDefault();
+                if (!editAffiliate) return;
+                const clean = {
+                    platform: editAffiliate.platform === 'TikTok Shop' ? 'TikTok Shop' : 'Shopee',
+                    title: String(editAffiliate.title || '').trim().slice(0, 120),
+                    description: String(editAffiliate.description || '').trim().slice(0, 220),
+                    url: String(editAffiliate.url || '').trim(),
+                    icon: editAffiliate.platform === 'TikTok Shop' ? 'fa-brands fa-tiktok' : 'fa-solid fa-bag-shopping',
+                    tone: editAffiliate.platform === 'TikTok Shop' ? 'tiktok' : 'shopee',
+                    active: editAffiliate.active !== false,
+                    sort_order: Number(editAffiliate.sort_order || 0)
+                };
+                if (!/^https?:\/\//i.test(clean.url)) {
+                    showToast('❌ URL affiliate harus diawali https:// atau http://');
+                    return;
+                }
+
+                let saved = false;
+                try {
+                    if (editAffiliate.id && !String(editAffiliate.id).startsWith('local-')) {
+                        const { data, error } = await supabaseClient.from('affiliate_links').update(clean).eq('id', editAffiliate.id).select().single();
+                        if (!error && data) {
+                            const next = affiliateLinks.map(x => x.id === editAffiliate.id ? data : x);
+                            setAffiliateLinks(next); persistAffiliateLocal(next); saved = true;
+                        }
+                    } else {
+                        const { data, error } = await supabaseClient.from('affiliate_links').insert([clean]).select().single();
+                        if (!error && data) {
+                            const next = [data, ...affiliateLinks];
+                            setAffiliateLinks(next); persistAffiliateLocal(next); saved = true;
+                        }
+                    }
+                } catch(e) {}
+
+                if (!saved) {
+                    const localItem = {
+                        ...clean,
+                        id: editAffiliate.id && String(editAffiliate.id).startsWith('local-') ? editAffiliate.id : `local-${Date.now()}`
+                    };
+                    const next = localItem.id && affiliateLinks.some(x => x.id === localItem.id)
+                        ? affiliateLinks.map(x => x.id === localItem.id ? localItem : x)
+                        : [localItem, ...affiliateLinks];
+                    setAffiliateLinks(next);
+                    persistAffiliateLocal(next);
+                    saved = true;
+                }
+
+                if (saved) {
+                    setEditAffiliate(null);
+                    showToast('✅ Affiliate berhasil disimpan.');
+                }
+            };
+
+            const deleteAffiliateLink = async (id) => {
+                if (!confirm('Hapus link affiliate ini?')) return;
+                let removed = false;
+                try {
+                    if (!String(id).startsWith('local-')) {
+                        const { error } = await supabaseClient.from('affiliate_links').delete().eq('id', id);
+                        removed = !error;
+                    } else removed = true;
+                } catch(e) {}
+                if (removed || String(id).startsWith('local-')) {
+                    const next = affiliateLinks.filter(x => x.id !== id);
+                    setAffiliateLinks(next);
+                    persistAffiliateLocal(next);
+                    showToast('🗑️ Affiliate dihapus.');
+                } else {
+                    showToast('❌ Gagal menghapus affiliate.');
+                }
+            };
+
+            const toggleAffiliateLink = async (item) => {
+                const updated = {...item, active: item.active === false};
+                setAffiliateLinks(prev => {
+                    const next = prev.map(x => x.id === item.id ? updated : x);
+                    persistAffiliateLocal(next);
+                    return next;
+                });
+                try {
+                    if (!String(item.id).startsWith('local-')) {
+                        await supabaseClient.from('affiliate_links').update({active: updated.active}).eq('id', item.id);
+                    }
+                } catch(e) {}
+            };
 
             const moderateComment = async (commentId, approved) => {
                 const { error } = await supabaseClient.from('blog_comments').update({is_approved: approved}).eq('id', commentId);
@@ -1432,6 +1547,9 @@
                                         <button onClick={() => setEditLink({ title: '', url: '', badge: '', highlight: false })} className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition shadow-lg shadow-purple-500/20">
                                             <i className="fa-solid fa-link mr-1"></i> Tambah Link Bio
                                         </button>
+                                        <button onClick={() => { setAdminTab('affiliate'); setEditAffiliate({ platform:'Shopee', title:'', description:'', url:'', active:true, sort_order:affiliateLinks.length }); }} className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition shadow-lg shadow-emerald-500/20">
+                                            <i className="fa-solid fa-cart-shopping mr-1"></i> Tambah Affiliate
+                                        </button>
                                         <button onClick={handleLogoutAdmin} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition shadow-lg shadow-red-500/20">
                                             <i className="fa-solid fa-right-from-bracket mr-1.5"></i> Keluar
                                         </button>
@@ -1445,6 +1563,7 @@
                                     <button onClick={() => setAdminTab('links')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'links' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Tautan Bio ({links.length})</button>
                                     <button onClick={() => setAdminTab('orders')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'orders' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Riwayat Pesanan</button>
                                     <button onClick={() => setAdminTab('blog')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'blog' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Blog & XML ({blogPosts.length})</button>
+                                    <button onClick={() => setAdminTab('affiliate')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'affiliate' ? 'bg-emerald-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Affiliate ({affiliateLinks.length})</button>
                                 </div>
 
                                 {/* ADMIN TAB: OVERVIEW */}
@@ -1656,6 +1775,106 @@
                                         )}
                                     </div>
                                 )}
+
+                                {/* ADMIN TAB: AFFILIATE */}
+                                {adminTab === 'affiliate' && (
+                                    <div className="space-y-5">
+                                        <div className="grid lg:grid-cols-[1fr_1.35fr] gap-5">
+                                            <form onSubmit={saveAffiliateLink} className="glass-card rounded-2xl p-6 space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <h3 className="font-extrabold text-white text-sm">Tambah / Edit Affiliate</h3>
+                                                        <p className="text-[10px] text-slate-500 mt-1">Anda bisa menambahkan banyak link Shopee dan TikTok Shop.</p>
+                                                    </div>
+                                                    <button type="button" onClick={() => setEditAffiliate(null)} className="text-slate-500 hover:text-white text-xs"><i className="fa-solid fa-rotate-left"></i></button>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-3 text-xs">
+                                                    <div>
+                                                        <label className="block text-slate-300 mb-1">Platform</label>
+                                                        <select value={editAffiliate?.platform || 'Shopee'} onChange={e=>setEditAffiliate({...editAffiliate, platform:e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none">
+                                                            <option>Shopee</option>
+                                                            <option>TikTok Shop</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label className="block text-slate-300 mb-1">Urutan</label>
+                                                        <input type="number" value={editAffiliate?.sort_order ?? 0} onChange={e=>setEditAffiliate({...editAffiliate, sort_order:e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none" />
+                                                    </div>
+                                                </div>
+
+                                                <div className="text-xs">
+                                                    <label className="block text-slate-300 mb-1">Judul Tampilan</label>
+                                                    <input type="text" value={editAffiliate?.title || ''} onChange={e=>setEditAffiliate({...editAffiliate, title:e.target.value})} placeholder="Contoh: Promo Shopee Pilihan" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none" required />
+                                                </div>
+
+                                                <div className="text-xs">
+                                                    <label className="block text-slate-300 mb-1">Keterangan</label>
+                                                    <textarea rows="2" value={editAffiliate?.description || ''} onChange={e=>setEditAffiliate({...editAffiliate, description:e.target.value})} placeholder="Contoh: Produk pilihan untuk kebutuhan harian." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none"></textarea>
+                                                </div>
+
+                                                <div className="text-xs">
+                                                    <label className="block text-slate-300 mb-1">Link Affiliate</label>
+                                                    <input type="url" value={editAffiliate?.url || ''} onChange={e=>setEditAffiliate({...editAffiliate, url:e.target.value})} placeholder="https://..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none" required />
+                                                </div>
+
+                                                <label className="flex items-center gap-2 text-xs text-slate-300 cursor-pointer">
+                                                    <input type="checkbox" checked={editAffiliate?.active !== false} onChange={e=>setEditAffiliate({...editAffiliate, active:e.target.checked})} className="w-4 h-4" />
+                                                    Tampilkan affiliate ini di blog
+                                                </label>
+
+                                                <button type="submit" disabled={!editAffiliate} className="w-full bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white font-bold text-xs py-3 rounded-xl">
+                                                    <i className="fa-solid fa-floppy-disk mr-1"></i> Simpan Affiliate
+                                                </button>
+                                                <p className="text-[9px] text-slate-500 leading-relaxed">Masukkan link affiliate resmi Anda. Setiap item dapat diaktifkan/nonaktifkan tanpa menghapusnya.</p>
+                                            </form>
+
+                                            <div className="glass-card rounded-2xl p-5">
+                                                <div className="flex items-center justify-between mb-3">
+                                                    <div>
+                                                        <h3 className="font-extrabold text-white text-sm">Daftar Affiliate</h3>
+                                                        <p className="text-[10px] text-slate-500 mt-1">Semua item aktif akan muncul di sidebar dan popup artikel.</p>
+                                                    </div>
+                                                    <button onClick={()=>setEditAffiliate({platform:'Shopee',title:'',description:'',url:'',active:true,sort_order:affiliateLinks.length})} className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold px-3 py-2 rounded-lg">
+                                                        <i className="fa-solid fa-plus mr-1"></i> Tambah
+                                                    </button>
+                                                </div>
+
+                                                {affiliateLinks.length === 0 ? (
+                                                    <div className="text-xs text-slate-500 py-8 text-center">Belum ada affiliate. Tambahkan Shopee atau TikTok Shop.</div>
+                                                ) : (
+                                                    <div className="space-y-2.5">
+                                                        {affiliateLinks
+                                                            .slice()
+                                                            .sort((a,b)=>(Number(a.sort_order||0)-Number(b.sort_order||0)))
+                                                            .map(item=>(
+                                                            <div key={item.id} className="bg-slate-950/70 border border-slate-800 rounded-xl p-3">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className={`affiliate-icon ${item.platform === 'TikTok Shop' ? 'tiktok' : 'shopee'}`}><i className={item.platform === 'TikTok Shop' ? 'fa-brands fa-tiktok' : 'fa-solid fa-bag-shopping'}></i></div>
+                                                                    <div className="min-w-0 flex-1">
+                                                                        <div className="flex items-center gap-2">
+                                                                            <span className="text-xs font-bold text-white truncate">{item.title || item.platform}</span>
+                                                                            <span className={`text-[9px] px-1.5 py-0.5 rounded-full ${item.active !== false ? 'bg-emerald-500/15 text-emerald-300' : 'bg-slate-800 text-slate-500'}`}>{item.active !== false ? 'Aktif' : 'Nonaktif'}</span>
+                                                                        </div>
+                                                                        <div className="text-[10px] text-slate-500 truncate">{item.platform} · {item.url}</div>
+                                                                    </div>
+                                                                    <div className="flex gap-1.5">
+                                                                        <button onClick={()=>toggleAffiliateLink(item)} className="bg-slate-800 hover:bg-slate-700 text-amber-300 text-[10px] px-2 py-1.5 rounded-lg" title="Aktif/nonaktif">
+                                                                            <i className={`fa-solid ${item.active !== false ? 'fa-eye-slash' : 'fa-eye'}`}></i>
+                                                                        </button>
+                                                                        <button onClick={()=>setEditAffiliate(item)} className="bg-slate-800 hover:bg-slate-700 text-indigo-300 text-[10px] px-2 py-1.5 rounded-lg">Edit</button>
+                                                                        <button onClick={()=>deleteAffiliateLink(item.id)} className="bg-slate-800 hover:bg-slate-700 text-red-400 text-[10px] px-2 py-1.5 rounded-lg">Hapus</button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* ADMIN TAB: BLOG & XML */}
                                 {adminTab === 'blog' && (
                                     <div className="space-y-5">
@@ -1713,7 +1932,7 @@
                                 </div>
                                 <div className="affiliate-auto-body">
                                     <div className="affiliate-auto-grid">
-                                        {AFFILIATE_LINKS.filter(x=>x.url).map(item=>(
+                                        {affiliateLinks.filter(x=>x.active !== false && x.url).map(item=>(
                                             <a key={item.platform} href={item.url} target="_blank" rel="nofollow sponsored noopener noreferrer" className="affiliate-auto-card" onClick={()=>trackAffiliateClick(item, selectedBlogPost)}>
                                                 <div className="affiliate-auto-card-top">
                                                     <div className={`affiliate-icon ${item.tone}`}><i className={item.icon}></i></div>
