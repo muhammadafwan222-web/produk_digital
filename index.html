@@ -93,6 +93,44 @@
         .dropzone { border:1.5px dashed #475569; }
         .dropzone:hover { border-color:#6366f1; background:rgba(99,102,241,.05); }
 
+        /* ===== AFFILIATE SIDEBAR SAAT MEMBACA ARTIKEL ===== */
+        .affiliate-side{position:sticky;top:92px;display:flex;flex-direction:column;gap:14px}
+        .affiliate-panel{background:radial-gradient(circle at 100% 0%,rgba(16,185,129,.16),transparent 38%),linear-gradient(145deg,rgba(15,23,42,.98),rgba(17,24,39,.94));border:1px solid rgba(148,163,184,.16);border-radius:18px;padding:14px;box-shadow:0 16px 34px rgba(0,0,0,.22)}
+        .affiliate-panel-title{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:900;color:#fff;margin-bottom:5px}
+        .affiliate-panel-sub{font-size:10px;color:#94a3b8;line-height:1.55;margin-bottom:12px}
+        .affiliate-item{display:flex;align-items:center;gap:10px;padding:10px;margin-top:9px;border-radius:13px;text-decoration:none;border:1px solid rgba(255,255,255,.07);transition:transform .2s ease,border-color .2s ease,background .2s ease}
+        .affiliate-item:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.17);background:rgba(255,255,255,.035)}
+        .affiliate-icon{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;flex:0 0 38px;font-size:18px;font-weight:900;color:#fff}
+        .affiliate-icon.shopee{background:linear-gradient(135deg,#f97316,#ef4444)}
+        .affiliate-icon.tiktok{background:linear-gradient(135deg,#111827,#334155);border:1px solid rgba(255,255,255,.08)}
+        .affiliate-item-main{min-width:0;flex:1}
+        .affiliate-item-name{display:block;font-size:11px;font-weight:800;color:#f8fafc}
+        .affiliate-item-desc{display:block;font-size:9px;color:#94a3b8;margin-top:2px}
+        .affiliate-go{color:#94a3b8;font-size:11px}
+        .affiliate-disclosure{font-size:9px;line-height:1.45;color:#64748b;margin-top:10px}
+        .affiliate-auto-overlay{position:fixed;inset:0;z-index:60;background:rgba(2,6,23,.76);backdrop-filter:blur(7px);display:flex;align-items:center;justify-content:center;padding:18px;animation:affFadeIn .25s ease}
+        .affiliate-auto-modal{width:min(720px,100%);background:linear-gradient(145deg,#0f172a,#111827);border:1px solid rgba(52,211,153,.26);border-radius:24px;box-shadow:0 28px 90px rgba(0,0,0,.5);overflow:hidden}
+        .affiliate-auto-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:17px 18px;border-bottom:1px solid rgba(255,255,255,.07)}
+        .affiliate-auto-kicker{font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;color:#34d399}
+        .affiliate-auto-title{font-size:18px;font-weight:900;color:#fff;margin-top:4px}
+        .affiliate-auto-sub{font-size:10px;color:#94a3b8;margin-top:4px;line-height:1.45}
+        .affiliate-auto-close{width:34px;height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.08);background:#111827;color:#94a3b8;cursor:pointer}
+        .affiliate-auto-body{padding:18px}
+        .affiliate-auto-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .affiliate-auto-card{display:block;text-decoration:none;border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px;background:rgba(2,6,23,.48);transition:transform .2s,border-color .2s,box-shadow .2s}
+        .affiliate-auto-card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,.17);box-shadow:0 15px 32px rgba(0,0,0,.22)}
+        .affiliate-auto-card-top{display:flex;align-items:center;gap:10px}
+        .affiliate-auto-card .affiliate-icon{width:46px;height:46px;flex-basis:46px;border-radius:13px;font-size:21px}
+        .affiliate-auto-platform{font-size:12px;font-weight:900;color:#fff}
+        .affiliate-auto-label{font-size:9px;color:#94a3b8;margin-top:2px}
+        .affiliate-auto-cta{margin-top:12px;padding:9px 11px;border-radius:11px;text-align:center;font-size:10px;font-weight:900;color:#fff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08)}
+        .affiliate-auto-foot{padding:0 18px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+        .affiliate-auto-disclosure{font-size:9px;color:#64748b;line-height:1.45;max-width:80%}
+        .affiliate-auto-count{font-size:11px;font-weight:900;color:#fbbf24;white-space:nowrap}
+        @keyframes affFadeIn{from{opacity:0;transform:scale(.98)}to{opacity:1;transform:scale(1)}}
+        @media(max-width:640px){.affiliate-auto-grid{grid-template-columns:1fr}.affiliate-auto-title{font-size:16px}.affiliate-auto-body{padding:14px}.affiliate-auto-head{padding:14px}.affiliate-auto-foot{padding:0 14px 14px}}
+        @media(max-width:900px){.affiliate-side{position:static}}
+
         /* ===== SHARE CARD WHATSAPP STATUS ===== */
         .share-card-preview {
             width: min(100%, 360px);
@@ -164,6 +202,22 @@
             bonusUrl: "https://drive.google.com/drive/folders/ID_FOLDER_ATAU_FILE",
             visitorCount: 0,
             shareCount: 0
+        };
+
+
+        // ===== KONFIGURASI AFFILIATE =====
+        // Ganti URL di bawah dengan link affiliate RESMI milik Anda.
+        const AFFILIATE_LINKS = [
+            { platform:'Shopee', title:'Rekomendasi Produk di Shopee', description:'Pilihan produk yang relevan dengan artikel.', url:'https://shopee.co.id/', icon:'fa-solid fa-bag-shopping', tone:'shopee' },
+            { platform:'TikTok Shop', title:'Belanja Pilihan di TikTok Shop', description:'Produk pilihan dan promo terbaru.', url:'https://www.tiktok.com/', icon:'fa-brands fa-tiktok', tone:'tiktok' }
+        ];
+        const trackAffiliateClick = (item, post) => {
+            try {
+                const key='bisniku7_affiliate_clicks';
+                const data=JSON.parse(localStorage.getItem(key)||'[]');
+                data.unshift({platform:item.platform,url:item.url,postTitle:post?.title||'',at:new Date().toISOString()});
+                localStorage.setItem(key,JSON.stringify(data.slice(0,500)));
+            } catch(e) {}
         };
 
         const formatIDR = (val) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val);
@@ -259,6 +313,24 @@
             return posts;
         };
 
+
+        const AffiliateSidebar = ({ post }) => (
+            <div className="affiliate-side">
+                <div className="affiliate-panel">
+                    <div className="affiliate-panel-title"><i className="fa-solid fa-cart-shopping text-emerald-400"></i> Rekomendasi Produk</div>
+                    <div className="affiliate-panel-sub">Tetap di halaman artikel sambil melihat referensi belanja dari partner affiliate kami.</div>
+                    {AFFILIATE_LINKS.filter(x=>x.url).map(item=>(
+                        <a key={item.platform} href={item.url} target="_blank" rel="nofollow sponsored noopener noreferrer" className="affiliate-item" onClick={()=>trackAffiliateClick(item,post)}>
+                            <div className={`affiliate-icon ${item.tone}`}><i className={item.icon}></i></div>
+                            <div className="affiliate-item-main"><span className="affiliate-item-name">{item.title}</span><span className="affiliate-item-desc">{item.description}</span></div>
+                            <i className="fa-solid fa-chevron-right affiliate-go"></i>
+                        </a>
+                    ))}
+                    <div className="affiliate-disclosure">Beberapa tautan merupakan tautan afiliasi. Jika terjadi pembelian melalui tautan tersebut, pemilik situs dapat menerima komisi tanpa biaya tambahan bagi pembeli.</div>
+                </div>
+            </div>
+        );
+
         function App() {
             // State Utama
             const [isLoading, setIsLoading] = useState(true);
@@ -280,6 +352,8 @@
             const [blogSharePost, setBlogSharePost] = useState(null);
             const [blogSharePreviewUrl, setBlogSharePreviewUrl] = useState('');
             const [blogShareBusy, setBlogShareBusy] = useState(false);
+            const [showAffiliateAutoModal, setShowAffiliateAutoModal] = useState(false);
+            const [affiliateAutoCountdown, setAffiliateAutoCountdown] = useState(12);
 
             // State Navigasi & Admin
             const [viewMode, setViewMode] = useState('store'); 
@@ -374,6 +448,39 @@
                 }
                 fetchAllData();
             }, []);
+
+
+            // Auto affiliate: tampil di dalam website 1,8 detik setelah artikel dibuka,
+            // lalu menutup otomatis setelah 12 detik.
+            useEffect(() => {
+                if (blogView !== 'article' || !selectedBlogPost) {
+                    setShowAffiliateAutoModal(false);
+                    return;
+                }
+                const openedKey = `affiliateAutoShown:${selectedBlogPost.slug}`;
+                if (sessionStorage.getItem(openedKey)) return;
+                const openTimer = setTimeout(() => {
+                    setAffiliateAutoCountdown(12);
+                    setShowAffiliateAutoModal(true);
+                    sessionStorage.setItem(openedKey, '1');
+                }, 1800);
+                return () => clearTimeout(openTimer);
+            }, [blogView, selectedBlogPost]);
+
+            useEffect(() => {
+                if (!showAffiliateAutoModal) return;
+                const countdownTimer = setInterval(() => {
+                    setAffiliateAutoCountdown(prev => {
+                        if (prev <= 1) {
+                            clearInterval(countdownTimer);
+                            setShowAffiliateAutoModal(false);
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+                return () => clearInterval(countdownTimer);
+            }, [showAffiliateAutoModal]);
 
             // URL hash membuat artikel mudah dibagikan seperti permalink Blogspot.
             useEffect(() => {
@@ -1274,7 +1381,9 @@
                         {viewMode === 'store' && blogView === 'article' && selectedBlogPost && (
                             <div className="blog-shell">
                                 <button onClick={backToBlog} className="mb-5 text-xs font-semibold text-slate-400 hover:text-white"><i className="fa-solid fa-arrow-left mr-2"></i>Kembali ke Blog</button>
-                                <article className="max-w-4xl mx-auto glass-card rounded-3xl overflow-hidden">
+                                <div className="max-w-6xl mx-auto grid lg:grid-cols-[minmax(0,1fr)_320px] gap-6 items-start">
+
+                                <article className="glass-card rounded-3xl overflow-hidden">
                                     {selectedBlogPost.cover_url ? <img src={selectedBlogPost.cover_url} className="blog-cover" alt={selectedBlogPost.title} /> : null}
                                     <div className="p-6 md:p-10">
                                         <div className="flex flex-wrap gap-2 mb-4">{(selectedBlogPost.labels||[]).map(l=><span key={l} className="blog-tag">#{l}</span>)}</div>
@@ -1288,6 +1397,10 @@
                                         <div className="article-body mt-7" dangerouslySetInnerHTML={{__html:sanitizeHtml(selectedBlogPost.content_html || '')}}></div>
                                     </div>
                                 </article>
+
+                                <AffiliateSidebar post={selectedBlogPost} />
+
+                                </div>
 
                                 <div className="max-w-4xl mx-auto mt-6 grid md:grid-cols-3 gap-5">
                                     <div className="md:col-span-2 glass-card rounded-2xl p-5">
@@ -1586,6 +1699,41 @@
                             </div>
                         )}
                     </main>
+
+                     {showAffiliateAutoModal && viewMode === 'store' && blogView === 'article' && selectedBlogPost && (
+                        <div className="affiliate-auto-overlay" role="dialog" aria-modal="true" aria-label="Rekomendasi affiliate">
+                            <div className="affiliate-auto-modal">
+                                <div className="affiliate-auto-head">
+                                    <div>
+                                        <div className="affiliate-auto-kicker"><i className="fa-solid fa-bolt mr-1"></i> Rekomendasi Belanja</div>
+                                        <div className="affiliate-auto-title">Pilihan produk saat Anda membaca</div>
+                                        <div className="affiliate-auto-sub">Artikel Anda tetap terbuka. Pilih Shopee atau TikTok Shop untuk melihat produk rekomendasi.</div>
+                                    </div>
+                                    <button className="affiliate-auto-close" onClick={()=>setShowAffiliateAutoModal(false)} aria-label="Tutup rekomendasi"><i className="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div className="affiliate-auto-body">
+                                    <div className="affiliate-auto-grid">
+                                        {AFFILIATE_LINKS.filter(x=>x.url).map(item=>(
+                                            <a key={item.platform} href={item.url} target="_blank" rel="nofollow sponsored noopener noreferrer" className="affiliate-auto-card" onClick={()=>trackAffiliateClick(item, selectedBlogPost)}>
+                                                <div className="affiliate-auto-card-top">
+                                                    <div className={`affiliate-icon ${item.tone}`}><i className={item.icon}></i></div>
+                                                    <div>
+                                                        <div className="affiliate-auto-platform">{item.platform}</div>
+                                                        <div className="affiliate-auto-label">Link affiliate resmi</div>
+                                                    </div>
+                                                </div>
+                                                <div className="affiliate-auto-cta"><i className="fa-solid fa-arrow-up-right-from-square mr-1"></i> Buka {item.platform}</div>
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="affiliate-auto-foot">
+                                    <div className="affiliate-auto-disclosure">Beberapa tautan merupakan tautan afiliasi. Jika terjadi pembelian melalui tautan tersebut, pemilik situs dapat menerima komisi tanpa biaya tambahan bagi pembeli.</div>
+                                    <div className="affiliate-auto-count">Tutup otomatis {affiliateAutoCountdown}s</div>
+                                </div>
+                            </div>
+                        </div>
+                     )}
 
                     {/* MODAL SHARE ARTIKEL KE STATUS WHATSAPP */}
                     {blogSharePost && (
