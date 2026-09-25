@@ -204,9 +204,6 @@
             shareCount: 0
         };
 
-
-        // ===== KONFIGURASI AFFILIATE =====
-        // Nilai default dipakai bila tabel affiliate_settings belum dibuat / belum berisi data.
         const DEFAULT_AFFILIATE_LINKS = [
             { platform:'Shopee', title:'Rekomendasi Produk di Shopee', description:'Pilihan produk yang relevan dengan artikel.', url:'https://shopee.co.id/', icon:'fa-solid fa-bag-shopping', tone:'shopee', enabled:true, sort_order:1 },
             { platform:'TikTok Shop', title:'Belanja Pilihan di TikTok Shop', description:'Produk pilihan dan promo terbaru.', url:'https://www.tiktok.com/', icon:'fa-brands fa-tiktok', tone:'tiktok', enabled:true, sort_order:2 }
@@ -237,6 +234,7 @@
                 return null;
             }
         };
+
         const trackAffiliateClick = (item, post) => {
             try {
                 const key='bisniku7_affiliate_clicks';
@@ -257,7 +255,6 @@
             return formatted;
         };
 
-        // ===== BLOG ENGINE: Blogger/Blogspot XML compatible =====
         const escapeHtml = (value = '') => String(value)
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
@@ -339,7 +336,6 @@
             return posts;
         };
 
-
         const AffiliateSidebar = ({ post, affiliateLinks = [] }) => (
             <div className="affiliate-side">
                 <div className="affiliate-panel">
@@ -384,6 +380,9 @@
             const [showAffiliateAutoModal, setShowAffiliateAutoModal] = useState(false);
             const [affiliateAutoCountdown, setAffiliateAutoCountdown] = useState(12);
 
+            // STATE BARU: DOKUMEN EDITOR BLOG
+            const [editBlogPost, setEditBlogPost] = useState(null);
+
             // State Navigasi & Admin
             const [viewMode, setViewMode] = useState('store'); 
             const [adminTab, setAdminTab] = useState('overview'); 
@@ -413,19 +412,16 @@
             const [isBonusUnlocked, setIsBonusUnlocked] = useState(false);
             const [showShareModal, setShowShareModal] = useState(false);
 
-            // Fungsi Notifikasi
             const showToast = (msg) => {
                 setToastMessage(msg);
                 setTimeout(() => setToastMessage(null), 3500);
             };
 
-            // Caption Viral Berantai
             const getViralCaption = () => {
                 const storeUrl = window.location.href;
                 return `🎁 *GRATIS! Akses Produk Digital Eksklusif dari ${creator.name}* 🚀\n\nSaya baru saja mengklaim bonus produk digital secara GRATIS!\n\nKamu juga bisa dapatkan sekarang:\n1. Klik link toko: ${storeUrl}\n2. Bagikan pesan ini ke teman/sosmed kamu\n3. Langsung unduh bonusnya!\n\n⚡ *Bantu bagikan ke yang lain agar semua bisa dapat bonus gratisnya!*`;
             };
 
-            // Fetch Data saat komponen dimuat
             useEffect(() => {
                 async function fetchAllData() {
                     setIsLoading(true);
@@ -438,9 +434,7 @@
                         const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id', 1).single();
                         
                         if (creatorData) {
-                            // PERBAIKAN: Menggunakan sessionStorage agar pengunjung valid bertambah jika membuka sesi baru
                             if (!sessionStorage.getItem('hasVisitedThisSession')) {
-                                // Ambil angka pengunjung paling terbaru di DB untuk mencegah bentrok
                                 const { data: latestData } = await supabaseClient.from('creator').select('visitorCount').eq('id', 1).single();
                                 const currentVisitorCount = latestData ? (latestData.visitorCount || 0) : (creatorData.visitorCount || 0);
                                 const newVisitorCount = currentVisitorCount + 1;
@@ -462,7 +456,6 @@
                         const { data: linkData } = await supabaseClient.from('links').select('*');
                         if (linkData) setLinks(linkData);
 
-                        // Affiliate publik: dibaca dari Supabase agar pengaturan Admin sinkron di semua perangkat.
                         const { data: affiliateData, error: affiliateError } = await supabaseClient
                             .from('affiliate_settings')
                             .select('*')
@@ -482,7 +475,7 @@
                         if (txData) setTransactions(txData);
 
                         const { data: blogData } = await supabaseClient.from('blog_posts')
-                            .select('*').eq('status', 'published').order('published_at', { ascending: false });
+                            .select('*').order('published_at', { ascending: false });
                         if (blogData) setBlogPosts(blogData);
                     } catch (error) {
                         console.error("Terjadi kesalahan saat memuat data:", error);
@@ -494,9 +487,6 @@
                 fetchAllData();
             }, []);
 
-
-            // Auto affiliate: tampil di dalam website 1,8 detik setelah artikel dibuka,
-            // lalu menutup otomatis setelah 12 detik.
             useEffect(() => {
                 if (blogView !== 'article' || !selectedBlogPost) {
                     setShowAffiliateAutoModal(false);
@@ -531,7 +521,6 @@
                 return () => clearInterval(countdownTimer);
             }, [showAffiliateAutoModal]);
 
-            // URL hash membuat artikel mudah dibagikan seperti permalink Blogspot.
             useEffect(() => {
                 const openFromHash = () => {
                     const hash = window.location.hash.replace(/^#/, '');
@@ -561,7 +550,6 @@
                 } else showToast('❌ Moderasi komentar gagal.');
             };
 
-            // SEO title dinamis sesuai halaman/artikel + metadata social.
             useEffect(() => {
                 const meta = document.getElementById('meta-description');
                 const ogTitle = document.getElementById('og-title');
@@ -608,7 +596,6 @@
                 }
             }, [blogView, selectedBlogPost, creator.name, creator.bio, creator.avatar]);
 
-            // Login Admin
             const handleLoginAdmin = async (e) => {
                 e.preventDefault();
                 setIsLoading(true);
@@ -629,7 +616,6 @@
                 setIsLoading(false);
             };
 
-            // Logout Admin
             const handleLogoutAdmin = async () => {
                 await supabaseClient.auth.signOut();
                 setIsAdminUnlocked(false);
@@ -637,21 +623,14 @@
                 showToast("🔒 Anda telah keluar.");
             };
 
-            // Simpan Profil
             const handleSaveCreator = async (e) => {
                 e.preventDefault();
-                
-                // PERBAIKAN: Hapus properti visitorCount dan shareCount dari objek yang akan disimpan
-                // agar Admin tidak menimpa / mereset data pengunjung jika ada pengunjung baru saat admin mengedit.
                 const { visitorCount, shareCount, ...safeCreatorData } = creator;
-                
                 const creatorToSave = { ...safeCreatorData, id: 1, whatsapp: formatWANumber(creator.whatsapp) };
                 
-                // Simpan tanpa menyentuh kolom visitorCount dan shareCount di database
                 const { error } = await supabaseClient.from('creator').update(creatorToSave).eq('id', 1);
                 
                 if (!error) {
-                    // Update state dengan aman tanpa merubah data angka
                     setCreator(prev => ({ ...prev, ...creatorToSave }));
                     showToast("✅ Pengaturan Profil & Rekening Berhasil Disimpan!");
                 } else {
@@ -660,7 +639,6 @@
                 }
             };
 
-            // Simpan Produk
             const handleSaveProduct = async (e) => {
                 e.preventDefault();
                 if (editProduct.id && !editProduct.id.toString().startsWith('prod-')) {
@@ -685,7 +663,6 @@
                 setEditProduct(null);
             };
 
-            // Hapus Produk
             const handleDeleteProduct = async (id) => {
                 if (confirm("Hapus produk ini secara permanen?")) {
                     const { error } = await supabaseClient.from('products').delete().eq('id', id);
@@ -696,7 +673,6 @@
                 }
             };
 
-            // Simpan Tautan (Link Bio)
             const handleSaveLink = async (e) => {
                 e.preventDefault();
                 if (editLink.id) {
@@ -720,7 +696,62 @@
                 setEditLink(null);
             };
 
-            // ===== PENGELOLAAN AFFILIATE =====
+            // FUNGSI BARU: MENYIMPAN ATAS EDIT ARTIKEL BLOG
+            const handleSaveBlogPost = async (e) => {
+                e.preventDefault();
+                if (!editBlogPost) return;
+
+                const labelsArray = Array.isArray(editBlogPost.labels) 
+                    ? editBlogPost.labels 
+                    : (editBlogPost.labels || '').split(',').map(s => s.trim()).filter(Boolean);
+
+                const payload = {
+                    title: editBlogPost.title,
+                    slug: editBlogPost.slug || slugify(editBlogPost.title),
+                    content_html: editBlogPost.content_html || '',
+                    excerpt: editBlogPost.excerpt || plainTextFromHtml(editBlogPost.content_html || '').slice(0, 220),
+                    cover_url: editBlogPost.cover_url || getFirstImage(editBlogPost.content_html || ''),
+                    author_name: editBlogPost.author_name || creator.name,
+                    published_at: editBlogPost.published_at || new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    status: editBlogPost.status || 'published',
+                    labels: labelsArray
+                };
+
+                if (editBlogPost.id) {
+                    const { error } = await supabaseClient.from('blog_posts').update(payload).eq('id', editBlogPost.id);
+                    if (!error) {
+                        setBlogPosts(blogPosts.map(p => p.id === editBlogPost.id ? { ...p, ...payload } : p));
+                        showToast("✅ Artikel berhasil diperbarui!");
+                    } else {
+                        showToast("❌ Gagal update artikel: " + error.message);
+                    }
+                } else {
+                    payload.legacy_id = `manual-${Date.now()}`;
+                    const { data, error } = await supabaseClient.from('blog_posts').insert([payload]).select();
+                    if (!error && data) {
+                        setBlogPosts([data[0], ...blogPosts]);
+                        showToast("🎉 Artikel baru berhasil diterbitkan!");
+                    } else {
+                        showToast("❌ Gagal tambah artikel: " + error.message);
+                    }
+                }
+                setEditBlogPost(null);
+            };
+
+            // FUNGSI BARU: MENGHAPUS ARTIKEL BLOG
+            const handleDeleteBlogPost = async (id) => {
+                if (confirm("Hapus artikel ini secara permanen?")) {
+                    const { error } = await supabaseClient.from('blog_posts').delete().eq('id', id);
+                    if (!error) {
+                        setBlogPosts(blogPosts.filter(p => p.id !== id));
+                        showToast("🗑️ Artikel berhasil dihapus.");
+                    } else {
+                        showToast("❌ Gagal hapus artikel: " + error.message);
+                    }
+                }
+            };
+
             const refreshAffiliateLinks = async () => {
                 const { data, error } = await supabaseClient
                     .from('affiliate_settings')
@@ -772,7 +803,6 @@
                     setEditAffiliate(null);
                     setAffiliateLinks(fresh);
                 } else {
-                    // Fallback agar tetap bisa diedit meskipun tabel belum dibuat.
                     const withoutDuplicate = affiliateLinks.filter(x => x.platform.toLowerCase() !== payload.platform.toLowerCase());
                     const next = normalizeAffiliateLinks([...withoutDuplicate, payload]);
                     try { localStorage.setItem('bisniku7_affiliate_settings', JSON.stringify(next)); } catch (e) {}
@@ -793,7 +823,6 @@
 
                 if (!error) {
                     const fresh = await refreshAffiliateLinks();
-                    // Saat semua data terhapus, tetap tampilkan default yang sudah tersedia.
                     if (!fresh.length) {
                         setAffiliateLinks(DEFAULT_AFFILIATE_LINKS);
                     }
@@ -807,7 +836,6 @@
                 }
             };
 
-            // Hapus Tautan
             const handleDeleteLink = async (id) => {
                 if (confirm("Hapus tautan ini?")) {
                     const { error } = await supabaseClient.from('links').delete().eq('id', id);
@@ -818,7 +846,6 @@
                 }
             };
 
-            // Transaksi Checkout
             const saveTransactionToDB = async (status, paymentMethod) => {
                 const newTx = {
                     id: `INV-${Date.now().toString().slice(-6)}`,
@@ -853,7 +880,6 @@
                 setCheckoutProduct(null);
             };
             
-            // Konfirmasi Pesanan Admin
             const handleCompleteOrder = async (txId) => {
                 const { error } = await supabaseClient
                     .from('transactions')
@@ -870,7 +896,6 @@
                 }
             }; 
             
-            // Trigger Buka Aplikasi Social Media & Buka Modal Konfirmasi
             const handleShareViral = async (platform) => {
                 const storeUrl = window.location.href;
                 const captionText = getViralCaption();
@@ -895,10 +920,8 @@
                 }
             };
 
-            // Eksekusi Konfirmasi Share (Membuka Akses Bonus)
             const handleConfirmShare = async () => {
                 try {
-                    // PERBAIKAN: Ambil angka shareCount paling aktual dari database terlebih dahulu
                     const { data: latestData } = await supabaseClient.from('creator').select('shareCount').eq('id', 1).single();
                     const currentShareCount = latestData ? (latestData.shareCount || 0) : (creator.shareCount || 0);
                     const newShareCount = currentShareCount + 1;
@@ -921,7 +944,6 @@
                 }
             };
 
-            // ===== SHARE BLOG KE STATUS WHATSAPP =====
             const getBlogPostUrl = (post) => {
                 const base = window.location.origin + window.location.pathname + window.location.search;
                 return `${base}#post/${encodeURIComponent(post.slug)}`;
@@ -1136,7 +1158,6 @@
                 }
             };
 
-            // ===== BLOG ACTIONS =====
             const openBlogPost = async (post) => {
                 setSelectedBlogPost(post);
                 setBlogView('article');
@@ -1183,7 +1204,7 @@
                     });
                     const { error } = await supabaseClient.from('blog_posts').upsert(posts, { onConflict:'legacy_id' });
                     if (error) throw error;
-                    const { data: fresh } = await supabaseClient.from('blog_posts').select('*').eq('status','published').order('published_at',{ascending:false});
+                    const { data: fresh } = await supabaseClient.from('blog_posts').select('*').order('published_at',{ascending:false});
                     setBlogPosts(fresh || []);
                     setBlogXmlFile(null);
                     showToast(`✅ ${posts.length} artikel berhasil diimpor dari XML.`);
@@ -1245,7 +1266,6 @@
 
             return (
                 <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
-                    {/* HEADER */}
                     <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 py-3 px-4 shadow-xl">
                         <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
                             <div className="flex items-center gap-2">
@@ -1269,7 +1289,6 @@
                         </div>
                     </header>
 
-                    {/* TOAST MESSAGE */}
                     {toastMessage && (
                         <div className="fixed bottom-6 right-6 z-50 bg-slate-800 text-white border border-indigo-500/50 px-5 py-3 rounded-xl shadow-2xl text-xs font-semibold transform transition-all duration-300 translate-y-0 opacity-100 flex items-center gap-2">
                             <i className="fa-solid fa-bell text-indigo-400"></i>
@@ -1278,7 +1297,6 @@
                     )}
 
                     <main className="flex-grow">
-                        {/* VIEW: LOGIN ADMIN */}
                         {viewMode === 'pin_prompt' && (
                             <div className="max-w-sm mx-auto my-20 px-4">
                                 <form onSubmit={handleLoginAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
@@ -1296,7 +1314,6 @@
                             </div>
                         )}
 
-                        {/* VIEW: STOREFRONT */}
                         {viewMode === 'store' && blogView === 'store' && (
                             <div className="max-w-md mx-auto min-h-screen pb-20 px-4 pt-6">
                                 <div className="text-center flex flex-col items-center mb-6">
@@ -1321,7 +1338,6 @@
                                     </div>
                                 </div>
 
-                                {/* AREA BONUS SPESIAL */}
                                 <div className="mb-8 glass-card p-4 rounded-2xl border border-indigo-500/40 bg-indigo-950/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(99,102,241,0.15)]">
                                     <div className="absolute top-0 right-0 bg-gradient-to-r from-pink-500 to-indigo-600 text-[9px] font-bold px-3 py-1 rounded-bl-xl uppercase shadow-lg text-white tracking-wider">Bonus Spesial</div>
                                     <h3 className="font-bold text-white text-sm mb-1 mt-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> {creator.bonusTitle || 'Dapatkan Bonus Eksklusif!'}</h3>
@@ -1355,7 +1371,6 @@
                                     )}
                                 </div>
 
-                                {/* LINKS SECTION */}
                                 <div className="space-y-2.5 mb-8">
                                     {links.length > 0 ? links.map(link => (
                                         <a key={link.id} href={link.url} target="_blank" className={`glass-card p-3.5 rounded-xl flex items-center justify-between transition hover:border-indigo-500/50 ${link.highlight ? 'border-indigo-500/50 bg-indigo-950/30' : ''}`}>
@@ -1367,7 +1382,6 @@
                                     )}
                                 </div>
 
-                                {/* BLOG TERBARU */}
                                 {blogPosts.length > 0 && (
                                     <section className="mb-8">
                                         <div className="flex items-center justify-between mb-3">
@@ -1388,7 +1402,6 @@
                                     </section>
                                 )}
 
-                                {/* PRODUCTS SECTION (Dengan Search Bar) */}
                                 <div className="mb-4 space-y-3">
                                     <div className="flex items-center justify-between">
                                         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
@@ -1399,7 +1412,6 @@
                                         </div>
                                     </div>
                                     
-                                    {/* Kolom Pencarian */}
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <i className="fa-solid fa-magnifying-glass text-slate-500 text-xs"></i>
@@ -1445,7 +1457,6 @@
                             </div>
                         )}
 
-                        {/* VIEW: BLOG HOME / ARTICLE */}
                         {viewMode === 'store' && blogView === 'home' && (
                             <div className="blog-shell">
                                 <section className="blog-hero rounded-3xl p-7 md:p-10 mb-7 overflow-hidden relative">
@@ -1479,7 +1490,7 @@
                                                         </div>
                                                         <h2 className="text-xl md:text-2xl font-extrabold text-white leading-snug">{post.title}</h2>
                                                         <p className="text-xs md:text-sm text-slate-400 mt-2 line-clamp-3">{post.excerpt || plainTextFromHtml(post.content_html)}</p>
-                                                                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-800 gap-2">
+                                                        <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-800 gap-2">
                                                             <span className="text-[10px] text-slate-500"><i className="fa-regular fa-calendar mr-1"></i>{new Date(post.published_at).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})} · {post.author_name || creator.name}</span>
                                                             <div className="flex items-center gap-2 shrink-0">
                                                                 <button onClick={(e)=>{e.stopPropagation();prepareBlogShare(post);}} className="text-[10px] text-emerald-400 hover:text-emerald-300 font-bold"><i className="fa-brands fa-whatsapp mr-1"></i>WA Status</button>
@@ -1553,7 +1564,6 @@
                             </div>
                         )}
 
-                        {/* VIEW: ADMIN PANEL */}
                         {viewMode === 'admin' && (
                             <div className="max-w-5xl mx-auto px-4 py-8 space-y-6">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-2xl">
@@ -1584,7 +1594,6 @@
                                     <button onClick={() => setAdminTab('blog')} className={`px-4 py-2 rounded-lg whitespace-nowrap transition ${adminTab === 'blog' ? 'bg-cyan-600 text-white' : 'text-slate-400 hover:bg-slate-800'}`}>Blog & XML ({blogPosts.length})</button>
                                 </div>
 
-                                {/* ADMIN TAB: OVERVIEW */}
                                 {adminTab === 'overview' && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div className="glass-card p-5 rounded-2xl relative overflow-hidden">
@@ -1620,7 +1629,6 @@
                                     </div>
                                 )}
 
-                                {/* ADMIN TAB: PROFILE */}
                                 {adminTab === 'profile' && (
                                     <form onSubmit={handleSaveCreator} className="glass-card p-6 rounded-2xl space-y-4 max-w-2xl">
                                         <h3 className="font-bold text-sm text-indigo-400 uppercase border-b border-slate-800 pb-2">Informasi Profil Toko</h3>
@@ -1691,7 +1699,6 @@
                                     </form>
                                 )}
 
-                                {/* ADMIN TAB: PRODUCTS */}
                                 {adminTab === 'products' && (
                                     <div className="space-y-3">
                                         {products.length > 0 ? products.map(p => (
@@ -1714,7 +1721,6 @@
                                     </div>
                                 )}
 
-                                {/* ADMIN TAB: LINKS */}
                                 {adminTab === 'links' && (
                                     <div className="space-y-3">
                                         {links.length > 0 ? links.map(l => (
@@ -1734,7 +1740,6 @@
                                     </div>
                                 )}
 
-                                {/* ADMIN TAB: AFFILIATE */}
                                 {adminTab === 'affiliate' && (
                                     <div className="space-y-4">
                                         <div className="glass-card rounded-2xl p-5 border border-emerald-500/20">
@@ -1790,7 +1795,6 @@
                                     </div>
                                 )}
 
-                                {/* ADMIN TAB: ORDERS */}
                                 {adminTab === 'orders' && (
                                     <div className="glass-card rounded-2xl p-4 overflow-x-auto">
                                         {transactions.length > 0 ? (
@@ -1849,7 +1853,8 @@
                                         )}
                                     </div>
                                 )}
-                                {/* ADMIN TAB: BLOG & XML */}
+
+                                {/* TAB ADMIN: BLOG & EDIT KONTEN BLOGSPOT */}
                                 {adminTab === 'blog' && (
                                     <div className="space-y-5">
                                         <div className="grid lg:grid-cols-2 gap-5">
@@ -1871,15 +1876,43 @@
                                                     <button onClick={exportBlogXml} className="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold py-3 rounded-xl"><i className="fa-solid fa-download mr-1"></i> Export XML</button>
                                                     <button onClick={()=>{setBlogView('home');setViewMode('store');window.location.hash='';}} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold py-3 rounded-xl"><i className="fa-solid fa-globe mr-1"></i> Lihat Blog</button>
                                                 </div>
-                                                <div className="mt-4 bg-slate-950/70 rounded-xl border border-slate-800 p-4 text-[10px] text-slate-500 leading-relaxed">Tips: gunakan XML hasil export Blogger untuk memindahkan arsip lama ke website ini. Import berulang aman karena memakai <code>legacy_id</code> sebagai kunci upsert.</div>
+                                                <div className="mt-4 bg-slate-950/70 rounded-xl border border-slate-800 p-4 text-[10px] text-slate-500 leading-relaxed">Tips: Anda dapat menambahkan artikel baru secara manual atau mengedit isi artikel yang diimpor dari Blogspot lewat tabel di bawah.</div>
                                             </div>
                                         </div>
 
                                         <div className="glass-card rounded-2xl p-4 overflow-x-auto">
-                                            <div className="flex items-center justify-between mb-3"><h3 className="font-extrabold text-white text-sm">Artikel Terkoleksi ({blogPosts.length})</h3><span className="text-[10px] text-slate-500">SEO permalink: #post/slug</span></div>
+                                            <div className="flex items-center justify-between mb-3">
+                                                <h3 className="font-extrabold text-white text-sm">Artikel Terkoleksi ({blogPosts.length})</h3>
+                                                <button onClick={() => setEditBlogPost({ title: '', slug: '', content_html: '', excerpt: '', cover_url: '', labels: [], status: 'published' })} className="bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition">
+                                                    <i className="fa-solid fa-plus mr-1"></i> Tulis Artikel Baru
+                                                </button>
+                                            </div>
                                             <table className="w-full text-xs text-left">
-                                                <thead><tr className="border-b border-slate-800 text-slate-500"><th className="p-2">Judul</th><th className="p-2">Kategori</th><th className="p-2">Tanggal</th><th className="p-2">View</th></tr></thead>
-                                                <tbody>{blogPosts.map(p=><tr key={p.id} className="border-b border-slate-900"><td className="p-2 text-white font-semibold min-w-[250px]">{p.title}</td><td className="p-2 text-slate-400">{(p.labels||[]).join(', ') || '-'}</td><td className="p-2 text-slate-400">{new Date(p.published_at).toLocaleDateString('id-ID')}</td><td className="p-2 text-indigo-300">{p.views || 0}</td></tr>)}</tbody>
+                                                <thead>
+                                                    <tr className="border-b border-slate-800 text-slate-500">
+                                                        <th className="p-2">Judul</th>
+                                                        <th className="p-2">Kategori</th>
+                                                        <th className="p-2">Tanggal</th>
+                                                        <th className="p-2">View</th>
+                                                        <th className="p-2">Aksi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {blogPosts.map(p => (
+                                                        <tr key={p.id} className="border-b border-slate-900">
+                                                            <td className="p-2 text-white font-semibold min-w-[220px]">{p.title}</td>
+                                                            <td className="p-2 text-slate-400">{(p.labels || []).join(', ') || '-'}</td>
+                                                            <td className="p-2 text-slate-400 whitespace-nowrap">{new Date(p.published_at).toLocaleDateString('id-ID')}</td>
+                                                            <td className="p-2 text-indigo-300">{p.views || 0}</td>
+                                                            <td className="p-2">
+                                                                <div className="flex gap-2">
+                                                                    <button onClick={() => setEditBlogPost({...p, labels: (p.labels || []).join(', ')})} className="bg-slate-800 hover:bg-slate-700 text-indigo-300 px-2.5 py-1.5 rounded-lg text-[10px] font-bold">Edit</button>
+                                                                    <button onClick={() => handleDeleteBlogPost(p.id)} className="bg-slate-800 hover:bg-slate-700 text-red-400 px-2.5 py-1.5 rounded-lg text-[10px] font-bold">Hapus</button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
                                             </table>
                                         </div>
 
@@ -1928,7 +1961,6 @@
                         </div>
                      )}
 
-                    {/* MODAL SHARE ARTIKEL KE STATUS WHATSAPP */}
                     {blogSharePost && (
                         <div className="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-cyan-500/30 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-y-auto p-5 md:p-7 shadow-2xl">
@@ -1970,7 +2002,6 @@
                         </div>
                     )}
 
-                    {/* MODAL KONFIRMASI SHARE VIRAL */}
                     {showShareModal && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl text-center">
@@ -2005,7 +2036,6 @@
                         </div>
                     )}
 
-                    {/* MODAL DETAIL PRODUK */}
                     {selectedDetailProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto relative">
@@ -2057,7 +2087,6 @@
                         </div>
                     )}
 
-                    {/* MODAL CHECKOUT & PEMBELIAN */}
                     {checkoutProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
@@ -2127,7 +2156,6 @@
                         </div>
                     )}
 
-                    {/* MODAL EDIT AFFILIATE */}
                     {editAffiliate && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <form onSubmit={handleSaveAffiliate} className="bg-slate-900 border border-emerald-500/20 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs max-h-[90vh] overflow-y-auto">
@@ -2182,7 +2210,48 @@
                         </div>
                     )}
 
-                    {/* MODAL EDIT PRODUK */}
+                    {/* MODAL FORM EDIT ARTIKEL BLOG */}
+                    {editBlogPost && (
+                        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+                            <form onSubmit={handleSaveBlogPost} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-5 space-y-3 text-xs max-h-[90vh] overflow-y-auto">
+                                <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                                    <h3 className="font-bold text-white text-sm">{editBlogPost.id ? 'Edit Artikel Blog' : 'Tulis Artikel Baru'}</h3>
+                                    <button type="button" onClick={() => setEditBlogPost(null)} className="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 mb-1">Judul Artikel *</label>
+                                    <input type="text" required value={editBlogPost.title || ''} onChange={e => setEditBlogPost({...editBlogPost, title: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-cyan-500" placeholder="Judul artikel..." />
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div>
+                                        <label className="block text-slate-300 mb-1">Slug (URL)</label>
+                                        <input type="text" value={editBlogPost.slug || ''} onChange={e => setEditBlogPost({...editBlogPost, slug: e.target.value})} placeholder="Dibuat otomatis dari judul" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-cyan-500" />
+                                    </div>
+                                    <div>
+                                        <label className="block text-slate-300 mb-1">Kategori / Label (Pisahkan dengan koma)</label>
+                                        <input type="text" value={editBlogPost.labels || ''} onChange={e => setEditBlogPost({...editBlogPost, labels: e.target.value})} placeholder="Tutorial, Bisnis, Tips" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-cyan-500" />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 mb-1">URL Cover / Gambar Sampul</label>
+                                    <input type="url" value={editBlogPost.cover_url || ''} onChange={e => setEditBlogPost({...editBlogPost, cover_url: e.target.value})} placeholder="https://images.unsplash.com/..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-cyan-500" />
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 mb-1">Ringkasan / Excerpt (Opsional)</label>
+                                    <textarea rows="2" value={editBlogPost.excerpt || ''} onChange={e => setEditBlogPost({...editBlogPost, excerpt: e.target.value})} placeholder="Ringkasan singkat yang tampil di daftar artikel..." className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-cyan-500"></textarea>
+                                </div>
+                                <div>
+                                    <label className="block text-slate-300 mb-1">Isi Konten (Format HTML / Teks) *</label>
+                                    <textarea rows="8" required value={editBlogPost.content_html || ''} onChange={e => setEditBlogPost({...editBlogPost, content_html: e.target.value})} placeholder="<p>Tuliskan artikel Anda di sini...</p>" className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-cyan-500 font-mono"></textarea>
+                                </div>
+                                <div className="flex gap-2 pt-2">
+                                    <button type="button" onClick={() => setEditBlogPost(null)} className="w-1/3 bg-slate-800 hover:bg-slate-700 transition py-2.5 rounded-xl">Batal</button>
+                                    <button type="submit" className="w-2/3 bg-cyan-600 hover:bg-cyan-500 transition font-bold py-2.5 rounded-xl text-white">Simpan Artikel</button>
+                                </div>
+                            </form>
+                        </div>
+                    )}
+
                     {editProduct && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <form onSubmit={handleSaveProduct} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs max-h-[90vh] overflow-y-auto">
@@ -2229,7 +2298,6 @@
                         </div>
                     )}
 
-                    {/* MODAL EDIT LINK BIO */}
                     {editLink && (
                         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
                             <form onSubmit={handleSaveLink} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 text-xs">
