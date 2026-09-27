@@ -1222,11 +1222,21 @@
                 const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='blog-backup.xml'; a.click(); URL.revokeObjectURL(a.href);
             };
 
-            const blogCategories = useMemo(() => {
-                const out = new Set();
-                blogPosts.forEach(p => (p.labels || []).forEach(l => out.add(l)));
-                return ['Semua', ...Array.from(out).sort()];
-            }, [blogPosts]);
+           // Tentukan batas maksimal panjang karakter kategori
+const MAX_LENGTH = 10; 
+
+const blogCategories = useMemo(() => {
+    const out = new Set();
+    blogPosts.forEach(p => 
+        (p.labels || []).forEach(l => {
+            // Hanya tambahkan ke Set jika panjang teks kategori tidak melebihi batas
+            if (l.length <= MAX_LENGTH) {
+                out.add(l);
+            }
+        })
+    );
+    return ['Semua', ...Array.from(out).sort()];
+}, [blogPosts]);
 
             const filteredBlogPosts = useMemo(() => {
                 const q = blogSearch.trim().toLowerCase();
