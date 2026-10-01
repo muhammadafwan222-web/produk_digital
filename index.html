@@ -2274,9 +2274,16 @@ const blogCategories = useMemo(() => {
                                     <div>
                                         <label className="block text-slate-300 mb-1">Kategori</label>
                                         <select value={editProduct.category} onChange={e => setEditProduct({...editProduct, category: e.target.value})} className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:border-indigo-500">
-                                            <option value="E-Book">E-Book</option>
-                                            <option value="Template">Template</option>
-                                            <option value="Kursus/Video">Kursus/Video</option>
+                                            <option value="E-Book">E-Book & Panduan PDF</option>
+                                            <option value="Template">Template (Canva, PPT, Excel)</option>
+                                            <option value="Kursus/Video">Kursus Online & Video Tutorial</option>
+                                            <option value="Preset & LUTs">Preset Lightroom & LUTs Video</option>
+                                            <option value="Aset Desain">Aset Desain (Icon, UI Kit, Ilustrasi 3D)</option>
+                                            <option value="Software & Plugin">Software, Script & Plugin</option>
+                                            <option value="Audio & Musik">Audio, Sound Effect & Musik</option>
+                                            <option value="Font & Tipografi">Font & Tipografi Premium</option>
+                                            <option value="Notion / Planner">Notion Template & Digital Planner</option>
+                                            <option value="Membership">Membership & Akses Komunitas Eksklusif</option>
                                         </select>
                                     </div>
                                     <div>
