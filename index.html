@@ -1416,9 +1416,14 @@ const blogCategories = useMemo(() => {
                                     <div className="flex items-center justify-between">
                                         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
                                         <div className="flex gap-1 overflow-x-auto text-xs pb-1">
-                                            {['Semua', 'E-Book', 'Template', 'Kursus/Video'].map(cat => (
-                                                <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition ${selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>{cat}</button>
-                                            ))}
+                                          {(() => {
+                                          const preferred = ['Semua', 'E-Book', 'Template', 'Kursus/Video', 'Photo Asset', 'Printable Kids', 'Template PPT', 'Template Notion', 'Asset Photoshop', 'Asset After Effect', 'Video Asset', 'Website/Plugin/JSON', 'Bank Konten Affiliate'];
+                                          const allCats = [...new Set(products.map(p => p.category).filter(Boolean))];
+                                          const sorted = [...preferred.filter(c => allCats.includes(c)), ...allCats.filter(c => !preferred.includes(c))];
+                                          return sorted.map(cat => (
+                                            <button key={cat} onClick={() => setSelectedCategory(cat)} className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition ${selectedCategory === cat ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}>{cat}</button>
+                                          ));
+                                        })()}
                                         </div>
                                     </div>
                                     
