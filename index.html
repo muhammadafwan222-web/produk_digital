@@ -15,33 +15,22 @@
 <meta id="twitter-title" name="twitter:title" content="Blog & Inspirasi | Produk Digital">
 <meta id="twitter-description" name="twitter:description" content="Koleksi artikel, tutorial, informasi, dan produk digital.">
 <meta id="twitter-image" name="twitter:image" content="">
-<!-- Tailwind CSS CDN -->
-<script src="https://cdn.tailwindcss.com"></script>
-<!-- Supabase CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- SheetJS (Excel XLSX / CSV) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<!-- EmailJS (kirim email otomatis) -->
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<!-- Konfigurasi Tailwind -->
+<!-- Konfigurasi Tailwind (dimuat oleh boot loader) -->
 <script>
-tailwind.config = {
+window.tailwind = window.tailwind || null;
+window.__tailwindConfig = {
   darkMode: 'class',
-  theme: {
-    extend: {
-      colors: {
-        brand: { 50:'#f0f5ff',100:'#e5edff',500:'#6366f1',600:'#4f46e5',700:'#4338ca',900:'#312e81' },
-        emerald: { 400:'#34d399',500:'#10b981',600:'#059669' }
-      }
-    }
-  }
-}
+  theme: { extend: { colors: {
+    brand: { 50:'#f0f5ff',100:'#e5edff',500:'#6366f1',600:'#4f46e5',700:'#4338ca',900:'#312e81' },
+    emerald: { 400:'#34d399',500:'#10b981',600:'#059669' }
+  } } }
+};
 </script>
 <!-- FontAwesome & Fontsource (Inter) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.0.16/index.css">
 <style>
-body { font-family:'Inter Variable','Inter',system-ui,sans-serif; background-color:#0f172a; color:#f8fafc; }
+body { font-family:'Inter Variable','Inter',system-ui,sans-serif; background-color:#0f172a; color:#f8fafc; margin:0; }
 .glass-card { background:rgba(30,41,59,.7); backdrop-filter:blur(12px); border:1px solid rgba(255,255,255,.08); }
 ::-webkit-scrollbar { width:6px; height:6px; }
 ::-webkit-scrollbar-track { background:#0f172a; }
@@ -106,13 +95,8 @@ body { font-family:'Inter Variable','Inter',system-ui,sans-serif; background-col
   border:1px solid rgba(255,255,255,.10); box-shadow:0 24px 70px rgba(0,0,0,.45); isolation:isolate; }
 .share-card-preview::after { content:""; position:absolute; inset:0; pointer-events:none;
   background:linear-gradient(180deg,rgba(2,6,23,.06) 0%,rgba(2,6,23,.02) 34%,rgba(2,6,23,.78) 76%,rgba(2,6,23,.97) 100%); z-index:1; }
-.share-card-preview .scp-cover { position:absolute; inset:0 0 42% 0; width:100%; height:58%; object-fit:cover; opacity:.94; z-index:0; }
-.share-card-preview .scp-content { position:absolute; inset:auto 22px 20px 22px; z-index:2; }
-.share-card-preview .scp-brand { display:flex; align-items:center; gap:8px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#a5f3fc; margin-bottom:10px; }
-.share-card-preview .scp-title { font-size:24px; line-height:1.15; font-weight:900; color:#fff; text-shadow:0 2px 16px rgba(0,0,0,.5); }
 .loader { border-top-color:#6366f1; animation:spinner 1.5s linear infinite; }
 @keyframes spinner { 0%{transform:rotate(0deg)} 100%{transform:rotate(360deg)} }
-/* ===== LEADS & BROADCAST ===== */
 .lead-magnet-art{position:relative;overflow:hidden;border-radius:18px;background:radial-gradient(circle at 18% 12%,rgba(99,102,241,.55),transparent 42%),radial-gradient(circle at 84% 78%,rgba(16,185,129,.45),transparent 45%),linear-gradient(150deg,#0b1220,#111827 55%,#052e2b);border:1px solid rgba(255,255,255,.10)}
 .lead-magnet-art .lm-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:26px 26px;opacity:.55}
 .lead-magnet-art .lm-icon{position:absolute;font-size:26px;opacity:.85;animation:floaty 5s ease-in-out infinite}
@@ -136,19 +120,128 @@ table.lead-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.
 .inp:focus{border-color:#6366f1}
 .btn{font-size:11px;font-weight:800;padding:10px 14px;border-radius:12px;transition:.18s;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
 </style>
+
+<!-- ============ BOOT LOADER: MUAT CDN BERURUTAN + FALLBACK ============ -->
+<script>
+(function () {
+  var ITEMS = [
+    { name:'Tailwind', urls:['https://cdn.tailwindcss.com'], check:function(){ return !!window.tailwind; }, cfg:true },
+    { name:'React', urls:['https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js','https://unpkg.com/react@18.3.1/umd/react.production.min.js'], check:function(){ return !!window.React; } },
+    { name:'ReactDOM', urls:['https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js','https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js'], check:function(){ return !!window.ReactDOM; } },
+    { name:'Supabase', urls:['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'], check:function(){ return !!window.supabase; } },
+    { name:'SheetJS', urls:['https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js','https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'], check:function(){ return !!window.XLSX; } },
+    { name:'EmailJS', urls:['https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js'], check:function(){ return !!window.emailjs; } },
+    { name:'Babel', urls:['https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js','https://unpkg.com/@babel/standalone@7.24.7/babel.min.js'], check:function(){ return !!window.Babel; } }
+  ];
+  window.__cdnStatus = {};
+  function load(i) {
+    if (i >= ITEMS.length) { document.dispatchEvent(new Event('cdn-ready')); return; }
+    var item = ITEMS[i];
+    function tryUrl(j) {
+      if (j >= item.urls.length) {
+        window.__cdnStatus[item.name] = 'GAGAL';
+        if (window.__fatal && (item.name === 'React' || item.name === 'ReactDOM' || item.name === 'Babel')) {
+          window.__fatal('CDN ' + item.name + ' gagal dimuat dari semua sumber. Periksa koneksi / adblock / firewall jaringan Anda.');
+        }
+        load(i + 1); return;
+      }
+      var s = document.createElement('script');
+      s.src = item.urls[j];
+      s.onload = function () {
+        if (item.cfg && window.tailwind && window.__tailwindConfig) { try { window.tailwind.config = window.__tailwindConfig; } catch (e) {} }
+        if (item.check()) { window.__cdnStatus[item.name] = 'OK'; load(i + 1); }
+        else tryUrl(j + 1);
+      };
+      s.onerror = function () { tryUrl(j + 1); };
+      document.head.appendChild(s);
+    }
+    tryUrl(0);
+  }
+  load(0);
+})();
+</script>
 </head>
 <body class="min-h-screen flex flex-col antialiased selection:bg-brand-500 selection:text-white">
-<div id="root" class="flex-grow flex flex-col"></div>
-<script type="text/babel">
+
+<!-- ============ PENANGKAP ERROR VISUAL (kotak merah) ============ -->
+<script>
+(function () {
+  var box = null;
+  function ensure() {
+    if (box) return box;
+    box = document.createElement('div');
+    box.id = 'fatal-box';
+    box.setAttribute('style', 'position:fixed;left:12px;bottom:12px;z-index:99999;max-width:440px;max-height:45vh;overflow:auto;background:#1c1012;border:1px solid #b91c1c;color:#fecaca;border-radius:14px;padding:12px 14px;font:11.5px/1.55 ui-monospace,Menlo,Consolas,monospace;box-shadow:0 18px 40px rgba(0,0,0,.55);white-space:pre-wrap;');
+    (document.body || document.documentElement).appendChild(box);
+    return box;
+  }
+  window.__fatal = function (msg) {
+    var b = ensure();
+    b.textContent = '⚠️ DEBUG: ' + String(msg).slice(0, 600) + (b.textContent ? '\n──────────\n' + b.textContent : '');
+  };
+  window.addEventListener('error', function (e) {
+    if (e && e.message) window.__fatal(e.message + (e.filename ? ' @' + String(e.filename).split('/').pop() + ':' + e.lineno : ''));
+  }, true);
+  window.addEventListener('unhandledrejection', function (e) {
+    var r = e && e.reason;
+    window.__fatal('Promise gagal: ' + (r && r.message ? r.message : String(r)).slice(0, 300));
+  });
+  document.addEventListener('cdn-ready', function () {
+    var missing = [];
+    if (!window.React) missing.push('React');
+    if (!window.ReactDOM) missing.push('ReactDOM');
+    if (!window.Babel) missing.push('Babel');
+    if (missing.length) window.__fatal('Library wajib belum siap: ' + missing.join(', ') + '. Status: ' + JSON.stringify(window.__cdnStatus));
+  });
+  setTimeout(function () {
+    var r = document.getElementById('root');
+    if (r && r.getAttribute('data-rendered') !== '1') {
+      var missing = [];
+      if (!window.React) missing.push('React');
+      if (!window.ReactDOM) missing.push('ReactDOM');
+      if (!window.Babel) missing.push('Babel');
+      window.__fatal('Aplikasi belum render setelah 15 detik. CDN bermasalah: ' + (missing.join(', ') || 'tidak ada') + '. Jika kotak ini satu-satunya pesan, buka Console → screenshot error merahnya. Status CDN: ' + JSON.stringify(window.__cdnStatus));
+    }
+  }, 15000);
+})();
+</script>
+
+<div id="root" class="flex-grow flex flex-col">
+  <div style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a;color:#94a3b8;font-size:13px;gap:10px">
+    <span style="width:22px;height:22px;border:3px solid #334155;border-top-color:#6366f1;border-radius:50%;display:inline-block;animation:spinner 1s linear infinite"></span>
+    Memuat aplikasi & library…
+  </div>
+</div>
+<noscript><div style="padding:20px;color:#fecaca;font-family:sans-serif">Aplikasi ini membutuhkan JavaScript. Aktifkan JavaScript di browser Anda.</div></noscript>
+
+<script type="text/babel" data-presets="react">
 const { useState, useEffect, useMemo, useRef } = React;
 
-/* ================= SUPABASE ================= */
-const { createClient } = supabase;
+/* ================= SUPABASE (dengan stub offline) ================= */
 const SUPABASE_URL = 'https://cjwbrmolzxnhvigolcfk.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqd2JybW9senhuaHZpZ29sY2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODQzMjYsImV4cCI6MjEwNTE2MDMyNn0.mbsRC05ibE0cbQrm2WpCbwOltcjy2aF1aguWRru9JSY';
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-/* Logo default (SVG lokal, tanpa gambar eksternal) */
+const offlineBuilder = () => {
+  const res = { data: null, error: { message: 'SUPABASE_OFFLINE', code: 'OFFLINE' } };
+  const b = {
+    then: (f, g) => Promise.resolve(res).then(f, g),
+    catch: (g) => Promise.resolve(res).catch(g)
+  };
+  ['select','insert','update','delete','upsert','eq','neq','gt','lt','in','not','order','limit','single','maybeSingle'].forEach(m => { b[m] = () => b; });
+  return b;
+};
+const supabaseClient = (window.supabase && window.supabase.createClient)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : {
+      auth: {
+        getSession: () => Promise.resolve({ data: { session: null } }),
+        signInWithPassword: () => Promise.resolve({ data: null, error: { message: 'Supabase tidak tersedia (CDN offline).' } }),
+        signOut: () => Promise.resolve({ error: null })
+      },
+      from: () => offlineBuilder(),
+      rpc: () => offlineBuilder()
+    };
+
 const SVG_LOGO = 'data:image/svg+xml;utf8,' + encodeURIComponent(
 '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6366f1"/><stop offset="1" stop-color="#06b6d4"/></linearGradient></defs><rect width="300" height="300" rx="64" fill="url(#g)"/><path d="M92 205V95h46c26 0 43 16 43 40s-17 40-43 40h-22v30z" fill="#fff"/><path d="M116 116v38h20c13 0 21-7 21-19s-8-19-21-19z" fill="#6366f1"/><path d="M196 95l34 60-34 60-14-8 28-52-28-52z" fill="#a5f3fc"/></svg>');
 
@@ -170,23 +263,15 @@ const DEFAULT_AFFILIATE_LINKS = [
   { platform:'TikTok Shop', title:'Belanja Pilihan di TikTok Shop', description:'Produk pilihan dan promo terbaru.', url:'https://www.tiktok.com/', icon:'fa-brands fa-tiktok', tone:'tiktok', enabled:true, sort_order:2 }
 ];
 
-/* ============ PENGATURAN BROADCAST / LEADS ============ */
 const DEFAULT_SETTINGS = {
-  channel: 'wa',                 // wa | email | both
-  sendMode: 'auto',              // auto (buka tab berurutan) | link (buat daftar link saja)
-  delaySeconds: 4,
+  channel: 'wa', sendMode: 'auto', delaySeconds: 4,
   emailjsPublicKey: '', emailjsServiceId: '', emailjsTemplateId: '',
-  waFooter: '',
-  defaultProductId: '',
-  defaultLink: '',
-  leadPopupEnabled: true,
-  leadPopupDelay: 12,
+  waFooter: '', defaultProductId: '', defaultLink: '',
+  leadPopupEnabled: true, leadPopupDelay: 12,
   leadTitle: 'Ambil Produk Digital GRATIS + Info Promo',
   leadDescription: 'Isi nama, email, dan WhatsApp kamu. Bonus digital gratis langsung terbuka, dan info produk/diskon terbaru otomatis terkirim ke email & WA kamu.',
   leadBonusText: 'Bonus: Paket Template & E-Book Digital Gratis',
-  autoBroadcastProduct: false,
-  autoBroadcastArticle: false,
-  autoBroadcastLead: true,
+  autoBroadcastProduct: false, autoBroadcastArticle: false, autoBroadcastLead: true,
   emailSubject: '🎁 Produk Digital Terbaru untuk {{nama}} — {{toko}}',
   messageTemplate:
 'Halo {{nama}} 👋
@@ -227,7 +312,6 @@ Semoga bermanfaat!',
   scheduledAt: ''
 };
 
-/* ============ STORAGE HELPER ============ */
 const LS = {
   get(k, d) { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
@@ -237,7 +321,6 @@ const KEY_SUBS = 'bisniku7_subscribers';
 const KEY_LOGS = 'bisniku7_broadcast_logs';
 const KEY_SETTINGS = 'bisniku7_app_settings';
 
-/* ============ UTIL ============ */
 const formatIDR = (v) => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(v||0));
 const formatWANumber = (num) => { if(!num) return ""; let f=String(num).replace(/\D/g,''); if(f.startsWith('0')) f='62'+f.substring(1); if(f.startsWith('620')) f='62'+f.substring(3); return f; };
 const storeUrl = () => window.location.origin + window.location.pathname;
@@ -286,7 +369,6 @@ const normalizeAffiliateLinks = (rows=[]) => (Array.isArray(rows)?rows:[]).filte
 const getStoredAffiliateLinks = () => { const s = LS.get('bisniku7_affiliate_settings', null); return Array.isArray(s)&&s.length?normalizeAffiliateLinks(s):null; };
 const trackAffiliateClick = (item, post) => { try { const d=LS.get('bisniku7_affiliate_clicks',[]); d.unshift({platform:item.platform,url:item.url,postTitle:post?.title||'',at:nowISO()}); LS.set('bisniku7_affiliate_clicks', d.slice(0,500)); } catch(e){} };
 
-/* Blogger XML importer */
 const extractBloggerEntries = (xmlText) => {
   const xml = new DOMParser().parseFromString(xmlText,'text/xml');
   if (xml.querySelector('parsererror')) throw new Error('File XML tidak valid.');
@@ -309,8 +391,7 @@ const extractBloggerEntries = (xmlText) => {
   return posts;
 };
 
-/* ============ KOMPONEN: SIDEBAR AFFILIATE ============ */
-const AffiliateSidebar = ({ post, affiliateLinks = [], children }) => (
+const AffiliateSidebar = ({ post, affiliateLinks = [] }) => (
   <div className="affiliate-side">
     <div className="affiliate-panel">
       <div className="affiliate-panel-title"><i className="fa-solid fa-cart-shopping text-emerald-400"></i> Rekomendasi Produk</div>
@@ -324,18 +405,15 @@ const AffiliateSidebar = ({ post, affiliateLinks = [], children }) => (
       ))}
       <div className="affiliate-disclosure">Beberapa tautan merupakan tautan afiliasi. Jika terjadi pembelian melalui tautan tersebut, pemilik situs dapat menerima komisi tanpa biaya tambahan bagi pembeli.</div>
     </div>
-    {children}
   </div>
 );
 
-/* ============ KOMPONEN: FORM KUMPUL DATA (LEAD CAPTURE) ============ */
 const LeadForm = ({ compact = false, settings, onSuccess, submitLabel = 'Kirim & Ambil Bonus' }) => {
   const [f, setF] = useState({ name:'', email:'', whatsapp:'' });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const submit = async (e) => {
-    e.preventDefault();
-    setErr('');
+    e.preventDefault(); setErr('');
     if (!f.name.trim()) return setErr('Nama wajib diisi.');
     const em = f.email.trim().toLowerCase();
     const wa = formatWANumber(f.whatsapp);
@@ -355,7 +433,7 @@ const LeadForm = ({ compact = false, settings, onSuccess, submitLabel = 'Kirim &
       <button disabled={busy} className="btn w-full bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white disabled:opacity-60">
         {busy ? <><i className="fa-solid fa-spinner fa-spin"></i> Menyimpan...</> : <><i className="fa-solid fa-paper-plane"></i> {submitLabel}</>}
       </button>
-      {!compact && <p className="text-[9px] text-slate-500 leading-relaxed">Dengan mendaftar, kamu menyetujui menerima informasi produk, promo, dan penawaran dari {settings.storeName || 'toko ini'} melalui email & WhatsApp. Data tidak dibagikan ke pihak lain.</p>}
+      {!compact && <p className="text-[9px] text-slate-500 leading-relaxed">Dengan mendaftar, kamu menyetujui menerima informasi produk, promo, dan penawaran melalui email & WhatsApp. Data tidak dibagikan ke pihak lain.</p>}
     </form>
   );
 };
@@ -373,7 +451,6 @@ const LeadMagnetArt = ({ h = 150 }) => (
   </div>
 );
 
-/* ================= APP ================= */
 function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [creator, setCreator] = useState(DEFAULT_CREATOR);
@@ -420,8 +497,8 @@ function App() {
   const [isBonusUnlocked, setIsBonusUnlocked] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
 
-  /* ===== STATE BARU: LEADS, BROADCAST, SETTINGS ===== */
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+  const [settingsForm, setSettingsForm] = useState(DEFAULT_SETTINGS);
   const [subscribers, setSubscribers] = useState([]);
   const [subsFallback, setSubsFallback] = useState(false);
   const [broadcastLogs, setBroadcastLogs] = useState([]);
@@ -468,25 +545,25 @@ function App() {
   useEffect(()=>{ productsRef.current = products; },[products]);
   useEffect(()=>{ creatorRef.current = creator; },[creator]);
   useEffect(()=>{ composeRef.current = compose; },[compose]);
+  useEffect(()=>{ setSettingsForm(settings); },[settings]);
 
   const showToast = (m) => { setToastMessage(m); setTimeout(()=>setToastMessage(null), 3800); };
 
-  /* ============ LOAD DATA ============ */
   useEffect(() => {
     async function fetchAllData() {
       setIsLoading(true);
       try {
-        const { data:{ session } } = await supabaseClient.auth.getSession();
-        if (session) setIsAdminUnlocked(true);
+        const sess = await supabaseClient.auth.getSession();
+        if (sess && sess.data && sess.data.session) setIsAdminUnlocked(true);
 
         const { data: creatorData } = await supabaseClient.from('creator').select('*').eq('id',1).single();
         if (creatorData) {
           if (!sessionStorage.getItem('hasVisitedThisSession')) {
             const cnt = (creatorData.visitorCount || 0) + 1;
             await supabaseClient.from('creator').update({ visitorCount: cnt }).eq('id',1);
-            setCreator({ ...creatorData, avatar: creatorData.avatar || SVG_LOGO, visitorCount: cnt });
+            setCreator({ ...DEFAULT_CREATOR, ...creatorData, avatar: creatorData.avatar || SVG_LOGO, visitorCount: cnt });
             sessionStorage.setItem('hasVisitedThisSession','true');
-          } else setCreator({ ...creatorData, avatar: creatorData.avatar || SVG_LOGO });
+          } else setCreator({ ...DEFAULT_CREATOR, ...creatorData, avatar: creatorData.avatar || SVG_LOGO });
         }
         const { data: prodData } = await supabaseClient.from('products').select('*').order('id',{ascending:false});
         if (prodData) setProducts(prodData);
@@ -500,7 +577,6 @@ function App() {
         const { data: blogData } = await supabaseClient.from('blog_posts').select('*').order('published_at',{ascending:false});
         if (blogData) setBlogPosts(blogData);
 
-        /* --- Settings --- */
         let mergedSettings = { ...DEFAULT_SETTINGS, ...LS.get(KEY_SETTINGS, {}) };
         const { data: setData, error: setErr } = await supabaseClient.from('app_settings').select('*').eq('id',1).maybeSingle();
         if (!setErr && setData && setData.settings) mergedSettings = { ...mergedSettings, ...setData.settings };
@@ -509,12 +585,10 @@ function App() {
           delaySeconds: mergedSettings.delaySeconds || 4, subject: mergedSettings.emailSubject || c.subject,
           message: mergedSettings.messageTemplate || c.message, productId: mergedSettings.defaultProductId || '', link: mergedSettings.defaultLink || '' }));
 
-        /* --- Subscribers (leads) --- */
         const { data: subData, error: subErr } = await supabaseClient.from('subscribers').select('*').order('created_at',{ascending:false});
-        if (!subErr && Array.isArray(subData)) { setSubscribers(subData); setSubsFallback(false); subsRef.current = subData; }
+        if (!subErr && Array.isArray(subData)) { setSubscribers(subData); subsRef.current = subData; setSubsFallback(false); }
         else { const local = LS.get(KEY_SUBS, []); setSubscribers(local); subsRef.current = local; setSubsFallback(true); }
 
-        /* --- Log broadcast --- */
         const { data: logData, error: logErr } = await supabaseClient.from('broadcast_logs').select('*').order('created_at',{ascending:false}).limit(500);
         if (!logErr && Array.isArray(logData)) setBroadcastLogs(logData);
         else setBroadcastLogs(LS.get(KEY_LOGS, []));
@@ -526,7 +600,6 @@ function App() {
     fetchAllData();
   }, []);
 
-  /* ============ POPUP LEAD MAGNET DI TOKO ============ */
   useEffect(() => {
     if (isLoading || viewMode !== 'store' || blogView !== 'store') return;
     if (!settings.leadPopupEnabled || leadOptedIn) return;
@@ -535,7 +608,6 @@ function App() {
     return () => clearTimeout(t);
   }, [isLoading, viewMode, blogView, settings.leadPopupEnabled, settings.leadPopupDelay, leadOptedIn]);
 
-  /* ============ SCHEDULER BROADCAST OTOMATIS ============ */
   useEffect(() => {
     if (!settings.scheduledAt) return;
     const iv = setInterval(() => {
@@ -544,7 +616,6 @@ function App() {
       if (!target) return;
       if (Date.now() >= target) {
         clearInterval(iv);
-        setSettings(prev => ({ ...prev, scheduledAt: '' }));
         persistSettings({ ...settingsRef.current, scheduledAt: '' });
         showToast('⏰ Jadwal terkirim — broadcast otomatis dijalankan.');
         runBroadcast({ campaignName: 'Terjadwal Otomatis' });
@@ -553,7 +624,6 @@ function App() {
     return () => clearInterval(iv);
   }, [settings.scheduledAt]);
 
-  /* ============ AFFILIATE AUTO MODAL / HASH / KOMENTAR ============ */
   useEffect(() => {
     if (blogView !== 'article' || !selectedBlogPost) { setShowAffiliateAutoModal(false); return; }
     if (affiliateLinks.filter(x=>x.enabled!==false&&x.url).length === 0) { setShowAffiliateAutoModal(false); return; }
@@ -590,7 +660,6 @@ function App() {
     }
   }, [adminTab, isAdminUnlocked]);
 
-  /* ============ META TAGS + ADSENSE + JSON-LD ============ */
   useEffect(() => {
     const meta=document.getElementById('meta-description'), ogTitle=document.getElementById('og-title'), ogDesc=document.getElementById('og-description'),
       ogUrl=document.getElementById('og-url'), ogImage=document.getElementById('og-image'), twTitle=document.getElementById('twitter-title'),
@@ -608,20 +677,9 @@ function App() {
           s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXX'; s.crossOrigin='anonymous';
           document.head.appendChild(s);
         }
-        setTimeout(()=>{
-          try{
-            document.querySelectorAll('.adsbygoogle').forEach(a=>a.remove());
-            const body=document.querySelector('.article-body');
-            if(body){ const ins=document.createElement('ins'); ins.className='adsbygoogle';
-              ins.style='display:block;text-align:center;margin:2rem 0'; ins.setAttribute('data-ad-layout','in-article');
-              ins.setAttribute('data-ad-format','fluid'); ins.setAttribute('data-ad-client','ca-pub-XXXX'); ins.setAttribute('data-ad-slot','YYYYYYYY');
-              const ps=body.querySelectorAll('p'); if(ps.length>3) body.insertBefore(ins,ps[3]); else body.appendChild(ins);
-              (window.adsbygoogle=window.adsbygoogle||[]).push({}); }
-          }catch(e){}
-        },800);
       } catch(e){}
       try {
-        document.getElementById('json-ld-schema')?.remove();
+        const old=document.getElementById('json-ld-schema'); if(old) old.remove();
         const schema={"@context":"https://schema.org","@type":"BlogPosting","headline":selectedBlogPost.title,
           "image":selectedBlogPost.cover_url||creator.avatar,"datePublished":selectedBlogPost.published_at,
           "dateModified":selectedBlogPost.updated_at,"author":{"@type":"Person","name":selectedBlogPost.author_name||creator.name},"description":desc};
@@ -633,38 +691,34 @@ function App() {
       if(meta) meta.content=desc; if(ogTitle) ogTitle.content=document.title; if(ogDesc) ogDesc.content=desc;
       if(ogUrl) ogUrl.content=window.location.href.split('#')[0]; if(twTitle) twTitle.content=document.title; if(twDesc) twDesc.content=desc;
       if(ogImage) ogImage.content=''; if(twImage) twImage.content='';
-      try{document.getElementById('adsense-script')?.remove();}catch(e){} try{document.getElementById('json-ld-schema')?.remove();}catch(e){}
+      try{const a=document.getElementById('adsense-script'); if(a)a.remove();}catch(e){}
+      try{const j=document.getElementById('json-ld-schema'); if(j)j.remove();}catch(e){}
     } else {
       document.title = `${creator.name} - Link in Bio & Digital Storefront`;
       const desc = creator.bio || 'Koleksi artikel, tutorial, informasi, dan produk digital.';
       if(meta) meta.content=desc; if(ogTitle) ogTitle.content=document.title; if(ogDesc) ogDesc.content=desc;
       if(ogUrl) ogUrl.content=window.location.href.split('#')[0]; if(twTitle) twTitle.content=document.title; if(twDesc) twDesc.content=desc;
       if(ogImage) ogImage.content=creator.avatar||SVG_LOGO; if(twImage) twImage.content=creator.avatar||SVG_LOGO;
-      try{document.getElementById('adsense-script')?.remove();}catch(e){} try{document.getElementById('json-ld-schema')?.remove();}catch(e){}
+      try{const a=document.getElementById('adsense-script'); if(a)a.remove();}catch(e){}
+      try{const j=document.getElementById('json-ld-schema'); if(j)j.remove();}catch(e){}
     }
   }, [blogView, selectedBlogPost, creator.name, creator.bio, creator.avatar]);
 
-  /* ============================================================
-     MESIN LEADS (KUMPUL DATA EMAIL & WHATSAPP)
-     ============================================================ */
+  /* ============ LEADS ============ */
   const persistLocalSubs = (list) => { LS.set(KEY_SUBS, list.slice(0, 5000)); };
 
-  const saveSubscriber = async (raw, opts = {}) => {
+  const saveSubscriber = async (raw) => {
     const payload = normalizeSubscriber(raw);
     if (!payload.email && !payload.whatsapp) return { ok:false, reason:'Email & WhatsApp kosong' };
     const list = subsRef.current || [];
     const existing = list.find(s => (payload.email && String(s.email||'').toLowerCase() === payload.email) ||
                                     (payload.whatsapp && String(s.whatsapp||'') === payload.whatsapp));
     if (existing) {
-      const merged = { ...existing, ...payload, id: existing.id,
-        name: payload.name || existing.name, tags: payload.tags || existing.tags,
-        source: opts.keepSource ? existing.source : (payload.source || existing.source) };
+      const merged = { ...existing, ...payload, id: existing.id, name: payload.name || existing.name, tags: payload.tags || existing.tags };
       const { error } = await supabaseClient.from('subscribers').update(merged).eq('id', existing.id);
       let next;
-      if (error) {
-        const local = LS.get(KEY_SUBS, list).map(s => s.id === existing.id ? merged : s);
-        LS.set(KEY_SUBS, local); next = local; setSubsFallback(true);
-      } else { next = list.map(s => s.id === existing.id ? merged : s); }
+      if (error) { const local = LS.get(KEY_SUBS, list).map(s => s.id === existing.id ? merged : s); LS.set(KEY_SUBS, local); next = local; setSubsFallback(true); }
+      else next = list.map(s => s.id === existing.id ? merged : s);
       subsRef.current = next; setSubscribers(next);
       return { ok:true, record: merged, duplicate:true };
     }
@@ -697,16 +751,17 @@ function App() {
   const bulkDeleteLeads = async () => {
     if (!selectedLeads.length) return showToast('❌ Pilih data terlebih dahulu.');
     if (!confirm(`Hapus ${selectedLeads.length} data kontak terpilih?`)) return;
-    const list = subsRef.current.filter(s => !selectedLeads.includes(s.id));
+    const ids = selectedLeads.slice();
+    const list = subsRef.current.filter(s => !ids.includes(s.id));
     subsRef.current = list; setSubscribers(list); setSelectedLeads([]);
-    await supabaseClient.from('subscribers').delete().in('id', selectedLeads);
+    await supabaseClient.from('subscribers').delete().in('id', ids);
     persistLocalSubs(list);
     showToast('🗑️ Data terpilih dihapus.');
   };
 
-  /* ===== Import Excel / CSV ===== */
   const handleImportFile = async (file) => {
     if (!file) return;
+    if (!window.XLSX) return showToast('❌ Library Excel (SheetJS) gagal dimuat. Periksa koneksi lalu refresh.');
     setImportFileName(file.name); setImportError(''); setImportRows([]); setImportPreview([]);
     try {
       let wb;
@@ -718,9 +773,7 @@ function App() {
       if (!rows.length) throw new Error('Sheet pertama kosong atau tidak punya baris header.');
       const cols = Object.keys(rows[0]);
       const find = (keys) => cols.find(c => { const n = String(c).toLowerCase().replace(/[\s_\-.]/g,''); return keys.some(k => n.includes(k)); }) || '';
-      setImportColumns(cols);
-      setImportRows(rows);
-      setImportPreview(rows.slice(0,6));
+      setImportColumns(cols); setImportRows(rows); setImportPreview(rows.slice(0,6));
       setImportMap({
         name: find(['nama','name','fullname','kontak']),
         email: find(['email','surel','mail']),
@@ -744,7 +797,7 @@ function App() {
         tags: importMap.tags ? r[importMap.tags] : '',
         source: importMap.source ? (r[importMap.source] || 'excel') : 'excel'
       };
-      const res = await saveSubscriber(raw, {});
+      const res = await saveSubscriber(raw);
       if (!res.ok) skipped++; else if (res.duplicate) updated++; else added++;
     }
     setImportBusy(false);
@@ -753,6 +806,7 @@ function App() {
   };
 
   const downloadTemplateExcel = () => {
+    if (!window.XLSX) return showToast('❌ Library Excel belum siap.');
     const sample = [
       { nama:'Budi Santoso', email:'budi@gmail.com', whatsapp:'081234567890', tags:'prospek', sumber:'excel' },
       { nama:'Siti Aminah', email:'siti@gmail.com', whatsapp:'085712345678', tags:'pelanggan', sumber:'excel' }
@@ -763,8 +817,9 @@ function App() {
     showToast('📥 Template Excel diunduh.');
   };
 
-  const exportLeadsExcel = (rows = null) => {
-    const data = (rows || filteredLeads).map((s,i)=>({
+  const exportLeadsExcel = () => {
+    if (!window.XLSX) return showToast('❌ Library Excel belum siap.');
+    const data = filteredLeads.map((s,i)=>({
       No:i+1, Nama:s.name||'', Email:s.email||s.raw_email||'', WhatsApp:s.whatsapp||'',
       Sumber:s.source||'', Tags:s.tags||'', Status:s.status||'aktif',
       'Kampanye Terakhir':s.last_campaign||'', 'Status Kirim':s.last_status||'',
@@ -774,11 +829,12 @@ function App() {
     const ws = XLSX.utils.json_to_sheet(data);
     ws['!cols'] = [{wch:5},{wch:24},{wch:28},{wch:16},{wch:12},{wch:14},{wch:9},{wch:24},{wch:12},{wch:20},{wch:20}];
     const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Data Leads');
-    XLSX.writeFile(wb, `data-leads-${slugify(creator.name)}-${new Date().toISOString().slice(0,10)}.xlsx`);
+    XLSX.writeFile(wb, `data-leads-${new Date().toISOString().slice(0,10)}.xlsx`);
     showToast('📥 File Excel data leads diunduh.');
   };
 
   const exportLeadsCSV = () => {
+    if (!window.XLSX) return showToast('❌ Library Excel belum siap.');
     const data = filteredLeads.map(s=>({ nama:s.name, email:s.email||s.raw_email, whatsapp:s.whatsapp, sumber:s.source, tags:s.tags, status:s.status }));
     if (!data.length) return showToast('❌ Tidak ada data untuk diekspor.');
     const ws = XLSX.utils.json_to_sheet(data);
@@ -788,11 +844,9 @@ function App() {
     showToast('📥 File CSV diunduh.');
   };
 
-  /* ============================================================
-     MESIN BROADCAST (KIRIM OTOMATIS KE EMAIL + WA)
-     ============================================================ */
+  /* ============ BROADCAST ============ */
   const buildMessage = (tpl, lead, ctx = {}) => {
-    const prod = ctx.product || productsRef.current.find(p => String(p.id) === String(ctx.productId || settingsRef.current.defaultProductId));
+    const prod = ctx.product || productsRef.current.find(p => String(p.id) === String(ctx.productId || composeRef.current.productId || settingsRef.current.defaultProductId));
     const bonusUrl = ctx.bonusUrl || creatorRef.current.bonusUrl || settingsRef.current.bonusUrl || storeUrl();
     const link = ctx.link || composeRef.current.link || (prod ? storeUrl() : (settingsRef.current.defaultLink || storeUrl()));
     return String(tpl || '')
@@ -801,7 +855,7 @@ function App() {
       .replace(/\{\{wa\}\}/gi, lead?.whatsapp || '')
       .replace(/\{\{toko\}\}/gi, creatorRef.current.name || '')
       .replace(/\{\{tanggal\}\}/gi, new Date().toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'}))
-      .replace(/\{\{produk\}\}/gi, ctx.productTitle || prod?.title || settingsRef.current.defaultProduct || 'Produk Digital Terbaru')
+      .replace(/\{\{produk\}\}/gi, ctx.productTitle || prod?.title || 'Produk Digital Terbaru')
       .replace(/\{\{harga\}\}/gi, ctx.price ? formatIDR(ctx.price) : (prod ? formatIDR(prod.price) : 'Hubungi admin'))
       .replace(/\{\{bonus_link\}\}/gi, bonusUrl)
       .replace(/\{\{bonus\}\}/gi, settingsRef.current.leadBonusText ? `🎁 ${settingsRef.current.leadBonusText}: ${bonusUrl}` : '')
@@ -812,8 +866,7 @@ function App() {
   const sendWhatsAppTo = (lead, message) => {
     const num = formatWANumber(lead.whatsapp);
     if (!num) return { status:'gagal', note:'Nomor WA kosong' };
-    const suffix = settingsRef.current.waFooter ? `%0A%0A${encodeURIComponent(settingsRef.current.waFooter)}` : '';
-    const url = `https://wa.me/${num}?text=${encodeURIComponent(message)}${suffix ? '' : ''}`;
+    const url = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
     if (composeRef.current.sendMode === 'link') return { status:'link siap', url };
     const w = window.open(url, '_blank', 'noopener,noreferrer');
     return w ? { status:'terkirim', url } : { status:'gagal', note:'Popup diblokir browser', url };
@@ -828,7 +881,7 @@ function App() {
         if (!window.emailjs.__inited) { window.emailjs.init({ publicKey: cfg.emailjsPublicKey }); window.emailjs.__inited = true; }
         await window.emailjs.send(cfg.emailjsServiceId, cfg.emailjsTemplateId, {
           to_email: to, to_name: lead.name || '', from_name: creatorRef.current.name || '',
-          subject, message, reply_to: cfg.emailjsReplyTo || '', store_name: creatorRef.current.name || ''
+          subject, message, store_name: creatorRef.current.name || ''
         });
         return { status:'terkirim' };
       } catch (e) { return { status:'gagal', note:String(e?.text || e?.message || e).slice(0,120) }; }
@@ -842,15 +895,14 @@ function App() {
   const pushLog = async (entry) => {
     const row = { id:`log-${Date.now()}-${Math.random().toString(36).slice(2,6)}`, created_at: nowISO(), ...entry };
     setBroadcastLogs(prev => { const n=[row,...prev].slice(0,600); LS.set(KEY_LOGS, n); return n; });
-    const { error } = await supabaseClient.from('broadcast_logs').insert([row]);
-    if (error) LS.set(KEY_LOGS, LS.get(KEY_LOGS, []).slice(0,600));
+    await supabaseClient.from('broadcast_logs').insert([row]);
   };
 
   const getTargets = (opts = {}) => {
     const channel = opts.channel || composeRef.current.channel;
     const src = opts.targetSource ?? composeRef.current.targetSource;
     const stat = opts.targetStatus ?? composeRef.current.targetStatus;
-    const tag = (opts.targetTag ?? composeRef.current.targetTag || '').trim().toLowerCase();
+    const tag = String(opts.targetTag ?? composeRef.current.targetTag || '').trim().toLowerCase();
     const onlyIds = opts.onlyIds;
     return (subsRef.current || []).filter(s => {
       if (onlyIds && !onlyIds.includes(s.id)) return false;
@@ -897,21 +949,20 @@ function App() {
       await pushLog({ name: lead.name || '', email: lead.email || '', whatsapp: lead.whatsapp || '',
         channel, campaign, status: statusLabel, note: results.map(r=>`${r.ch}: ${r.status}${r.note?` (${r.note})`:''}`).join(' | '),
         message: message.slice(0,600) });
-      if (i < targets.length - 1 && !cancelRef.current) await sleep(channel === 'wa' && compose.sendMode === 'auto' ? delay : Math.min(delay, 600));
+      if (i < targets.length - 1 && !cancelRef.current) await sleep(channel !== 'email' && composeRef.current.sendMode === 'auto' ? delay : Math.min(delay, 600));
     }
 
-    /* simpan status kirim ke data leads */
     let merged = subsRef.current.map(s => { const t = touched.find(x => x.id === s.id); return t ? { ...s, last_campaign:t.last_campaign, last_status:t.last_status, last_sent_at:t.last_sent_at } : s; });
     subsRef.current = merged; setSubscribers(merged); persistLocalSubs(merged);
-    try { await supabaseClient.from('subscribers').upsert(touched.map(t=>({ id:t.id, last_campaign:t.last_campaign, last_status:t.last_status, last_sent_at:t.last_sent_at })), { onConflict:'id' }); } catch(e){}
+    if (touched.length) await supabaseClient.from('subscribers').upsert(touched.map(t=>({ id:t.id, last_campaign:t.last_campaign, last_status:t.last_status, last_sent_at:t.last_sent_at })), { onConflict:'id' });
 
     setSendProgress({ done: targets.length, total: targets.length, ok, fail, current: cancelRef.current ? 'Dihentikan' : 'Selesai' });
     setLastResult({ total: targets.length, ok, fail, campaign, at: nowISO(), stopped: cancelRef.current });
     sendingRef.current = false; setSending(false);
-    showToast(cancelRef.current ? `⏹️ Pengiriman dihentikan. ${ok} terkirim, ${fail} gagal.` : `✅ Broadcast selesai: ${ok} terkirim, ${fail} gagal dari ${targets.length} target.`);
+    showToast(cancelRef.current ? `⏹️ Dihentikan. ${ok} terkirim, ${fail} gagal.` : `✅ Broadcast selesai: ${ok} terkirim, ${fail} gagal dari ${targets.length} target.`);
   };
 
-  const sendWelcome = async (lead, source = 'toko') => {
+  const sendWelcome = async (lead) => {
     if (!settingsRef.current.autoBroadcastLead) return;
     const ctx = { bonusUrl: creatorRef.current.bonusUrl || settingsRef.current.bonusUrl || storeUrl(), link: settingsRef.current.defaultLink || storeUrl() };
     const ch = (lead.email && lead.whatsapp) ? 'both' : (lead.whatsapp ? 'wa' : 'email');
@@ -928,12 +979,12 @@ function App() {
   };
 
   const handleLeadSubmit = async (data, source = 'toko') => {
-    const res = await saveSubscriber({ ...data, source }, {});
+    const res = await saveSubscriber({ ...data, source });
     if (!res.ok) { showToast('❌ ' + res.reason); return; }
     LS.set('leadOptedIn', true); setLeadOptedIn(true);
     setShowLeadPopup(false); setShowLeadReward(true); setIsBonusUnlocked(true);
-    showToast(res.duplicate ? '✅ Data kamu sudah terdaftar — pesan terbaru dikirim ulang.' : '🎉 Data tersimpan! Bonus dibuka & pesan otomatis dikirim.');
-    try { await sendWelcome(res.record, source); } catch(e){ console.warn('welcome', e); }
+    showToast(res.duplicate ? '✅ Data sudah terdaftar — pesan terbaru dikirim ulang.' : '🎉 Data tersimpan! Bonus dibuka & pesan otomatis dikirim.');
+    try { await sendWelcome(res.record); } catch(e){ console.warn('welcome', e); }
   };
 
   const triggerAutoBroadcast = async (kind, ctx) => {
@@ -946,34 +997,32 @@ function App() {
       context: ctx, campaignName: kind==='product' ? 'Auto: Produk Baru' : 'Auto: Artikel Baru' });
   };
 
-  /* ===== Pengaturan ===== */
   const persistSettings = async (next) => {
     setSettings(next); settingsRef.current = next; LS.set(KEY_SETTINGS, next);
     const { error } = await supabaseClient.from('app_settings').upsert([{ id:1, settings: next, updated_at: nowISO() }], { onConflict:'id' });
     return !error;
   };
   const handleSaveSettings = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     const ok = await persistSettings({ ...settings, ...settingsForm });
-    showToast(ok ? '✅ Pengaturan broadcast tersimpan & sinkron.' : '⚠️ Tersimpan di perangkat (buat tabel app_settings di Supabase agar sinkron).');
+    showToast(ok ? '✅ Pengaturan broadcast tersimpan & sinkron.' : '⚠️ Tersimpan di perangkat (buat tabel app_settings agar sinkron).');
   };
-  const [settingsForm, setSettingsForm] = useState(DEFAULT_SETTINGS);
-  useEffect(()=>{ setSettingsForm(settings); },[settings]);
 
   const testEmailConfig = async () => {
+    if (!window.emailjs) return showToast('❌ Library EmailJS gagal dimuat. Periksa koneksi lalu refresh.');
     if (!settingsForm.emailjsPublicKey || !settingsForm.emailjsServiceId || !settingsForm.emailjsTemplateId)
       return showToast('❌ Lengkapi Public Key, Service ID, dan Template ID EmailJS.');
     try {
       window.emailjs.init({ publicKey: settingsForm.emailjsPublicKey });
       await window.emailjs.send(settingsForm.emailjsServiceId, settingsForm.emailjsTemplateId, {
-        to_email: settingsForm.testEmail || creator.email || '', to_name:'Tes', from_name: creator.name,
+        to_email: settingsForm.testEmail || '', to_name:'Tes', from_name: creator.name,
         subject:'Tes Konfigurasi Email', message:'Ini pesan tes dari panel broadcast.'
       });
       showToast('✅ Tes email berhasil dikirim.');
     } catch (e) { showToast('❌ Tes email gagal: ' + String(e?.text || e?.message || e).slice(0,90)); }
   };
 
-  /* ============ FUNGSI LAMA (ADMIN/TOKO/BLOG) ============ */
+  /* ============ FUNGSI ADMIN/TOKO/BLOG ============ */
   const handleLoginAdmin = async (e) => {
     e.preventDefault(); setIsLoading(true);
     const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -1002,7 +1051,7 @@ function App() {
     } else {
       const newProduct = { ...editProduct, salesCount:0, rating:5.0 }; delete newProduct.id;
       const { data, error } = await supabaseClient.from('products').insert([newProduct]).select();
-      if (!error && data) {
+      if (!error && data && data[0]) {
         setProducts([data[0], ...products]); showToast('🎉 Produk Baru Diterbitkan!');
         if (settingsRef.current.autoBroadcastProduct) await triggerAutoBroadcast('product', { product: data[0], productTitle: data[0].title, price: data[0].price, link: storeUrl() });
       } else showToast('❌ Gagal Tambah Produk: ' + (error?.message || ''));
@@ -1048,7 +1097,7 @@ function App() {
     } else {
       payload.legacy_id = `manual-${Date.now()}`;
       const { data, error } = await supabaseClient.from('blog_posts').insert([payload]).select();
-      if (!error && data) {
+      if (!error && data && data[0]) {
         setBlogPosts([data[0], ...blogPosts]); showToast('🎉 Artikel baru berhasil diterbitkan!');
         if (settingsRef.current.autoBroadcastArticle) await triggerAutoBroadcast('article', { productTitle: data[0].title, link: `${storeUrl()}#post/${encodeURIComponent(data[0].slug)}` });
       } else showToast('❌ Gagal tambah artikel: ' + (error?.message||''));
@@ -1101,8 +1150,7 @@ function App() {
     const up = (checkoutProduct.salesCount || 0) + 1;
     await supabaseClient.from('products').update({ salesCount: up }).eq('id', checkoutProduct.id);
     setProducts(p => p.map(x => x.id === checkoutProduct.id ? { ...x, salesCount: up } : x));
-    /* pembeli otomatis masuk database leads */
-    await saveSubscriber({ name: buyerName, email: buyerEmail, whatsapp: buyerPhone, source:'pembelian', tags:'pelanggan' }, {});
+    await saveSubscriber({ name: buyerName, email: buyerEmail, whatsapp: buyerPhone, source:'pembelian', tags:'pelanggan' });
     return newTx;
   };
   const handleCheckoutWhatsApp = async () => {
@@ -1211,7 +1259,7 @@ Kamu juga bisa dapatkan sekarang:
     try { const c = await createBlogShareCard(post); setBlogSharePreviewUrl(c.toDataURL('image/png',1.0)); }
     catch(e){ setBlogSharePreviewUrl(''); } finally { setBlogShareBusy(false); }
   };
-  const downloadBlogShareCard = async (post = blogSharePost) => {
+  const downloadBlogShareCard = async (post) => {
     if (!post) return;
     try { const c = await createBlogShareCard(post);
       c.toBlob(blob=>{ if(!blob) return; const url=URL.createObjectURL(blob); const a=document.createElement('a');
@@ -1274,22 +1322,13 @@ Kamu juga bisa dapatkan sekarang:
   };
   const exportBlogXml = () => {
     const esc = (s='')=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
-    const entries = blogPosts.map(p=>`
-<entry>
-<title>${esc(p.title)}</title>
-<id>${esc(p.legacy_id||`urn:custom:${p.id}`)}</id>
-<published>${new Date(p.published_at||Date.now()).toISOString()}</published>
-<updated>${new Date(p.updated_at||p.published_at||Date.now()).toISOString()}</updated>
-<author><name>${esc(p.author_name||creator.name)}</name></author>
-<content type="html">${esc(p.content_html||'')}</content>
-${(p.labels||[]).map(l=>`<category scheme="http://www.blogger.com/atom/ns#" term="${esc(l)}"/>`).join('')}
-</entry>`).join('');
+    const entries = blogPosts.map(p=>`\n<entry>\n<title>${esc(p.title)}</title>\n<id>${esc(p.legacy_id||`urn:custom:${p.id}`)}</id>\n<published>${new Date(p.published_at||Date.now()).toISOString()}</published>\n<updated>${new Date(p.updated_at||p.published_at||Date.now()).toISOString()}</updated>\n<author><name>${esc(p.author_name||creator.name)}</name></author>\n<content type="html">${esc(p.content_html||'')}</content>\n${(p.labels||[]).map(l=>`<category scheme="http://www.blogger.com/atom/ns#" term="${esc(l)}"/>`).join('')}\n</entry>`).join('');
     const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">${entries}\n</feed>`;
     const blob = new Blob([xml],{type:'application/atom+xml;charset=utf-8'});
     const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='blog-backup.xml'; a.click(); URL.revokeObjectURL(a.href);
   };
 
-  /* ============ DERIVED DATA ============ */
+  /* ============ DERIVED ============ */
   const blogCategories = useMemo(() => {
     const out = new Set();
     blogPosts.forEach(p => (p.labels||[]).forEach(l => { if (l.length <= 7) out.add(l); }));
@@ -1351,6 +1390,7 @@ ${(p.labels||[]).map(l=>`<category scheme="http://www.blogger.com/atom/ns#" term
   };
 
   const exportLogsExcel = () => {
+    if (!window.XLSX) return showToast('❌ Library Excel belum siap.');
     if (!broadcastLogs.length) return showToast('❌ Belum ada log pengiriman.');
     const rows = broadcastLogs.map((l,i)=>({ No:i+1, Waktu:fmtDateTime(l.created_at), Nama:l.name||'', Email:l.email||'',
       WhatsApp:l.whatsapp||'', Kanal:l.channel||'', Kampanye:l.campaign||'', Status:l.status||'', Keterangan:l.note||'' }));
@@ -1361,12 +1401,11 @@ ${(p.labels||[]).map(l=>`<category scheme="http://www.blogger.com/atom/ns#" term
   const clearLogs = async () => {
     if (!confirm('Hapus semua riwayat log pengiriman?')) return;
     setBroadcastLogs([]); LS.set(KEY_LOGS, []);
-    await supabaseClient.from('broadcast_logs').delete().not('id','is',null);
+    await supabaseClient.from('broadcast_logs').delete().neq('id', null);
     showToast('🗑️ Log dibersihkan.');
   };
   const quickSendLead = async (lead) => {
-    await runBroadcast({ targets:[lead], channel: lead.whatsapp ? (lead.email ? 'both' : 'wa') : 'email',
-      campaignName:'Kirim Manual 1 Kontak' });
+    await runBroadcast({ targets:[lead], channel: lead.whatsapp ? (lead.email ? 'both' : 'wa') : 'email', campaignName:'Kirim Manual 1 Kontak' });
   };
 
   const SQL_GUIDE = `-- 1) Tabel database kontak (email + WhatsApp)
@@ -1415,7 +1454,10 @@ create policy "subscribers_all" on public.subscribers for all using (true) with 
 create policy "logs_all" on public.broadcast_logs for all using (true) with check (true);
 create policy "settings_all" on public.app_settings for all using (true) with check (true);`;
 
-  /* ============ LOADING ============ */
+  useEffect(() => {
+    try { document.getElementById('root')?.setAttribute('data-rendered','1'); } catch (e) {}
+  }, []);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-950">
@@ -1427,7 +1469,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
     );
   }
 
-  /* ============ RENDER ============ */
   return (
     <div className="min-h-screen flex flex-col bg-slate-950 text-slate-100">
       <header className="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 py-3 px-4 shadow-xl">
@@ -1435,11 +1476,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
           <div className="flex items-center gap-2">
             <img src={creator.avatar || SVG_LOGO} onError={(e)=>{e.target.src=SVG_LOGO;}} className="w-8 h-8 rounded-lg object-cover bg-indigo-600" alt="logo" />
             <span className="font-bold text-sm text-white">{creator.name} Platform</span>
-            {isAdminUnlocked && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 text-[9px] font-black text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-1">
-                <span className="status-dot dot-live"></span> AUTO BROADCAST SIAP
-              </span>
-            )}
           </div>
           <div className="flex items-center bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
             <button onClick={()=>{ setViewMode('store'); setBlogView('store'); window.location.hash=''; }} className={`px-4 py-1.5 rounded-lg text-xs font-semibold ${blogView==='store'&&viewMode==='store'?'bg-indigo-600 text-white':'text-slate-400 hover:text-slate-200'}`}>
@@ -1462,7 +1498,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
       )}
 
       <main className="flex-grow">
-        {/* ===== LOGIN ADMIN ===== */}
         {viewMode === 'pin_prompt' && (
           <div className="max-w-sm mx-auto my-20 px-4">
             <form onSubmit={handleLoginAdmin} className="glass-card p-6 rounded-2xl text-center space-y-4">
@@ -1476,7 +1511,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
           </div>
         )}
 
-        {/* ===== TOKO ===== */}
         {viewMode === 'store' && blogView === 'store' && (
           <div className="max-w-md mx-auto min-h-screen pb-20 px-4 pt-6">
             <div className="text-center flex flex-col items-center mb-6">
@@ -1497,7 +1531,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </div>
             </div>
 
-            {/* ===== KARTU KUMPUL DATA EMAIL & WA ===== */}
             <section className="mb-6 glass-card rounded-2xl p-4 border border-emerald-500/30 bg-emerald-950/20">
               <div className="flex items-start gap-3">
                 <div className="w-10 h-10 shrink-0 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-300"><i className="fa-solid fa-tower-broadcast"></i></div>
@@ -1515,22 +1548,21 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               )}
             </section>
 
-            {/* ===== BONUS SHARE ===== */}
-            <div className="mb-8 glass-card p-4 rounded-2xl border border-indigo-500/40 bg-indigo-950/30 text-center relative overflow-hidden shadow-[0_0_15px_rgba(99,102,241,0.15)]">
+            <div className="mb-8 glass-card p-4 rounded-2xl border border-indigo-500/40 bg-indigo-950/30 text-center relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-gradient-to-r from-pink-500 to-indigo-600 text-[9px] font-bold px-3 py-1 rounded-bl-xl uppercase shadow-lg text-white tracking-wider">Bonus Spesial</div>
-              <h3 className="font-bold text-white text-sm mb-1 mt-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> {creator.bonusTitle || 'Dapatkan Bonus Eksklusif!'}</h3>
+              <h3 className="font-bold text-white text-sm mb-1 mt-1"><i className="fa-solid fa-gift text-pink-400 mr-1.5"></i> {creator.bonusTitle}</h3>
               <p className="text-xs text-slate-300 mb-4">{creator.bonusDescription}</p>
               {!isBonusUnlocked ? (
                 <div className="flex flex-wrap gap-2 justify-center mt-2">
-                  <button onClick={()=>handleShareViral('wa')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center shadow-lg shadow-emerald-500/20"><i className="fa-brands fa-whatsapp mr-1.5 text-sm"></i> WhatsApp</button>
-                  <button onClick={()=>handleShareViral('ig')} className="bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center shadow-lg shadow-pink-500/20"><i className="fa-brands fa-instagram mr-1.5 text-sm"></i> Instagram</button>
-                  <button onClick={()=>handleShareViral('fb')} className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center shadow-lg shadow-blue-500/20"><i className="fa-brands fa-facebook mr-1.5 text-sm"></i> Facebook</button>
+                  <button onClick={()=>handleShareViral('wa')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center"><i className="fa-brands fa-whatsapp mr-1.5 text-sm"></i> WhatsApp</button>
+                  <button onClick={()=>handleShareViral('ig')} className="bg-gradient-to-r from-purple-600 to-pink-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center"><i className="fa-brands fa-instagram mr-1.5 text-sm"></i> Instagram</button>
+                  <button onClick={()=>handleShareViral('fb')} className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center"><i className="fa-brands fa-facebook mr-1.5 text-sm"></i> Facebook</button>
                   <button onClick={()=>handleShareViral('copy')} className="bg-slate-700 hover:bg-slate-600 text-white text-[11px] px-3 py-2 rounded-xl font-bold transition flex items-center justify-center"><i className="fa-solid fa-link mr-1.5 text-sm"></i> Salin Link</button>
                 </div>
               ) : (
-                <div className="bg-slate-900 border border-emerald-500/40 p-5 rounded-xl inline-block w-full shadow-[0_0_20px_rgba(16,185,129,0.15)] mt-1">
+                <div className="bg-slate-900 border border-emerald-500/40 p-5 rounded-xl inline-block w-full mt-1">
                   <span className="text-[11px] text-emerald-400 block mb-3 font-extrabold uppercase tracking-widest animate-pulse">🎉 Bonus Berhasil Dibuka 🎉</span>
-                  <a href={creator.bonusUrl || '#'} target="_blank" rel="noopener noreferrer" className="inline-block w-full sm:w-auto bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-lg"><i className="fa-solid fa-cloud-arrow-down mr-2 text-sm"></i> Unduh Produk Gratis</a>
+                  <a href={creator.bonusUrl || '#'} target="_blank" rel="noopener noreferrer" className="inline-block w-full bg-gradient-to-r from-emerald-600 to-teal-500 text-white text-xs font-bold px-6 py-3 rounded-xl shadow-lg"><i className="fa-solid fa-cloud-arrow-down mr-2 text-sm"></i> Unduh Produk Gratis</a>
                 </div>
               )}
             </div>
@@ -1565,9 +1597,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
             )}
 
             <div className="mb-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
-              </div>
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400"><i className="fa-solid fa-box-open text-indigo-400 mr-1.5"></i> Produk Digital</h2>
               <div className="flex gap-1 overflow-x-auto text-xs pb-1 scrollbar-hide">
                 {(() => {
                   const preferred = ['Semua','E-Book','Template','Kursus/Video','Photo Asset','Printable Kids','Template PPT','Template Notion','Asset Photoshop','Asset After Effect','Video Asset','Website/Plugin/JSON','Bank Konten Affiliate'];
@@ -1596,7 +1626,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                     <p className="text-xs text-slate-400 mb-4 line-clamp-2">{product.description}</p>
                     <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
                       <div><span className="text-[10px] text-slate-500 uppercase block">Harga</span><span className="text-base font-extrabold text-emerald-400">{formatIDR(product.price)}</span></div>
-                      <button onClick={(e)=>{e.stopPropagation();setSelectedDetailProduct(product);}} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition hover:-translate-y-0.5 flex items-center gap-1.5"><i className="fa-solid fa-eye text-xs"></i> Lihat Detail</button>
+                      <button onClick={(e)=>{e.stopPropagation();setSelectedDetailProduct(product);}} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg transition flex items-center gap-1.5"><i className="fa-solid fa-eye text-xs"></i> Lihat Detail</button>
                     </div>
                   </div>
                 </div>
@@ -1607,17 +1637,15 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
           </div>
         )}
 
-        {/* ===== BLOG HOME ===== */}
         {viewMode === 'store' && blogView === 'home' && (
           <div className="blog-shell">
             <section className="blog-hero rounded-3xl p-7 md:p-10 mb-7 overflow-hidden relative">
-              <div className="absolute right-0 top-0 w-56 h-56 bg-cyan-400/10 blur-3xl rounded-full"></div>
               <div className="relative max-w-3xl">
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-400/10 text-cyan-300 border border-cyan-400/20 text-[10px] font-bold uppercase tracking-widest mb-4"><i className="fa-solid fa-bolt"></i> Pusat Informasi</div>
                 <h1 className="text-3xl md:text-5xl font-black text-white leading-tight">Wawasan, Tutorial & Cerita dari {creator.name}</h1>
                 <p className="text-slate-300 mt-4 max-w-2xl text-sm md:text-base">Koleksi artikel yang membantu pengunjung menemukan informasi, tutorial, inspirasi, dan produk digital yang relevan.</p>
-                <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                  <div className="relative flex-1">
+                <div className="mt-6">
+                  <div className="relative">
                     <i className="fa-solid fa-magnifying-glass absolute left-4 top-3.5 text-slate-500 text-sm"></i>
                     <input value={blogSearch} onChange={e=>setBlogSearch(e.target.value)} placeholder="Cari artikel, tutorial, atau topik..." className="w-full bg-slate-950/70 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white outline-none focus:border-cyan-500" />
                   </div>
@@ -1676,7 +1704,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
           </div>
         )}
 
-        {/* ===== ARTIKEL ===== */}
         {viewMode === 'store' && blogView === 'article' && selectedBlogPost && (
           <div className="blog-shell">
             <button onClick={backToBlog} className="mb-5 text-xs font-semibold text-slate-400 hover:text-white"><i className="fa-solid fa-arrow-left mr-2"></i>Kembali ke Blog</button>
@@ -1721,7 +1748,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
           </div>
         )}
 
-        {/* ===== ADMIN ===== */}
         {viewMode === 'admin' && (
           <div className="max-w-6xl mx-auto px-4 py-8 space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-card p-6 rounded-2xl">
@@ -1730,7 +1756,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                 <p className="text-xs text-slate-400 mt-1">Kumpulkan email + WhatsApp, simpan seperti Excel, lalu kirim penawaran otomatis ke semua kontak.</p>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button onClick={()=>setEditProduct({title:'',category:'E-Book',price:'',description:'',details:'',downloadUrl:'',coverUrl:''})} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition shadow-lg shadow-indigo-500/20"><i className="fa-solid fa-plus mr-1"></i> Tambah Produk</button>
+                <button onClick={()=>setEditProduct({title:'',category:'E-Book',price:'',description:'',details:'',downloadUrl:'',coverUrl:''})} className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition"><i className="fa-solid fa-plus mr-1"></i> Tambah Produk</button>
                 <button onClick={()=>setEditLink({title:'',url:'',badge:'',highlight:false})} className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2.5 rounded-xl transition"><i className="fa-solid fa-link mr-1"></i> Link Bio</button>
                 <button onClick={handleLogoutAdmin} className="bg-red-600 hover:bg-red-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition"><i className="fa-solid fa-right-from-bracket mr-1.5"></i> Keluar</button>
               </div>
@@ -1751,24 +1777,20 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               ))}
             </div>
 
-            {/* --- OVERVIEW --- */}
             {adminTab === 'overview' && (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="glass-card p-5 rounded-2xl relative overflow-hidden">
-                  <div className="absolute -right-4 -top-4 text-emerald-500/10 text-7xl"><i className="fa-solid fa-money-bill-wave"></i></div>
-                  <span className="text-xs font-bold text-slate-400 uppercase relative z-10">Total Omset</span>
-                  <p className="text-2xl font-extrabold text-emerald-400 mt-2 relative z-10">{formatIDR(totalRevenue)}</p>
+                  <span className="text-xs font-bold text-slate-400 uppercase">Total Omset</span>
+                  <p className="text-2xl font-extrabold text-emerald-400 mt-2">{formatIDR(totalRevenue)}</p>
                 </div>
                 <div className="glass-card p-5 rounded-2xl relative overflow-hidden">
-                  <div className="absolute -right-4 -top-4 text-indigo-500/10 text-7xl"><i className="fa-solid fa-cart-shopping"></i></div>
-                  <span className="text-xs font-bold text-slate-400 uppercase relative z-10">Transaksi</span>
-                  <p className="text-2xl font-extrabold text-white mt-2 relative z-10">{transactions.length} Pesanan</p>
+                  <span className="text-xs font-bold text-slate-400 uppercase">Transaksi</span>
+                  <p className="text-2xl font-extrabold text-white mt-2">{transactions.length} Pesanan</p>
                 </div>
                 <div className="glass-card p-5 rounded-2xl relative overflow-hidden">
-                  <div className="absolute -right-4 -top-4 text-cyan-500/10 text-7xl"><i className="fa-solid fa-tower-broadcast"></i></div>
-                  <span className="text-xs font-bold text-slate-400 uppercase relative z-10">Database Leads</span>
-                  <p className="text-2xl font-extrabold text-cyan-300 mt-2 relative z-10">{subscribers.length} Kontak</p>
-                  <p className="text-[10px] text-slate-500 mt-1 relative z-10">{leadStats.withEmail} email · {leadStats.withWa} WhatsApp · {leadStats.sentOk} pesan terkirim</p>
+                  <span className="text-xs font-bold text-slate-400 uppercase">Database Leads</span>
+                  <p className="text-2xl font-extrabold text-cyan-300 mt-2">{subscribers.length} Kontak</p>
+                  <p className="text-[10px] text-slate-500 mt-1">{leadStats.withEmail} email · {leadStats.withWa} WhatsApp · {leadStats.sentOk} pesan terkirim</p>
                 </div>
                 <div className="glass-card p-5 rounded-2xl md:col-span-3 grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
                   <div><span className="text-xs font-bold text-slate-400 uppercase">Pengunjung</span><p className="text-2xl font-extrabold text-indigo-400 mt-2"><i className="fa-solid fa-users text-lg mr-2"></i>{creator.visitorCount||0}</p></div>
@@ -1779,7 +1801,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </div>
             )}
 
-            {/* --- LEADS & BROADCAST --- */}
             {adminTab === 'leads' && (
               <div className="space-y-5">
                 <div className="flex gap-2 flex-wrap">
@@ -1788,7 +1809,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   ))}
                 </div>
 
-                {/* STAT BAR */}
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   {[
                     {l:'Total Kontak',v:leadStats.total,i:'fa-users',c:'text-cyan-300'},
@@ -1798,7 +1818,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                     {l:'Gagal',v:leadStats.sentFail,i:'fa-circle-xmark',c:'text-rose-300'}
                   ].map((s,i)=>(
                     <div key={i} className="glass-card rounded-2xl p-4">
-                      <div className="flex items-center justify-between"><span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">{s.l}</span><i className={`fa-solid ${s.i} ${s.c} text-xs`}></i></div>
+                      <div className="flex items-center justify-between"><span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">{s.l}</span><i className={`${s.i.startsWith('fa-brands')?'fa-brands':'fa-solid'} ${s.i.replace('fa-brands ','')} ${s.c} text-xs`}></i></div>
                       <div className={`text-xl font-extrabold mt-1.5 ${s.c}`}>{s.v}</div>
                     </div>
                   ))}
@@ -1806,11 +1826,10 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
 
                 {subsFallback && (
                   <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-[10px] text-amber-200 leading-relaxed">
-                    <i className="fa-solid fa-triangle-exclamation mr-1"></i> Tabel <code>subscribers</code> belum ada di Supabase → data disimpan di perangkat ini (tetap bisa export Excel). Buka tab <b>Panduan & SQL</b> untuk SQL siap tempel agar data tersimpan cloud dan terbaca dari semua perangkat.
+                    <i className="fa-solid fa-triangle-exclamation mr-1"></i> Tabel <code>subscribers</code> belum ada di Supabase (atau Supabase offline) → data disimpan di perangkat ini dan tetap bisa export Excel. Buka tab <b>Panduan & SQL</b> untuk SQL siap tempel.
                   </div>
                 )}
 
-                {/* TAB: DATA */}
                 {leadsTab === 'data' && (
                   <div className="space-y-4">
                     <div className="glass-card rounded-2xl p-4 space-y-3">
@@ -1854,7 +1873,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                               <td><span className="badge-soft bg-slate-800 text-slate-300">{s.source||'toko'}</span></td>
                               <td className="text-slate-400">{s.tags||'-'}</td>
                               <td><span className={`badge-soft ${s.status==='nonaktif'?'bg-slate-800 text-slate-400':'bg-emerald-500/10 text-emerald-300 border-emerald-500/25'}`}>{s.status||'aktif'}</span></td>
-                              <td className="text-[10px] text-slate-400">{s.last_campaign?`${s.last_campaign} · ${s.last_status}`:'-'}{s.last_sent_at?` (${fmtDateTime(s.last_sent_at)})`:''}</td>
+                              <td className="text-[10px] text-slate-400">{s.last_campaign?`${s.last_campaign} · ${s.last_status}`:'-'}</td>
                               <td>
                                 <div className="flex gap-1.5">
                                   <button onClick={()=>quickSendLead(s)} title="Kirim pesan ke kontak ini" className="btn bg-emerald-600/90 hover:bg-emerald-500 text-white px-2.5 py-1.5"><i className="fa-solid fa-paper-plane"></i></button>
@@ -1874,7 +1893,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   </div>
                 )}
 
-                {/* TAB: KIRIM */}
                 {leadsTab === 'kirim' && (
                   <div className="grid lg:grid-cols-[minmax(0,1fr)_360px] gap-5 items-start">
                     <div className="glass-card rounded-2xl p-5 space-y-4">
@@ -1909,9 +1927,9 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                             {products.map(p=><option key={p.id} value={p.id}>{p.title} ({formatIDR(p.price)})</option>)}
                           </select></div>
                       </div>
-                      <div><label className="field-label">Link Tujuan ({{'{{link}}'}})</label>
+                      <div><label className="field-label">Link Tujuan</label>
                         <input value={compose.link} onChange={e=>setCompose({...compose,link:e.target.value})} placeholder={storeUrl()} className="inp" /></div>
-                      <div><label className="field-label">Subjek Email ({{'{{nama}}'}}, {{'{{produk}}'}} didukung)</label>
+                      <div><label className="field-label">Subjek Email</label>
                         <input value={compose.subject} onChange={e=>setCompose({...compose,subject:e.target.value})} className="inp" /></div>
                       <div>
                         <label className="field-label">Isi Pesan</label>
@@ -1936,8 +1954,8 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                             <span className="text-slate-400">{sendProgress.done}/{sendProgress.total} · ✅ {sendProgress.ok} · ❌ {sendProgress.fail}</span>
                           </div>
                           <div className="progress-track"><div className="progress-fill" style={{width:`${sendProgress.total?Math.round(sendProgress.done/sendProgress.total*100):0}%`}}></div></div>
-                          {lastResult && !sending && <div className="text-[10px] text-slate-400">Kampanye "{lastResult.campaign}" {lastResult.stopped?'dihentikan':'selesai'} — {lastResult.ok} terkirim, {lastResult.fail} gagal dari {lastResult.total}. Lihat tab Laporan untuk detail & export Excel.</div>}
-                          {compose.sendMode==='auto' && compose.channel!=='email' && <div className="text-[9px] text-amber-300/90"><i className="fa-solid fa-circle-info mr-1"></i>Izinkan popup untuk situs ini agar tab WhatsApp bisa terbuka otomatis berurutan.</div>}
+                          {lastResult && !sending && <div className="text-[10px] text-slate-400">Kampanye "{lastResult.campaign}" {lastResult.stopped?'dihentikan':'selesai'} — {lastResult.ok} terkirim, {lastResult.fail} gagal dari {lastResult.total}.</div>}
+                          {compose.sendMode==='auto' && compose.channel!=='email' && <div className="text-[9px] text-amber-300/90"><i className="fa-solid fa-circle-info mr-1"></i>Izinkan popup untuk situs ini agar tab WhatsApp terbuka otomatis berurutan.</div>}
                         </div>
                       )}
                     </div>
@@ -1948,7 +1966,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                           <div className="rounded-xl rounded-tl-none bg-[#005c4b] text-white text-[11px] leading-relaxed p-3 whitespace-pre-wrap shadow">
                             {buildMessage(compose.message, filteredLeads[0] || {name:'Kak'}, {productId:compose.productId, link:compose.link})}
                           </div>
-                          <div className="text-[9px] text-slate-500 mt-2 text-right">{new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})} ✓✓</div>
                         </div>
                       </div>
                       <div className="glass-card rounded-2xl p-4">
@@ -1964,7 +1981,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   </div>
                 )}
 
-                {/* TAB: OTOMATISASI */}
                 {leadsTab === 'otomatis' && (
                   <div className="grid md:grid-cols-2 gap-5">
                     <div className="glass-card rounded-2xl p-5 space-y-4">
@@ -1983,7 +1999,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                         <textarea rows="5" value={settingsForm.autoTemplateProduct} onChange={e=>setSettingsForm({...settingsForm,autoTemplateProduct:e.target.value})} className="inp font-mono text-[11px]"></textarea></div>
                       <div><label className="field-label">Template: Artikel Baru</label>
                         <textarea rows="4" value={settingsForm.autoTemplateArticle} onChange={e=>setSettingsForm({...settingsForm,autoTemplateArticle:e.target.value})} className="inp font-mono text-[11px]"></textarea></div>
-                      <div><label className="field-label">Template: Pesan Selamat Datang (WhatsApp)</label>
+                      <div><label className="field-label">Template: Pesan Selamat Datang</label>
                         <textarea rows="5" value={settingsForm.welcomeMessage} onChange={e=>setSettingsForm({...settingsForm,welcomeMessage:e.target.value})} className="inp font-mono text-[11px]"></textarea></div>
                       <div><label className="field-label">Subjek Email Selamat Datang</label>
                         <input value={settingsForm.welcomeSubject} onChange={e=>setSettingsForm({...settingsForm,welcomeSubject:e.target.value})} className="inp" /></div>
@@ -1992,7 +2008,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                     <div className="space-y-5">
                       <div className="glass-card rounded-2xl p-5 space-y-3">
                         <h3 className="text-sm font-extrabold text-white"><i className="fa-regular fa-clock text-amber-400 mr-2"></i>Jadwal Kirim Otomatis</h3>
-                        <p className="text-[10px] text-slate-400 leading-relaxed">Tentukan tanggal & jam, sistem akan menjalankan broadcast sendiri (halaman admin harus tetap terbuka di salah satu perangkat/browser).</p>
+                        <p className="text-[10px] text-slate-400 leading-relaxed">Tentukan tanggal & jam, sistem akan menjalankan broadcast sendiri (halaman admin harus tetap terbuka).</p>
                         <input type="datetime-local" value={settingsForm.scheduledAt||''} onChange={e=>setSettingsForm({...settingsForm,scheduledAt:e.target.value})} className="inp" />
                         <div className="flex gap-2">
                           <button onClick={handleSaveSettings} className="btn flex-1 bg-amber-600 hover:bg-amber-500 text-white"><i className="fa-solid fa-calendar-check"></i> Aktifkan Jadwal</button>
@@ -2003,16 +2019,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                             <i className="fa-solid fa-hourglass-half mr-1"></i> Terjadwal: <b>{fmtDateTime(settings.scheduledAt)}</b> — kanal {settings.channel}, target {getTargets({channel:settings.channel}).length} kontak.
                           </div>
                         )}
-                      </div>
-                      <div className="glass-card rounded-2xl p-5">
-                        <h3 className="text-sm font-extrabold text-white mb-2"><i className="fa-solid fa-wand-magic-sparkles text-indigo-400 mr-2"></i>Alur Kerja Profesional</h3>
-                        <ol className="text-[10px] text-slate-400 leading-relaxed space-y-2 list-decimal pl-4">
-                          <li>Pasang form kumpul data → email & WhatsApp masuk otomatis ke tabel <code>subscribers</code>.</li>
-                          <li>Import data lama dari Excel/CSV (kolom terpetakan otomatis).</li>
-                          <li>Buat pesan dengan variabel personal, pilih produk yang dijual.</li>
-                          <li>Kirim sekarang, jadwalkan, atau biarkan otomatis terkirim saat ada produk/artikel baru.</li>
-                          <li>Pantau laporan pengiriman & export ke Excel untuk arsip.</li>
-                        </ol>
                       </div>
                       <div className="glass-card rounded-2xl p-5">
                         <h3 className="text-sm font-extrabold text-white mb-3">Sumber Data Terkumpul</h3>
@@ -2030,12 +2036,11 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   </div>
                 )}
 
-                {/* TAB: PENGATURAN */}
                 {leadsTab === 'pengaturan' && (
                   <form onSubmit={handleSaveSettings} className="grid md:grid-cols-2 gap-5 items-start">
                     <div className="glass-card rounded-2xl p-5 space-y-3">
                       <h3 className="text-sm font-extrabold text-white"><i className="fa-solid fa-envelope-circle-check text-indigo-400 mr-2"></i>Pengiriman Email Otomatis (EmailJS)</h3>
-                      <p className="text-[10px] text-slate-400 leading-relaxed">Gratis di <b>emailjs.com</b> → buat service (Gmail), template dengan variabel <code>{'{{to_email}}'}</code>, <code>{'{{subject}}'}</code>, <code>{'{{message}}'}</code>, <code>{'{{to_name}}'}</code>, lalu tempel 3 kode di bawah. Tanpa EmailJS, email tetap bisa dikirim lewat aplikasi email perangkat.</p>
+                      <p className="text-[10px] text-slate-400 leading-relaxed">Gratis di emailjs.com → buat service (Gmail), template dengan variabel to_email, subject, message, to_name, lalu tempel 3 kode di bawah.</p>
                       <div><label className="field-label">Public Key</label><input value={settingsForm.emailjsPublicKey} onChange={e=>setSettingsForm({...settingsForm,emailjsPublicKey:e.target.value})} placeholder="xxxxxxxxxxxxxxx" className="inp" /></div>
                       <div><label className="field-label">Service ID</label><input value={settingsForm.emailjsServiceId} onChange={e=>setSettingsForm({...settingsForm,emailjsServiceId:e.target.value})} placeholder="service_xxxxxxx" className="inp" /></div>
                       <div><label className="field-label">Template ID</label><input value={settingsForm.emailjsTemplateId} onChange={e=>setSettingsForm({...settingsForm,emailjsTemplateId:e.target.value})} placeholder="template_xxxxxxx" className="inp" /></div>
@@ -2062,7 +2067,7 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                         <h3 className="text-sm font-extrabold text-white"><i className="fa-solid fa-magnet text-pink-400 mr-2"></i>Form Kumpul Data (Lead Magnet)</h3>
                         <div><label className="field-label">Judul Ajakan</label><input value={settingsForm.leadTitle} onChange={e=>setSettingsForm({...settingsForm,leadTitle:e.target.value})} className="inp" /></div>
                         <div><label className="field-label">Deskripsi</label><textarea rows="3" value={settingsForm.leadDescription} onChange={e=>setSettingsForm({...settingsForm,leadDescription:e.target.value})} className="inp"></textarea></div>
-                        <div><label className="field-label">Kalimat Bonus di Pesan ({{'{{bonus}}'}})</label><input value={settingsForm.leadBonusText} onChange={e=>setSettingsForm({...settingsForm,leadBonusText:e.target.value})} className="inp" /></div>
+                        <div><label className="field-label">Kalimat Bonus di Pesan</label><input value={settingsForm.leadBonusText} onChange={e=>setSettingsForm({...settingsForm,leadBonusText:e.target.value})} className="inp" /></div>
                         <div><label className="field-label">Link Bonus Otomatis</label><input value={settingsForm.bonusUrl||''} onChange={e=>setSettingsForm({...settingsForm,bonusUrl:e.target.value})} placeholder={creator.bonusUrl} className="inp" /></div>
                         <div className="grid grid-cols-2 gap-3">
                           <div><label className="field-label">Popup Otomatis</label>
@@ -2076,7 +2081,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   </form>
                 )}
 
-                {/* TAB: LOG */}
                 {leadsTab === 'log' && (
                   <div className="glass-card rounded-2xl p-5 space-y-4">
                     <div className="flex flex-wrap items-center justify-between gap-2">
@@ -2107,7 +2111,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   </div>
                 )}
 
-                {/* TAB: PANDUAN */}
                 {leadsTab === 'panduan' && (
                   <div className="grid md:grid-cols-2 gap-5 items-start">
                     <div className="glass-card rounded-2xl p-5 space-y-3">
@@ -2115,14 +2118,14 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                         <h3 className="text-sm font-extrabold text-white"><i className="fa-solid fa-database text-cyan-400 mr-2"></i>SQL Supabase (sekali tempel)</h3>
                         <button onClick={()=>setShowSql(!showSql)} className="btn bg-slate-800 hover:bg-slate-700 text-slate-200"><i className="fa-solid fa-code"></i> {showSql?'Tutup':'Lihat SQL'}</button>
                       </div>
-                      <p className="text-[10px] text-slate-400 leading-relaxed">Buka Supabase → SQL Editor → tempel → Run. Setelah itu semua data leads, log pengiriman, dan pengaturan tersimpan di cloud (bisa dibuka dari HP/PC mana pun). Tanpa SQL ini aplikasi tetap jalan dengan penyimpanan perangkat.</p>
+                      <p className="text-[10px] text-slate-400 leading-relaxed">Buka Supabase → SQL Editor → tempel → Run. Setelah itu semua data leads, log pengiriman, dan pengaturan tersimpan di cloud.</p>
                       {showSql && <pre className="sql-box max-h-[420px]">{SQL_GUIDE}</pre>}
                       {showSql && <button onClick={()=>{navigator.clipboard.writeText(SQL_GUIDE);showToast('✅ SQL disalin.');}} className="btn bg-indigo-600 hover:bg-indigo-500 text-white"><i className="fa-solid fa-copy"></i> Salin SQL</button>}
                     </div>
                     <div className="space-y-5">
                       <div className="glass-card rounded-2xl p-5">
                         <h3 className="text-sm font-extrabold text-white mb-3"><i className="fa-solid fa-file-excel text-emerald-400 mr-2"></i>Format Excel / CSV</h3>
-                        <p className="text-[10px] text-slate-400 leading-relaxed mb-3">Kolom dikenali otomatis: <b>nama</b>, <b>email</b>, <b>whatsapp/no/hp/phone</b>, <b>tag</b>, <b>sumber</b>. Unduh template, isi datanya, lalu import kembali.</p>
+                        <p className="text-[10px] text-slate-400 leading-relaxed mb-3">Kolom dikenali otomatis: <b>nama</b>, <b>email</b>, <b>whatsapp/no/hp/phone</b>, <b>tag</b>, <b>sumber</b>.</p>
                         <button onClick={downloadTemplateExcel} className="btn bg-emerald-600 hover:bg-emerald-500 text-white"><i className="fa-solid fa-download"></i> Unduh Template Excel</button>
                       </div>
                       <div className="glass-card rounded-2xl p-5">
@@ -2141,7 +2144,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </div>
             )}
 
-            {/* --- PROFIL --- */}
             {adminTab === 'profile' && (
               <form onSubmit={handleSaveCreator} className="glass-card p-6 rounded-2xl space-y-4 max-w-2xl">
                 <h3 className="font-bold text-sm text-indigo-400 uppercase border-b border-slate-800 pb-2">Informasi Profil Toko</h3>
@@ -2167,7 +2169,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </form>
             )}
 
-            {/* --- PRODUK --- */}
             {adminTab === 'products' && (
               <div className="space-y-3">
                 {products.length>0?products.map(p=>(
@@ -2185,7 +2186,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </div>
             )}
 
-            {/* --- LINKS --- */}
             {adminTab === 'links' && (
               <div className="space-y-3">
                 {links.length>0?links.map(l=>(
@@ -2200,7 +2200,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </div>
             )}
 
-            {/* --- AFFILIATE --- */}
             {adminTab === 'affiliate' && (
               <div className="space-y-4">
                 <div className="glass-card rounded-2xl p-5 border border-emerald-500/20">
@@ -2235,7 +2234,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </div>
             )}
 
-            {/* --- ORDERS --- */}
             {adminTab === 'orders' && (
               <div className="glass-card rounded-2xl p-4 overflow-x-auto">
                 {transactions.length>0?(
@@ -2265,7 +2263,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
               </div>
             )}
 
-            {/* --- BLOG --- */}
             {adminTab === 'blog' && (
               <div className="space-y-5">
                 <div className="grid lg:grid-cols-2 gap-5">
@@ -2286,7 +2283,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                       <button onClick={()=>{setBlogView('home');setViewMode('store');window.location.hash='';}} className="btn bg-indigo-600 hover:bg-indigo-500 text-white"><i className="fa-solid fa-globe"></i> Lihat Blog</button>
                     </div>
                     <button onClick={()=>{setAdminTab('leads');setLeadsTab('kirim');}} className="btn w-full mt-2 bg-emerald-600 hover:bg-emerald-500 text-white"><i className="fa-solid fa-paper-plane"></i> Broadcast Artikel ke Email & WA</button>
-                    <div className="mt-4 bg-slate-950/70 rounded-xl border border-slate-800 p-4 text-[10px] text-slate-500 leading-relaxed">Aktifkan "Broadcast otomatis saat artikel baru terbit" di tab Leads & Broadcast → Otomatisasi agar setiap artikel langsung terkirim ke semua kontak.</div>
                   </div>
                 </div>
                 <div className="glass-card rounded-2xl p-4 overflow-x-auto">
@@ -2333,7 +2329,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         )}
       </main>
 
-      {/* ===== MODAL: AFFILIATE AUTO ===== */}
       {showAffiliateAutoModal && viewMode==='store' && blogView==='article' && selectedBlogPost && (
         <div className="affiliate-auto-overlay" role="dialog" aria-modal="true">
           <div className="affiliate-auto-modal">
@@ -2366,7 +2361,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: POPUP KUMPUL DATA ===== */}
       {showLeadPopup && !leadOptedIn && (
         <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-emerald-500/30 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl">
@@ -2390,7 +2384,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: REWARD BONUS ===== */}
       {showLeadReward && (
         <div className="fixed inset-0 z-[75] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-emerald-500/40 rounded-3xl w-full max-w-sm p-6 text-center space-y-4">
@@ -2403,7 +2396,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: IMPORT EXCEL ===== */}
       {importOpen && (
         <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-emerald-500/25 rounded-2xl w-full max-w-3xl p-5 space-y-4 max-h-[92vh] overflow-y-auto">
@@ -2442,10 +2434,9 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: EDIT LEAD ===== */}
       {editLead && (
         <div className="fixed inset-0 z-[70] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <form onSubmit={async (e)=>{e.preventDefault(); if(editLead.id){await updateSubscriber(editLead); showToast('✅ Data kontak diperbarui.');} else {const r=await saveSubscriber({...editLead, source:editLead.source||'manual'}); if(r.ok) showToast('✅ Kontak ditambahkan.');} setEditLead(null);}} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3">
+          <form onSubmit={async (e)=>{e.preventDefault(); if(editLead.id){await updateSubscriber(editLead); showToast('✅ Data kontak diperbarui.');} else {const r=await saveSubscriber({...editLead, source:editLead.source||'manual'}); if(r && r.ok) showToast('✅ Kontak ditambahkan.');} setEditLead(null);}} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <h3 className="text-sm font-extrabold text-white">{editLead.id?'Edit Data Kontak':'Tambah Kontak Manual'}</h3>
               <button type="button" onClick={()=>setEditLead(null)} className="text-slate-400 hover:text-white"><i className="fa-solid fa-xmark"></i></button>
@@ -2468,7 +2459,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: SHARE CARD ARTIKEL ===== */}
       {blogSharePost && (
         <div className="fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-cyan-500/30 rounded-3xl w-full max-w-4xl max-h-[92vh] overflow-y-auto p-5 md:p-7 shadow-2xl">
@@ -2494,14 +2484,12 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   <button disabled={blogShareBusy} onClick={()=>shareBlogToWhatsAppStatus(blogSharePost)} className="btn bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white"><i className="fa-brands fa-whatsapp"></i>Bagikan ke WhatsApp</button>
                   <button disabled={blogShareBusy} onClick={()=>downloadBlogShareCard(blogSharePost)} className="btn bg-cyan-600 hover:bg-cyan-500 disabled:opacity-60 text-white"><i className="fa-solid fa-image"></i>Simpan Kartu</button>
                 </div>
-                <button onClick={()=>{const p=blogSharePost;setBlogSharePost(null);handleLeadSubmit({name:'Pengunjung',email:`${slugify(p.title)}@lead.local`,whatsapp:''},'artikel');}} className="hidden"></button>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ===== MODAL: KONFIRMASI SHARE VIRAL ===== */}
       {showShareModal && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-indigo-500/40 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl text-center">
@@ -2520,7 +2508,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: DETAIL PRODUK ===== */}
       {selectedDetailProduct && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-5 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -2544,7 +2531,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: CHECKOUT ===== */}
       {checkoutProduct && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
@@ -2586,7 +2572,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: EDIT AFFILIATE ===== */}
       {editAffiliate && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form onSubmit={handleSaveAffiliate} className="bg-slate-900 border border-emerald-500/20 rounded-2xl w-full max-w-md p-5 space-y-3 max-h-[90vh] overflow-y-auto">
@@ -2612,7 +2597,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: EDIT ARTIKEL ===== */}
       {editBlogPost && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form onSubmit={handleSaveBlogPost} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
@@ -2636,7 +2620,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: EDIT PRODUK ===== */}
       {editProduct && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form onSubmit={handleSaveProduct} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3 max-h-[90vh] overflow-y-auto">
@@ -2665,7 +2648,6 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
         </div>
       )}
 
-      {/* ===== MODAL: EDIT LINK ===== */}
       {editLink && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <form onSubmit={handleSaveLink} className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-5 space-y-3">
