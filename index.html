@@ -922,7 +922,7 @@ function App() {
     const channel = opts.channel || composeRef.current.channel;
     const src = opts.targetSource ?? composeRef.current.targetSource;
     const stat = opts.targetStatus ?? composeRef.current.targetStatus;
-    const tag = String(opts.targetTag ?? composeRef.current.targetTag || '').trim().toLowerCase();
+    const tag = String((opts.targetTag ?? composeRef.current.targetTag) || '').trim().toLowerCase();
     const onlyIds = opts.onlyIds;
     return (subsRef.current || []).filter(s => {
       if (onlyIds && !onlyIds.includes(s.id)) return false;
