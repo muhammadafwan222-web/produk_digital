@@ -554,6 +554,9 @@ function App() {
   const [sendProgress, setSendProgress] = useState({ done:0, total:0, ok:0, fail:0, current:'' });
   const [lastResult, setLastResult] = useState(null);
   const [showSql, setShowSql] = useState(false);
+  const [setupOpen, setSetupOpen] = useState(false);
+  const [tableStatus, setTableStatus] = useState(null);
+  const [checkingTables, setCheckingTables] = useState(false);
   const [compose, setCompose] = useState({
     channel:'wa', sendMode:'auto', delaySeconds:4, subject:DEFAULT_SETTINGS.emailSubject,
     message:DEFAULT_SETTINGS.messageTemplate, productId:'', link:'', targetSource:'Semua',
