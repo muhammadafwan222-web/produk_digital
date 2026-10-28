@@ -15,9 +15,7 @@
 <meta id="twitter-title" name="twitter:title" content="Blog & Inspirasi | Produk Digital">
 <meta id="twitter-description" name="twitter:description" content="Koleksi artikel, tutorial, informasi, dan produk digital.">
 <meta id="twitter-image" name="twitter:image" content="">
-<!-- Konfigurasi Tailwind (dimuat oleh boot loader) -->
 <script>
-window.tailwind = window.tailwind || null;
 window.__tailwindConfig = {
   darkMode: 'class',
   theme: { extend: { colors: {
@@ -26,7 +24,6 @@ window.__tailwindConfig = {
   } } }
 };
 </script>
-<!-- FontAwesome & Fontsource (Inter) -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.0.16/index.css">
 <style>
@@ -121,9 +118,38 @@ table.lead-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.
 .btn{font-size:11px;font-weight:800;padding:10px 14px;border-radius:12px;transition:.18s;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
 </style>
 
-<!-- ============ BOOT LOADER: MUAT CDN BERURUTAN + FALLBACK ============ -->
+<!-- ============ BOOT LOADER: MUAT CDN BERURUTAN + FALLBACK + PAKSA TRANSFORM BABEL ============ -->
 <script>
 (function () {
+  window.__appBooted = false;
+  window.__cdnStatus = {};
+
+  /* Transformasi manual semua <script type="text/babel">.
+     WAJIB karena Babel Standalone UMD hanya auto-transform pada event
+     DOMContentLoaded; saat dimuat dinamis (setelah event itu lewat),
+     tag babel tidak pernah diproses → aplikasi tidak render. */
+  function transformBabelTags() {
+    if (!window.Babel || typeof window.Babel.transform !== 'function') {
+      window.__fatal('Babel.term transform() tidak tersedia.');
+      return;
+    }
+    var tags = document.querySelectorAll('script[type="text/babel"]');
+    if (!tags.length) return;
+    Array.prototype.forEach.call(tags, function (s) {
+      try {
+        var presetsAttr = s.getAttribute('data-presets') || 'react';
+        var out = window.Babel.transform(s.textContent, { presets: presetsAttr.split(',') }).code;
+        var ns = document.createElement('script');
+        ns.textContent = out;
+        s.parentNode.insertBefore(ns, s);
+        s.parentNode.removeChild(s);
+      } catch (e) {
+        window.__fatal('Babel transform gagal: ' + (e && e.message ? e.message : String(e)));
+      }
+    });
+  }
+  window.__transformBabelTags = transformBabelTags;
+
   var ITEMS = [
     { name:'Tailwind', urls:['https://cdn.tailwindcss.com'], check:function(){ return !!window.tailwind; }, cfg:true },
     { name:'React', urls:['https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.production.min.js','https://unpkg.com/react@18.3.1/umd/react.production.min.js'], check:function(){ return !!window.React; } },
@@ -133,15 +159,20 @@ table.lead-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.
     { name:'EmailJS', urls:['https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js'], check:function(){ return !!window.emailjs; } },
     { name:'Babel', urls:['https://cdn.jsdelivr.net/npm/@babel/standalone@7.24.7/babel.min.js','https://unpkg.com/@babel/standalone@7.24.7/babel.min.js'], check:function(){ return !!window.Babel; } }
   ];
-  window.__cdnStatus = {};
+
   function load(i) {
-    if (i >= ITEMS.length) { document.dispatchEvent(new Event('cdn-ready')); return; }
+    if (i >= ITEMS.length) {
+      /* Semua CDN selesai → pastikan tag babel pasti ditransform */
+      setTimeout(function () { if (!window.__appBooted) transformBabelTags(); }, 30);
+      document.dispatchEvent(new Event('cdn-ready'));
+      return;
+    }
     var item = ITEMS[i];
     function tryUrl(j) {
       if (j >= item.urls.length) {
         window.__cdnStatus[item.name] = 'GAGAL';
         if (window.__fatal && (item.name === 'React' || item.name === 'ReactDOM' || item.name === 'Babel')) {
-          window.__fatal('CDN ' + item.name + ' gagal dimuat dari semua sumber. Periksa koneksi / adblock / firewall jaringan Anda.');
+          window.__fatal('CDN ' + item.name + ' gagal dimuat dari semua sumber. Periksa koneksi / adblock / firewall.');
         }
         load(i + 1); return;
       }
@@ -149,8 +180,14 @@ table.lead-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.
       s.src = item.urls[j];
       s.onload = function () {
         if (item.cfg && window.tailwind && window.__tailwindConfig) { try { window.tailwind.config = window.__tailwindConfig; } catch (e) {} }
-        if (item.check()) { window.__cdnStatus[item.name] = 'OK'; load(i + 1); }
-        else tryUrl(j + 1);
+        if (item.check()) {
+          window.__cdnStatus[item.name] = 'OK';
+          if (item.name === 'Babel') {
+            /* Langsung transform begitu Babel siap (jangan tunggu DOMContentLoaded) */
+            setTimeout(function () { if (!window.__appBooted) transformBabelTags(); }, 0);
+          }
+          load(i + 1);
+        } else tryUrl(j + 1);
       };
       s.onerror = function () { tryUrl(j + 1); };
       document.head.appendChild(s);
@@ -171,13 +208,13 @@ table.lead-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.
     if (box) return box;
     box = document.createElement('div');
     box.id = 'fatal-box';
-    box.setAttribute('style', 'position:fixed;left:12px;bottom:12px;z-index:99999;max-width:440px;max-height:45vh;overflow:auto;background:#1c1012;border:1px solid #b91c1c;color:#fecaca;border-radius:14px;padding:12px 14px;font:11.5px/1.55 ui-monospace,Menlo,Consolas,monospace;box-shadow:0 18px 40px rgba(0,0,0,.55);white-space:pre-wrap;');
+    box.setAttribute('style', 'position:fixed;left:12px;bottom:12px;z-index:99999;max-width:460px;max-height:45vh;overflow:auto;background:#1c1012;border:1px solid #b91c1c;color:#fecaca;border-radius:14px;padding:12px 14px;font:11.5px/1.55 ui-monospace,Menlo,Consolas,monospace;box-shadow:0 18px 40px rgba(0,0,0,.55);white-space:pre-wrap;');
     (document.body || document.documentElement).appendChild(box);
     return box;
   }
   window.__fatal = function (msg) {
     var b = ensure();
-    b.textContent = '⚠️ DEBUG: ' + String(msg).slice(0, 600) + (b.textContent ? '\n──────────\n' + b.textContent : '');
+    b.textContent = '⚠️ DEBUG: ' + String(msg).slice(0, 700) + (b.textContent ? '\n──────────\n' + b.textContent : '');
   };
   window.addEventListener('error', function (e) {
     if (e && e.message) window.__fatal(e.message + (e.filename ? ' @' + String(e.filename).split('/').pop() + ':' + e.lineno : ''));
@@ -186,21 +223,13 @@ table.lead-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.
     var r = e && e.reason;
     window.__fatal('Promise gagal: ' + (r && r.message ? r.message : String(r)).slice(0, 300));
   });
-  document.addEventListener('cdn-ready', function () {
-    var missing = [];
-    if (!window.React) missing.push('React');
-    if (!window.ReactDOM) missing.push('ReactDOM');
-    if (!window.Babel) missing.push('Babel');
-    if (missing.length) window.__fatal('Library wajib belum siap: ' + missing.join(', ') + '. Status: ' + JSON.stringify(window.__cdnStatus));
-  });
   setTimeout(function () {
     var r = document.getElementById('root');
     if (r && r.getAttribute('data-rendered') !== '1') {
-      var missing = [];
-      if (!window.React) missing.push('React');
-      if (!window.ReactDOM) missing.push('ReactDOM');
-      if (!window.Babel) missing.push('Babel');
-      window.__fatal('Aplikasi belum render setelah 15 detik. CDN bermasalah: ' + (missing.join(', ') || 'tidak ada') + '. Jika kotak ini satu-satunya pesan, buka Console → screenshot error merahnya. Status CDN: ' + JSON.stringify(window.__cdnStatus));
+      var state = window.__appBooted
+        ? 'Skrip aplikasi SUDAH dieksekusi tetapi render gagal (cari pesan merah lain di kotak ini / Console).'
+        : 'Skrip aplikasi BELUM dieksekusi (transform Babel tidak berjalan).';
+      window.__fatal('Aplikasi belum render setelah 15 detik. ' + state + ' Status CDN: ' + JSON.stringify(window.__cdnStatus));
     }
   }, 15000);
 })();
@@ -215,6 +244,7 @@ table.lead-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.
 <noscript><div style="padding:20px;color:#fecaca;font-family:sans-serif">Aplikasi ini membutuhkan JavaScript. Aktifkan JavaScript di browser Anda.</div></noscript>
 
 <script type="text/babel" data-presets="react">
+window.__appBooted = true;
 const { useState, useEffect, useMemo, useRef } = React;
 
 /* ================= SUPABASE (dengan stub offline) ================= */
@@ -672,13 +702,6 @@ function App() {
       if(ogUrl) ogUrl.content=shareUrl; if(ogImage) ogImage.content=selectedBlogPost.cover_url||'';
       if(twTitle) twTitle.content=selectedBlogPost.title; if(twDesc) twDesc.content=desc; if(twImage) twImage.content=selectedBlogPost.cover_url||'';
       try {
-        if (!document.getElementById('adsense-script')) {
-          const s=document.createElement('script'); s.id='adsense-script'; s.async=true;
-          s.src='https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXX'; s.crossOrigin='anonymous';
-          document.head.appendChild(s);
-        }
-      } catch(e){}
-      try {
         const old=document.getElementById('json-ld-schema'); if(old) old.remove();
         const schema={"@context":"https://schema.org","@type":"BlogPosting","headline":selectedBlogPost.title,
           "image":selectedBlogPost.cover_url||creator.avatar,"datePublished":selectedBlogPost.published_at,
@@ -691,7 +714,6 @@ function App() {
       if(meta) meta.content=desc; if(ogTitle) ogTitle.content=document.title; if(ogDesc) ogDesc.content=desc;
       if(ogUrl) ogUrl.content=window.location.href.split('#')[0]; if(twTitle) twTitle.content=document.title; if(twDesc) twDesc.content=desc;
       if(ogImage) ogImage.content=''; if(twImage) twImage.content='';
-      try{const a=document.getElementById('adsense-script'); if(a)a.remove();}catch(e){}
       try{const j=document.getElementById('json-ld-schema'); if(j)j.remove();}catch(e){}
     } else {
       document.title = `${creator.name} - Link in Bio & Digital Storefront`;
@@ -699,7 +721,6 @@ function App() {
       if(meta) meta.content=desc; if(ogTitle) ogTitle.content=document.title; if(ogDesc) ogDesc.content=desc;
       if(ogUrl) ogUrl.content=window.location.href.split('#')[0]; if(twTitle) twTitle.content=document.title; if(twDesc) twDesc.content=desc;
       if(ogImage) ogImage.content=creator.avatar||SVG_LOGO; if(twImage) twImage.content=creator.avatar||SVG_LOGO;
-      try{const a=document.getElementById('adsense-script'); if(a)a.remove();}catch(e){}
       try{const j=document.getElementById('json-ld-schema'); if(j)j.remove();}catch(e){}
     }
   }, [blogView, selectedBlogPost, creator.name, creator.bio, creator.avatar]);
@@ -1813,12 +1834,12 @@ create policy "settings_all" on public.app_settings for all using (true) with ch
                   {[
                     {l:'Total Kontak',v:leadStats.total,i:'fa-users',c:'text-cyan-300'},
                     {l:'Email Valid',v:leadStats.withEmail,i:'fa-envelope',c:'text-indigo-300'},
-                    {l:'WhatsApp Valid',v:leadStats.withWa,i:'fa-brands fa-whatsapp',c:'text-emerald-300'},
+                    {l:'WhatsApp Valid',v:leadStats.withWa,i:'fa-whatsapp',c:'text-emerald-300'},
                     {l:'Pesan Terkirim',v:leadStats.sentOk,i:'fa-circle-check',c:'text-teal-300'},
                     {l:'Gagal',v:leadStats.sentFail,i:'fa-circle-xmark',c:'text-rose-300'}
                   ].map((s,i)=>(
                     <div key={i} className="glass-card rounded-2xl p-4">
-                      <div className="flex items-center justify-between"><span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">{s.l}</span><i className={`${s.i.startsWith('fa-brands')?'fa-brands':'fa-solid'} ${s.i.replace('fa-brands ','')} ${s.c} text-xs`}></i></div>
+                      <div className="flex items-center justify-between"><span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">{s.l}</span><i className={`${s.i.startsWith('fa-whatsapp')?'fa-brands':'fa-solid'} ${s.i} ${s.c} text-xs`}></i></div>
                       <div className={`text-xl font-extrabold mt-1.5 ${s.c}`}>{s.v}</div>
                     </div>
                   ))}
